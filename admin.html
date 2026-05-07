@@ -47,6 +47,9 @@
   }
   .page-loader p { font-size: 13px; color: var(--muted); }
 
+  .btn-danger { background:#dc2626;color:#fff;border:none; }
+  .btn-danger:hover { background:#b91c1c; }
+
   /* Edit modal fields */
   .modal-body .field + .field { margin-top: 0; }
   .perm-grid {
@@ -72,16 +75,6 @@
   <!-- Stats -->
   <div class="stats-row" id="stats-row"></div>
 
-  <!-- How to create users -->
-  <div class="setup-note">
-    <span>ℹ️</span>
-    <div>
-      <strong>Adding a new user:</strong> Go to your
-      <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a>
-      → Authentication → Users → <em>Add User</em>, set their email and a temporary password.
-      Their profile will appear here automatically — then set their permissions below.
-    </div>
-  </div>
 
   <!-- Users table -->
   <div class="card">
@@ -91,6 +84,7 @@
         <input type="text" id="search" placeholder="Search by name or email…"
           style="border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;width:220px;outline:none;font-family:inherit"
           oninput="filterTable()">
+        <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ Add User</button>
       </div>
     </div>
     <div class="tbl-wrap">
@@ -113,6 +107,54 @@
     </div>
   </div>
 
+</div>
+
+<!-- ── Add User Modal ── -->
+<div class="modal-overlay hidden" id="add-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add New User</h3>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="add-modal-error" class="alert alert-error hidden"></div>
+      <div class="field">
+        <label class="field-label">Full Name</label>
+        <input type="text" id="add-name" placeholder="Full name">
+      </div>
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="add-email" placeholder="user@example.com">
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <input type="password" id="add-password" placeholder="Min. 6 characters">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Module Access</div>
+        <div class="perm-grid">
+          <div class="perm-row">
+            <span>🇺🇸 USA Patent Filing</span>
+            <label class="toggle">
+              <input type="checkbox" id="add-us">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="perm-row">
+            <span>🇮🇳 India Patent Filing</span>
+            <label class="toggle">
+              <input type="checkbox" id="add-india">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" id="add-btn" onclick="addUser()">Create User</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Edit User Modal ── -->
@@ -247,8 +289,9 @@
             ${u.is_active ? 'Active' : 'Inactive'}
           </span>
         </td>
-        <td>
+        <td style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEdit('${u.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${u.id}','${esc(u.full_name||u.email)}')">Delete</button>
         </td>
       </tr>`).join('');
   }
@@ -337,6 +380,83 @@
   document.getElementById('edit-modal').addEventListener('click', e => {
     if (e.target === document.getElementById('edit-modal')) closeModal();
   });
+  document.getElementById('add-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('add-modal')) closeAddModal();
+  });
+
+  // ── Add User Modal ────────────────────────────────────────────
+  function openAddUser() {
+    document.getElementById('add-name').value     = '';
+    document.getElementById('add-email').value    = '';
+    document.getElementById('add-password').value = '';
+    document.getElementById('add-us').checked     = false;
+    document.getElementById('add-india').checked  = false;
+    document.getElementById('add-modal-error').classList.add('hidden');
+    document.getElementById('add-modal').classList.remove('hidden');
+  }
+
+  function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+  }
+
+  async function addUser() {
+    const btn      = document.getElementById('add-btn');
+    const errEl    = document.getElementById('add-modal-error');
+    const email    = document.getElementById('add-email').value.trim();
+    const password = document.getElementById('add-password').value;
+    const fullName = document.getElementById('add-name').value.trim();
+
+    errEl.classList.add('hidden');
+
+    if (!email || !password) {
+      errEl.textContent = 'Email and password are required.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating…';
+
+    const { data, error } = await db.functions.invoke('create-user', {
+      body: { email, password, full_name: fullName }
+    });
+
+    if (error || data?.error) {
+      errEl.textContent = data?.error || error.message;
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = 'Create User';
+      return;
+    }
+
+    // Set module permissions on the new profile
+    const newId = data.user.id;
+    await db.from('profiles').update({
+      us_patenting:    document.getElementById('add-us').checked,
+      india_patenting: document.getElementById('add-india').checked,
+    }).eq('id', newId);
+
+    btn.disabled = false;
+    btn.innerHTML = 'Create User';
+    closeAddModal();
+    await loadUsers();
+  }
+
+  // ── Delete User ───────────────────────────────────────────────
+  async function confirmDelete(userId, name) {
+    if (!confirm(`Delete user "${name}"?\n\nThis cannot be undone.`)) return;
+
+    const { data, error } = await db.functions.invoke('delete-user', {
+      body: { user_id: userId }
+    });
+
+    if (error || data?.error) {
+      alert('Failed to delete: ' + (data?.error || error.message));
+      return;
+    }
+
+    await loadUsers();
+  }
 
   // ── Escape HTML ───────────────────────────────────────────────
   function esc(str) {
