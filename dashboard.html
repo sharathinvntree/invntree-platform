@@ -149,9 +149,8 @@
 
     // Render module cards
     const grid = document.getElementById('modules-grid');
-    grid.innerHTML = MODULES.map(m => {
-      const hasAccess = profile[m.key];
-      return buildCard(m, hasAccess);
+    grid.innerHTML = MODULES.filter(m => !m.wip && profile[m.key]).map(m => {
+      return buildCard(m, true);
     }).join('');
 
     document.getElementById('loader').style.display = 'none';
