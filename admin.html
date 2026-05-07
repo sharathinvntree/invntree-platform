@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvnTree — Admin Panel</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: #fff; border-radius: 10px;
+    border: 1px solid var(--border); padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .stat-card .stat-num  { font-size: 28px; font-weight: 800; color: var(--navy); }
+  .stat-card .stat-lbl  { font-size: 12px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 700; color: var(--navy); flex: 1; }
+
+  .setup-note {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 13px 16px;
+    font-size: 13px; color: #1e40af; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .setup-note a { color: var(--blue); font-weight: 600; }
+
+  /* Toggle cell */
+  .toggle-cell { display: flex; align-items: center; gap: 8px; }
+
+  /* Role badge colors */
+  .role-admin { background: #fef3c7; color: #92400e; }
+  .role-user  { background: #f1f5f9; color: #475569; }
+
+  .page-loader {
+    position: fixed; inset: 0; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; flex-direction: column; gap: 12px;
+  }
+  .page-loader p { font-size: 13px; color: var(--muted); }
+
+  /* Edit modal fields */
+  .modal-body .field + .field { margin-top: 0; }
+  .perm-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+    background: #f8fafd;
+  }
+  .perm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .perm-row span { font-size: 13px; color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="page-loader" id="loader">
+  <span class="spinner spinner-blue" style="width:28px;height:28px;border-width:3px"></span>
+  <p>Loading…</p>
+</div>
+
+<div id="navbar-slot"></div>
+
+<div class="container" id="main" style="display:none">
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- How to create users -->
+  <div class="setup-note">
+    <span>ℹ️</span>
+    <div>
+      <strong>Adding a new user:</strong> Go to your
+      <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a>
+      → Authentication → Users → <em>Add User</em>, set their email and a temporary password.
+      Their profile will appear here automatically — then set their permissions below.
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Users</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="search" placeholder="Search by name or email…"
+          style="border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;width:220px;outline:none;font-family:inherit"
+          oninput="filterTable()">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data-table" id="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>US Patent</th>
+            <th>India Patent</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Edit User Modal ── -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit User</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-error" class="alert alert-error hidden"></div>
+      <div class="field">
+        <label class="field-label">Full Name</label>
+        <input type="text" id="edit-name" placeholder="Full name">
+      </div>
+      <div class="field">
+        <label class="field-label">Role</label>
+        <select id="edit-role">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Module Access</div>
+        <div class="perm-grid">
+          <div class="perm-row">
+            <span>🇺🇸 USA Patent Filing</span>
+            <label class="toggle">
+              <input type="checkbox" id="edit-us">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="perm-row">
+            <span>🇮🇳 India Patent Filing</span>
+            <label class="toggle">
+              <input type="checkbox" id="edit-india">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Account Status</label>
+        <select id="edit-active">
+          <option value="true">Active</option>
+          <option value="false">Deactivated</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveUser()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  let allUsers = [];
+  let editingId = null;
+  let currentAdminId = null;
+
+  (async () => {
+    const auth = await requireAdmin();
+    if (!auth) return;
+
+    currentAdminId = auth.profile.id;
+    renderNavbar(auth.profile, 'Admin Panel');
+
+    await loadUsers();
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('main').style.display   = 'block';
+  })();
+
+  // ── Load all users ────────────────────────────────────────────
+  async function loadUsers() {
+    const { data, error } = await db
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) { console.error(error); return; }
+
+    allUsers = data || [];
+    renderStats();
+    renderTable(allUsers);
+  }
+
+  // ── Stats cards ───────────────────────────────────────────────
+  function renderStats() {
+    const total    = allUsers.length;
+    const active   = allUsers.filter(u => u.is_active).length;
+    const usCount  = allUsers.filter(u => u.us_patenting).length;
+    const indCount = allUsers.filter(u => u.india_patenting).length;
+
+    document.getElementById('stats-row').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Users</div></div>
+      <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>
+      <div class="stat-card"><div class="stat-num">${usCount}</div><div class="stat-lbl">US Patent Access</div></div>
+      <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>`;
+  }
+
+  // ── Render users table ────────────────────────────────────────
+  function renderTable(users) {
+    const tbody = document.getElementById('users-tbody');
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr data-id="${u.id}">
+        <td><strong>${esc(u.full_name || '—')}</strong></td>
+        <td style="color:var(--muted)">${esc(u.email)}</td>
+        <td><span class="badge ${u.role === 'admin' ? 'role-admin' : 'role-user'}">${u.role}</span></td>
+        <td>
+          <label class="toggle" title="Toggle US Patent access">
+            <input type="checkbox" ${u.us_patenting ? 'checked' : ''} onchange="quickToggle('${u.id}','us_patenting',this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </td>
+        <td>
+          <label class="toggle" title="Toggle India Patent access">
+            <input type="checkbox" ${u.india_patenting ? 'checked' : ''} onchange="quickToggle('${u.id}','india_patenting',this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </td>
+        <td>
+          <span class="badge ${u.is_active ? 'badge-green' : 'badge-red'}">
+            ${u.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${u.id}')">Edit</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // ── Quick-toggle a permission directly from the table ─────────
+  async function quickToggle(userId, field, value) {
+    const { error } = await db
+      .from('profiles')
+      .update({ [field]: value })
+      .eq('id', userId);
+
+    if (error) {
+      alert('Failed to update: ' + error.message);
+      await loadUsers(); // revert UI
+    } else {
+      // update local cache
+      const u = allUsers.find(u => u.id === userId);
+      if (u) u[field] = value;
+      renderStats();
+    }
+  }
+
+  // ── Search filter ─────────────────────────────────────────────
+  function filterTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    renderTable(allUsers.filter(u =>
+      (u.full_name || '').toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
+    ));
+  }
+
+  // ── Open edit modal ───────────────────────────────────────────
+  function openEdit(userId) {
+    const u = allUsers.find(u => u.id === userId);
+    if (!u) return;
+
+    editingId = userId;
+    document.getElementById('edit-name').value   = u.full_name || '';
+    document.getElementById('edit-role').value   = u.role;
+    document.getElementById('edit-us').checked   = u.us_patenting;
+    document.getElementById('edit-india').checked = u.india_patenting;
+    document.getElementById('edit-active').value = String(u.is_active);
+    document.getElementById('modal-error').classList.add('hidden');
+
+    // Prevent admin from demoting themselves
+    document.getElementById('edit-role').disabled = (userId === currentAdminId);
+
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+    editingId = null;
+  }
+
+  // ── Save edited user ──────────────────────────────────────────
+  async function saveUser() {
+    if (!editingId) return;
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
+
+    const updates = {
+      full_name:       document.getElementById('edit-name').value.trim() || null,
+      role:            document.getElementById('edit-role').value,
+      us_patenting:    document.getElementById('edit-us').checked,
+      india_patenting: document.getElementById('edit-india').checked,
+      is_active:       document.getElementById('edit-active').value === 'true',
+    };
+
+    const { error } = await db.from('profiles').update(updates).eq('id', editingId);
+
+    btn.disabled = false; btn.innerHTML = 'Save Changes';
+
+    if (error) {
+      const errEl = document.getElementById('modal-error');
+      errEl.textContent = error.message;
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    closeModal();
+    await loadUsers();
+  }
+
+  // Close modal on overlay click
+  document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('edit-modal')) closeModal();
+  });
+
+  // ── Escape HTML ───────────────────────────────────────────────
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
