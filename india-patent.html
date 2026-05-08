@@ -182,14 +182,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
                 </div>
                 <span class="step-sub-note">Form 3 &amp; Assignment Deed included in both paths.</span>
               </div>
-              <div class="step-sub" id="early-pub-row">
-                <span class="step-sub-label">Early Publication:</span>
-                <div class="step-yn" style="border-color:#aac4e4">
-                  <button id="ep-yes" class="yes-on" onclick="setEarlyPub('yes')" style="border-right:1px solid #aac4e4">Yes</button>
-                  <button id="ep-no"  onclick="setEarlyPub('no')">No</button>
-                </div>
-                <span class="step-sub-note">Govt. fee ₹12,500 + Prof. fee ₹5,000</span>
-              </div>
             </div>
 
             <div class="step-item active" id="pill-3">
@@ -334,17 +326,12 @@ function setOpt(num, val) {
   });
   const item = document.getElementById('pill-' + num);
   val === 'yes' ? item.classList.add('active') : item.classList.remove('active');
-  if (num === 2) {
-    document.getElementById('draft-type-row').classList.toggle('hidden', val !== 'yes');
-    document.getElementById('early-pub-row').classList.toggle('hidden', val !== 'yes');
-  }
+  if (num === 2) document.getElementById('draft-type-row').classList.toggle('hidden', val !== 'yes');
   recalc();
 }
 
 function setEarlyPub(val) {
   st.earlyPub = val;
-  document.getElementById('ep-yes').className = val === 'yes' ? 'yes-on' : '';
-  document.getElementById('ep-no').className  = val === 'no'  ? 'no-on'  : '';
   recalc();
 }
 
@@ -395,16 +382,14 @@ function buildRows() {
       rows.push({label:'Drafting Complete Specification',    prof:p.draftingCompleteSpec.amount,      govt:0});
       rows.push({label:'Filing Complete Patent Application', prof:p.filingComplete.amount,            govt:g.filingComplete.amount});
       rows.push({label:'Examination Request (Normal)',       prof:p.examinationReqComplete.amount,    govt:g.examinationReqComplete.amount});
-      if (st.earlyPub === 'yes')
-        rows.push({label:'Request for Early Publication',   prof:p.earlyPublicationComplete.amount,  govt:g.earlyPublicationComplete.amount});
+      rows.push({label:'Request for Early Publication',     prof:p.earlyPublicationComplete.amount,  govt:g.earlyPublicationComplete.amount, earlyPub:true});
     } else {
       rows.push({label:'Drafting Provisional Specification',        prof:p.draftingProvSpec.amount,         govt:0});
       rows.push({label:'Filing Provisional Application',            prof:p.filingProv.amount,               govt:g.filingProv.amount});
       rows.push({label:'Drafting Complete Spec (from Provisional)', prof:p.draftingCompleteFromProv.amount, govt:0});
       rows.push({label:'Filing Complete Patent Application',        prof:p.filingCompleteFromProv.amount,   govt:g.filingCompleteFromProv.amount});
       rows.push({label:'Examination Request (Normal)',               prof:p.examinationReqProv.amount,       govt:g.examinationReqProv.amount});
-      if (st.earlyPub === 'yes')
-        rows.push({label:'Request for Early Publication',           prof:p.earlyPublicationProv.amount,     govt:g.earlyPublicationProv.amount});
+      rows.push({label:'Request for Early Publication',             prof:p.earlyPublicationProv.amount,     govt:g.earlyPublicationProv.amount, earlyPub:true});
     }
   }
 
@@ -430,7 +415,7 @@ function recalc() {
 
   const n = st.n, rows = buildRows();
   let totProf = 0, totGovt = 0;
-  rows.forEach(r => { if (!r.hdr) { totProf += r.prof; totGovt += r.govt; } });
+  rows.forEach(r => { if (!r.hdr && !(r.earlyPub && st.earlyPub === 'no')) { totProf += r.prof; totGovt += r.govt; } });
   const gProf = totProf * n, gGovt = totGovt * n, gTotal = gProf + gGovt;
 
   const al = [];
@@ -447,6 +432,17 @@ function recalc() {
   let tbody = '';
   rows.forEach(r => {
     if (r.hdr) { tbody += `<tr class="opt-hdr"><td colspan="5">${r.label}</td></tr>`; return; }
+
+    if (r.earlyPub) {
+      const on = st.earlyPub === 'yes';
+      const toggle = `<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:5px;overflow:hidden;margin-left:8px;vertical-align:middle">
+        <button style="padding:2px 10px;border:none;border-right:1px solid var(--border);background:${on?'#dcf5e4':'#fff'};color:${on?'#1a7a3a':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('yes')">Yes</button>
+        <button style="padding:2px 10px;border:none;background:${!on?'#fde8e8':'#fff'};color:${!on?'#b91c1c':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('no')">No</button>
+      </span>`;
+      tbody += `<tr><td>${r.label}${toggle}</td><td>${on && r.prof>0 ? inr(r.prof) : '–'}</td><td>${on && r.govt>0 ? inr(r.govt) : '–'}</td><td>${on ? inr(r.prof+r.govt) : '–'}</td><td>${on ? '<strong>'+inr((r.prof+r.govt)*n)+'</strong>' : '–'}</td></tr>`;
+      return;
+    }
+
     const unit = r.prof + r.govt, total = unit * n;
     const gc   = r.govt > 0 ? inr(r.govt) : '–';
     const tag  = r.mandatory ? `<span class="mandatory-tag">Mandatory</span>` : '';
