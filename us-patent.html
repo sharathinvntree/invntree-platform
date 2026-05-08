@@ -273,7 +273,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
@@ -470,10 +469,7 @@ function recalc() {
     </table></div></div>`;
 }
 
-async function downloadPdf() {
-  const btn = document.querySelector('[onclick="downloadPdf()"]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
-
+function downloadPdf() {
   const client  = userProfile?.client_name     || '';
   const contact = userProfile?.contact_person  || '';
   const title   = userProfile?.invention_title || '';
@@ -551,33 +547,36 @@ async function downloadPdf() {
       </div>
     </div>`;
 
-  const clientSlug = client ? client.replace(/[^a-z0-9]/gi,'_').slice(0,30)+'_' : '';
-  const filename = `InvnTree_USA_Patent_${clientSlug}${new Date().toISOString().slice(0,10)}.pdf`;
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:inherit;font-size:14px;color:#666;gap:10px;';
-  overlay.innerHTML = '<span class="spinner spinner-blue" style="width:20px;height:20px;border-width:3px"></span> Generating PDF…';
-  document.body.appendChild(overlay);
-
-  const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;top:0;left:0;width:750px;background:#fff;z-index:9998;';
-  tmp.innerHTML = html;
-  document.body.appendChild(tmp);
-
-  await new Promise(r => setTimeout(r, 300));
-
-  try {
-    await html2pdf().set({
-      margin:[12,10], filename,
-      image:{type:'jpeg',quality:0.97},
-      html2canvas:{scale:2,useCORS:true,logging:false},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(tmp).save();
-  } finally {
-    document.body.removeChild(tmp);
-    document.body.removeChild(overlay);
-    if (btn) { btn.disabled=false; btn.textContent='⬇ Download PDF'; }
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>InvnTree — USA Patent Fee Estimate</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff}
+  @page{size:A4;margin:12mm 10mm}
+  @media print{
+    .print-bar{display:none!important}
+    body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   }
+  .print-bar{background:#1a2f5e;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px;position:sticky;top:0;z-index:10}
+  .print-bar span{opacity:.85}
+  .print-bar button{background:#f5c842;color:#1a2f5e;border:none;padding:7px 20px;border-radius:5px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap}
+  .content{padding:16px 20px}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>Your fee estimate is ready. Click "Save as PDF" or press Ctrl+P / Cmd+P.</span>
+  <button onclick="window.print()">Save as PDF</button>
+</div>
+<div class="content">${html}</div>
+</body>
+</html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 600);
 }
 
 function buildFeeSchedule() {
