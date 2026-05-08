@@ -55,6 +55,11 @@ input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 
 .cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
 
+.cfg-opts-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.cfg-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500}
+.cfg-opt .step-yn{border-radius:5px}
+.cfg-opt .step-yn button{padding:4px 13px;font-size:11px}
+
 /* Quote header */
 .qh-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .qh-field{display:flex;flex-direction:column;gap:5px}
@@ -72,7 +77,8 @@ input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 .note-item strong{font-weight:600}
 
 /* Summary */
-.sum-grid{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:16px;margin-bottom:20px}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sum-grid.no-gst{grid-template-columns:1fr 1fr 1.15fr}
 .s-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#234b8c 100%);border-color:var(--navy)}
 .s-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
@@ -93,6 +99,7 @@ tbody td{padding:10px 15px;text-align:right;border-bottom:1px solid #f0f3f9;colo
 tbody td:first-child{text-align:left}
 tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f7faff}
 .usd-note{font-size:11px;color:var(--muted);margin-left:4px}
+.gst-row td{background:#f9fef9;color:#1a7a3a;font-size:12.5px;font-style:italic;padding:8px 15px;border-bottom:1px solid #d4f0d4}
 .subtotal-row td{background:#f4f8ff;font-weight:600;color:var(--navy);padding:11px 15px;border-top:2px solid var(--border);font-size:13px}
 .grand-row td{background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:13px 15px}
 
@@ -208,6 +215,16 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 
           </div>
 
+          <div class="cfg-opts-row">
+            <div class="cfg-opt">
+              <span>Show GST (18% on Prof. Fees)</span>
+              <div class="step-yn">
+                <button id="gst-yes" onclick="setGst('yes')">Yes</button>
+                <button id="gst-no" class="no-on" onclick="setGst('no')">No</button>
+              </div>
+            </div>
+          </div>
+
           <div class="cfg-footer">
             <button class="btn btn-ghost" onclick="resetAll()">↺ Reset / Clear All</button>
           </div>
@@ -215,7 +232,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
       </div>
 
       <div class="notes-bar">
-        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees and is not included in figures shown.</span>
+        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include in totals.</span>
         <span class="note-item"><strong>Govt. Fees</strong> are shown as INR equivalent at an indicative rate of <strong>1 USD = ₹100</strong>.</span>
         <span class="note-item"><strong>Step 3 — Prosecution</strong> assumes 2 Office Action Responses.</span>
       </div>
@@ -300,7 +317,7 @@ const fees = {
 };
 const USD_RATE = 100, NUM_OA = 2;
 
-let st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional' };
+let st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional', showGst:false };
 
 function switchTab(name, btn) {
   document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
@@ -327,11 +344,19 @@ function setDraftType(type) {
   recalc();
 }
 
+function setGst(val) {
+  st.showGst = (val === 'yes');
+  document.getElementById('gst-yes').className = st.showGst ? 'yes-on' : '';
+  document.getElementById('gst-no').className  = !st.showGst ? 'no-on' : '';
+  recalc();
+}
+
 function resetAll() {
   document.getElementById('numPatents').value = 1;
-  st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional' };
+  st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional', showGst:false };
   [1,2,3].forEach(i => setOpt(i,'yes'));
   setDraftType('non-provisional');
+  setGst('no');
   recalc();
 }
 
@@ -392,7 +417,9 @@ function recalc() {
   const n=st.n, rows=buildRows();
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
-  const gProf=totProf*n, gGovt=totGovt*n, gTotal=gProf+gGovt;
+  const gProf=totProf*n, gGovt=totGovt*n;
+  const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
+  const gTotal = gProf + gGovt + gGst;
 
   const profDisc = userProfile?.prof_discount || 0;
   const discNote = profDisc > 0
@@ -403,10 +430,16 @@ function recalc() {
   if(st.opts[2]==='yes') al.push(`Drafting & Filing (${st.draftType==='non-provisional'?'Non-Provisional':'Provisional → Complete'})`);
   if(st.opts[3]==='yes') al.push('Prosecution');
 
-  const sumHTML=`<div class="sum-grid">
-    <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">+ GST @ 18% applicable</div></div>
+  const sumClass = st.showGst ? 'sum-grid' : 'sum-grid no-gst';
+  const gstCard  = st.showGst
+    ? `<div class="s-card"><div class="s-lbl">GST (18% on Prof.)</div><div class="s-amt">${inr(gGst)}</div><div class="s-note">Applicable on professional fees</div></div>`
+    : '';
+
+  const sumHTML=`<div class="${sumClass}">
+    <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
     <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${gGovt?inr(gGovt):'–'}</div><div class="s-note">At 1 USD = ₹100 (indicative)</div></div>
-    <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · excl. GST</div></div>
+    ${gstCard}
+    <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
   </div>`;
 
   let tbody='';
@@ -417,8 +450,11 @@ function recalc() {
     const tag=r.mandatory?`<span class="mandatory-tag">Mandatory</span>`:'';
     tbody+=`<tr><td>${r.label}${tag}</td><td>${r.prof>0?inr(r.prof):'–'}</td><td>${gc}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
   });
+  if (st.showGst) {
+    tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf * n * 0.18)}</td><td>–</td><td colspan="2">${inr(gGst)}</td></tr>`;
+  }
   tbody+=`<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):'–'}</td><td>${inr(totProf+totGovt)}</td><td>—</td></tr>
-  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):'–'}</td><td>—</td><td>${inr(gTotal)}</td></tr>`;
+  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):'–'}</td><td>—</td><td>${inr(gTotal)}</td></tr>`;
 
   area.innerHTML=sumHTML+`<div class="cfg-card">
     <div class="cfg-head">
@@ -454,7 +490,9 @@ async function downloadPdf() {
   const n=st.n, rows=buildRows();
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
-  const gProf=totProf*n, gGovt=totGovt*n, gTotal=gProf+gGovt;
+  const gProf=totProf*n, gGovt=totGovt*n;
+  const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
+  const gTotal = gProf + gGovt + gGst;
   const profDisc = userProfile?.prof_discount || 0;
   const discNote = profDisc > 0
     ? ` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>` : '';
@@ -467,8 +505,11 @@ async function downloadPdf() {
     const tag=r.mandatory?` <span style="font-size:9px;background:#f0f3f9;color:#888;border-radius:2px;padding:1px 4px">Mandatory</span>`:'';
     pdfTbody+=`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}${tag}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
   });
+  if (st.showGst) {
+    pdfTbody += `<tr style="background:#f0fff4"><td colspan="2" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td colspan="3" style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
+  }
   pdfTbody+=`<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total (per patent)${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):'–'}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">—</td></tr>
-  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${n} Patent${n!==1?'s':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(gProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${gGovt?inr(gGovt):'–'}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">—</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
+  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(gProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${gGovt?inr(gGovt):'–'}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">—</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
 
   const notesSection = notes ? `
     <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
@@ -505,7 +546,7 @@ async function downloadPdf() {
       </div>
       ${notesSection}
       <div style="margin-top:20px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px">
-        GST @ 18% is applicable on Professional Fees and not included above · Govt. fees are USPTO rates shown at 1 USD = ₹100 indicative<br>
+        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'} · Govt. fees are USPTO rates shown at 1 USD = ₹100 indicative<br>
         © 2025 InvnTree IP Services. This estimate is indicative and subject to revision.
       </div>
     </div>`;
