@@ -297,7 +297,6 @@ const fees = {
     earlyPublicationComplete: { label: 'Request for Early Publication',              group: 'step2-complete', amount: 12500  },
     // Step 2 — Provisional → Complete path
     filingProv:               { label: 'Filing Provisional Application (IPO)',       group: 'step2-prov',    amount: 8000   },
-    filingCompleteFromProv:   { label: 'Filing Complete Application (IPO)',          group: 'step2-prov',    amount: 8000   },
     examinationReqProv:       { label: 'Examination Request (Normal)',               group: 'step2-prov',    amount: 20000  },
     earlyPublicationProv:     { label: 'Request for Early Publication',              group: 'step2-prov',    amount: 12500  },
     // Step 3
@@ -387,7 +386,7 @@ function buildRows() {
       rows.push({label:'Drafting Provisional Specification',        prof:p.draftingProvSpec.amount,         govt:0});
       rows.push({label:'Filing Provisional Application',            prof:p.filingProv.amount,               govt:g.filingProv.amount});
       rows.push({label:'Drafting Complete Spec (from Provisional)', prof:p.draftingCompleteFromProv.amount, govt:0});
-      rows.push({label:'Filing Complete Patent Application',        prof:p.filingCompleteFromProv.amount,   govt:g.filingCompleteFromProv.amount});
+      rows.push({label:'Filing Complete Patent Application',        prof:p.filingCompleteFromProv.amount,   govt:0});
       rows.push({label:'Examination Request (Normal)',               prof:p.examinationReqProv.amount,       govt:g.examinationReqProv.amount});
       rows.push({label:'Request for Early Publication',             prof:p.earlyPublicationProv.amount,     govt:g.earlyPublicationProv.amount, earlyPub:true});
     }
@@ -519,7 +518,6 @@ function buildFeeSchedule() {
   g.appendChild(dvd());
   g.appendChild(sec('Step 2 — Provisional → Complete'));
   g.appendChild(mk('govt','filingProv'));
-  g.appendChild(mk('govt','filingCompleteFromProv'));
   g.appendChild(mk('govt','examinationReqProv'));
   g.appendChild(mk('govt','earlyPublicationProv'));
 
