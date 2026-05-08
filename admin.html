@@ -235,6 +235,25 @@
           </div>
         </div>
       </div>
+      <div style="border-top:1px solid var(--border);margin:16px 0 12px;padding-top:14px">
+        <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— pre-filled in PDF downloads for this user</span></div>
+        <div class="field">
+          <label class="field-label">Client / Company Name</label>
+          <input type="text" id="edit-client-name" placeholder="e.g. ABC Technologies Pvt. Ltd.">
+        </div>
+        <div class="field">
+          <label class="field-label">Inventor / Contact Person</label>
+          <input type="text" id="edit-contact-person" placeholder="e.g. Mr. Rajesh Kumar">
+        </div>
+        <div class="field">
+          <label class="field-label">Patent / Invention Title</label>
+          <input type="text" id="edit-invention-title" placeholder="e.g. Method for Improved Energy Storage">
+        </div>
+        <div class="field">
+          <label class="field-label">Notes / Assumptions</label>
+          <textarea id="edit-quote-notes" placeholder="e.g. Assumes English language, ≤30 claims. Valid for 30 days." style="border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;min-height:72px;outline:none"></textarea>
+        </div>
+      </div>
       <div class="field">
         <label class="field-label">Account Status</label>
         <select id="edit-active">
@@ -394,8 +413,12 @@
     document.getElementById('edit-entity').value    = u.entity_type || 'other';
     document.getElementById('edit-us').checked      = u.us_patenting;
     document.getElementById('edit-india').checked   = u.india_patenting;
-    document.getElementById('edit-prof-disc').value = u.prof_discount || 0;
-    document.getElementById('edit-active').value    = String(u.is_active);
+    document.getElementById('edit-prof-disc').value       = u.prof_discount || 0;
+    document.getElementById('edit-client-name').value     = u.client_name || '';
+    document.getElementById('edit-contact-person').value  = u.contact_person || '';
+    document.getElementById('edit-invention-title').value = u.invention_title || '';
+    document.getElementById('edit-quote-notes').value     = u.quote_notes || '';
+    document.getElementById('edit-active').value          = String(u.is_active);
     document.getElementById('modal-error').classList.add('hidden');
 
     document.getElementById('edit-role').disabled = (userId === currentAdminId);
@@ -422,8 +445,12 @@
       entity_type:     document.getElementById('edit-entity').value,
       us_patenting:    document.getElementById('edit-us').checked,
       india_patenting: document.getElementById('edit-india').checked,
-      prof_discount:   parseInt(document.getElementById('edit-prof-disc').value) || 0,
-      is_active:       document.getElementById('edit-active').value === 'true',
+      prof_discount:    parseInt(document.getElementById('edit-prof-disc').value) || 0,
+      client_name:      document.getElementById('edit-client-name').value.trim() || null,
+      contact_person:   document.getElementById('edit-contact-person').value.trim() || null,
+      invention_title:  document.getElementById('edit-invention-title').value.trim() || null,
+      quote_notes:      document.getElementById('edit-quote-notes').value.trim() || null,
+      is_active:        document.getElementById('edit-active').value === 'true',
     };
 
     const { error } = await db.from('profiles').update(updates).eq('id', editingId);

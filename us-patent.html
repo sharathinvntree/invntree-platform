@@ -129,7 +129,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 }
 @media(max-width:500px){.sum-grid{grid-template-columns:1fr}}
 
-#pdf-source{display:none}
 </style>
 </head>
 <body>
@@ -152,35 +151,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 
     <!-- ══ CALCULATOR TAB ══ -->
     <div id="tab-calculator" class="calc-panel active">
-
-      <!-- Quote Header -->
-      <div class="cfg-card">
-        <div class="cfg-head"><h2>Quote Details <span style="font-size:11px;font-weight:400;color:var(--muted)">&nbsp;— optional fields · only filled fields appear in PDF</span></h2></div>
-        <div class="cfg-body">
-          <div class="qh-grid">
-            <div class="qh-field">
-              <label>Client / Company Name</label>
-              <input type="text" id="qh-client" placeholder="e.g. ABC Technologies Inc." oninput="recalc()">
-            </div>
-            <div class="qh-field">
-              <label>Inventor / Contact Person</label>
-              <input type="text" id="qh-contact" placeholder="e.g. John Smith" oninput="recalc()">
-            </div>
-            <div class="qh-field">
-              <label>Patent / Invention Title</label>
-              <input type="text" id="qh-title" placeholder="e.g. System for Automated Data Processing" oninput="recalc()">
-            </div>
-            <div class="qh-field">
-              <label>Quote Date</label>
-              <input type="text" id="qh-date" oninput="recalc()">
-            </div>
-            <div class="qh-field full">
-              <label>Notes / Assumptions</label>
-              <textarea id="qh-notes" placeholder="e.g. Assumes English language specification, ≤20 claims. Govt. fees shown at 1 USD = ₹100 indicative rate. Valid for 30 days." oninput="recalc()"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Configuration -->
       <div class="cfg-card">
@@ -285,8 +255,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
   </div>
 </div>
 
-<div id="pdf-source"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="js/config.js"></script>
@@ -305,7 +273,6 @@ let userProfile = null;
 
   userProfile = auth.profile;
   renderNavbar(auth.profile, 'USA Patent Fee Calculator');
-  document.getElementById('qh-date').value = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
 
@@ -471,11 +438,11 @@ async function downloadPdf() {
   const btn = document.querySelector('[onclick="downloadPdf()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
 
-  const client  = document.getElementById('qh-client').value.trim();
-  const contact = document.getElementById('qh-contact').value.trim();
-  const title   = document.getElementById('qh-title').value.trim();
-  const date    = document.getElementById('qh-date').value.trim();
-  const notes   = document.getElementById('qh-notes').value.trim();
+  const client  = userProfile?.client_name     || '';
+  const contact = userProfile?.contact_person  || '';
+  const title   = userProfile?.invention_title || '';
+  const notes   = userProfile?.quote_notes     || '';
+  const date    = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'});
 
   const headerRows = [
     client  ? `<tr><td style="color:#666;width:160px;padding:4px 0">Client</td><td style="font-weight:600;padding:4px 0">${client}</td></tr>` : '',
@@ -543,21 +510,16 @@ async function downloadPdf() {
       </div>
     </div>`;
 
-  const src = document.getElementById('pdf-source');
-  src.style.display = 'block';
-  src.innerHTML = html;
-
   const clientSlug = client ? client.replace(/[^a-z0-9]/gi,'_').slice(0,30)+'_' : '';
   const filename = `InvnTree_USA_Patent_${clientSlug}${new Date().toISOString().slice(0,10)}.pdf`;
 
   await html2pdf().set({
     margin:[12,10], filename,
     image:{type:'jpeg',quality:0.97},
-    html2canvas:{scale:2,useCORS:true},
+    html2canvas:{scale:2,useCORS:true,logging:false},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(src).save();
+  }).from(html).save();
 
-  src.style.display = 'none';
   if (btn) { btn.disabled=false; btn.textContent='⬇ Download PDF'; }
 }
 
