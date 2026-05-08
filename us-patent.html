@@ -7,7 +7,6 @@
 <link rel="icon" href="/img/favicon.png">
 <link rel="stylesheet" href="css/shared.css">
 <style>
-/* ── Calculator-specific styles ────────────────────────────── */
 :root{--stage-bg:#edf2f9}
 
 .calc-tabs-bar{background:var(--navy);padding:0 32px;display:flex;border-bottom:2px solid var(--gold)}
@@ -21,7 +20,6 @@
 .calc-panel{display:none}
 .calc-panel.active{display:block}
 
-/* Config card */
 .cfg-card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
 .cfg-head{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .cfg-head h2{font-size:14px;font-weight:600;color:var(--navy)}
@@ -31,7 +29,6 @@
 input[type=number]{border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;background:#fff;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:160px}
 input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
 
-/* Steps list */
 .steps-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
 .steps-list{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
 .step-item{border-bottom:1px solid var(--border)}
@@ -47,7 +44,6 @@ input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 .step-yn button.yes-on{background:#dcf5e4;color:#1a7a3a}
 .step-yn button.no-on{background:#fde8e8;color:#b91c1c}
 
-/* Step-2 draft type sub-row */
 .step-sub{background:#f0f6ff;border-top:1.5px dashed #b8cfe8;padding:10px 18px 10px 86px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .step-sub.hidden{display:none !important}
 .step-sub-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);white-space:nowrap}
@@ -59,12 +55,23 @@ input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 
 .cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
 
+/* Quote header */
+.qh-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qh-field{display:flex;flex-direction:column;gap:5px}
+.qh-field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.qh-field input,.qh-field textarea{border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;background:#fff;width:100%;box-sizing:border-box}
+.qh-field input:focus,.qh-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.qh-field textarea{resize:vertical;min-height:72px}
+.qh-field.full{grid-column:1/-1}
+
+.disc-tag{font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+
 /* Notes bar */
 .notes-bar{background:#fefbec;border:1px solid #f0d97a;border-radius:8px;padding:11px 16px;font-size:12.5px;color:#7c6208;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap}
 .note-item::before{content:'ⓘ  '}
 .note-item strong{font-weight:600}
 
-/* Summary cards */
+/* Summary */
 .sum-grid{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:16px;margin-bottom:20px}
 .s-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#234b8c 100%);border-color:var(--navy)}
@@ -75,7 +82,7 @@ input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 .s-note{font-size:11px;color:var(--muted);margin-top:4px}
 .s-card.grand .s-note{color:rgba(255,255,255,.45)}
 
-/* Results table */
+/* Table */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 thead th{background:var(--stage-bg);padding:10px 15px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:right;white-space:nowrap;border-bottom:2px solid var(--border)}
@@ -118,8 +125,11 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
   .sum-grid{grid-template-columns:1fr 1fr}
   .fs-grid{grid-template-columns:1fr}
   .step-sub{padding-left:18px}
+  .qh-grid{grid-template-columns:1fr}
 }
 @media(max-width:500px){.sum-grid{grid-template-columns:1fr}}
+
+#pdf-source{display:none}
 </style>
 </head>
 <body>
@@ -143,6 +153,36 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
     <!-- ══ CALCULATOR TAB ══ -->
     <div id="tab-calculator" class="calc-panel active">
 
+      <!-- Quote Header -->
+      <div class="cfg-card">
+        <div class="cfg-head"><h2>Quote Details <span style="font-size:11px;font-weight:400;color:var(--muted)">&nbsp;— optional fields · only filled fields appear in PDF</span></h2></div>
+        <div class="cfg-body">
+          <div class="qh-grid">
+            <div class="qh-field">
+              <label>Client / Company Name</label>
+              <input type="text" id="qh-client" placeholder="e.g. ABC Technologies Inc." oninput="recalc()">
+            </div>
+            <div class="qh-field">
+              <label>Inventor / Contact Person</label>
+              <input type="text" id="qh-contact" placeholder="e.g. John Smith" oninput="recalc()">
+            </div>
+            <div class="qh-field">
+              <label>Patent / Invention Title</label>
+              <input type="text" id="qh-title" placeholder="e.g. System for Automated Data Processing" oninput="recalc()">
+            </div>
+            <div class="qh-field">
+              <label>Quote Date</label>
+              <input type="text" id="qh-date" oninput="recalc()">
+            </div>
+            <div class="qh-field full">
+              <label>Notes / Assumptions</label>
+              <textarea id="qh-notes" placeholder="e.g. Assumes English language specification, ≤20 claims. Govt. fees shown at 1 USD = ₹100 indicative rate. Valid for 30 days." oninput="recalc()"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuration -->
       <div class="cfg-card">
         <div class="cfg-head"><h2>Configuration</h2></div>
         <div class="cfg-body">
@@ -205,7 +245,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
       </div>
 
       <div class="notes-bar">
-        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees and is not included in the figures shown.</span>
+        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees and is not included in figures shown.</span>
         <span class="note-item"><strong>Govt. Fees</strong> are shown as INR equivalent at an indicative rate of <strong>1 USD = ₹100</strong>.</span>
         <span class="note-item"><strong>Step 3 — Prosecution</strong> assumes 2 Office Action Responses.</span>
       </div>
@@ -242,25 +282,30 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
       </div>
     </div>
 
-  </div><!-- /calc-container -->
-</div><!-- /app -->
+  </div>
+</div>
+
+<div id="pdf-source"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
-// ── Auth gate ─────────────────────────────────────────────────
+let userProfile = null;
+
 (async () => {
   const auth = await requireAuth();
   if (!auth) return;
 
   if (!auth.profile.us_patenting) {
-    // No access — bounce back to dashboard
     window.location.href = 'dashboard.html';
     return;
   }
 
+  userProfile = auth.profile;
   renderNavbar(auth.profile, 'USA Patent Fee Calculator');
+  document.getElementById('qh-date').value = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
 
@@ -268,31 +313,28 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
   recalc();
 })();
 
-// ── Fee Store ──────────────────────────────────────────────────
 const fees = {
   prof: {
-    noveltySearch:           { label: 'Novelty Search',                            group: 'step1',        amount: 35000  },
-    foreignFilingPerm:       { label: 'Foreign Filing Permission',                 group: 'step2-common', amount: 12000  },
-    draftingCompleteSpec:    { label: 'Drafting Complete Specification',            group: 'step2-nonprov',amount: 110000 },
-    filingNonProv:           { label: 'Filing Non-Provisional Application',        group: 'step2-nonprov',amount: 45000  },
-    draftingProvSpec:        { label: 'Drafting Provisional Specification',        group: 'step2-prov',   amount: 80000  },
-    filingProv:              { label: 'Filing Provisional Application',            group: 'step2-prov',   amount: 35000  },
-    draftingCompleteFromProv:{ label: 'Drafting Complete Spec (from Provisional)', group: 'step2-prov',   amount: 50000  },
-    filingNonProvFromProv:   { label: 'Filing Non-Provisional Application',        group: 'step2-prov',   amount: 45000  },
-    officeAction:            { label: 'Office Action Response',                    group: 'step3',        amount: 70000  },
+    noveltySearch:            { label: 'Novelty Search',                            group: 'step1',         amount: 35000  },
+    foreignFilingPerm:        { label: 'Foreign Filing Permission',                 group: 'step2-common',  amount: 12000  },
+    draftingCompleteSpec:     { label: 'Drafting Complete Specification',            group: 'step2-nonprov', amount: 110000 },
+    filingNonProv:            { label: 'Filing Non-Provisional Application',        group: 'step2-nonprov', amount: 45000  },
+    draftingProvSpec:         { label: 'Drafting Provisional Specification',        group: 'step2-prov',    amount: 80000  },
+    filingProv:               { label: 'Filing Provisional Application',            group: 'step2-prov',    amount: 35000  },
+    draftingCompleteFromProv: { label: 'Drafting Complete Spec (from Provisional)', group: 'step2-prov',    amount: 50000  },
+    filingNonProvFromProv:    { label: 'Filing Non-Provisional Application',        group: 'step2-prov',    amount: 45000  },
+    officeAction:             { label: 'Office Action Response',                    group: 'step3',         amount: 70000  },
   },
   govt: {
-    filingNonProv:        { label: 'Filing Non-Provisional (USPTO)',                    group: 'step2-nonprov', amount: 800 },
-    filingProv:           { label: 'Filing Provisional (USPTO)',                        group: 'step2-prov',    amount: 130 },
-    filingNonProvFromProv:{ label: 'Filing Non-Provisional (USPTO) — from Provisional', group: 'step2-prov',    amount: 800 },
+    filingNonProv:         { label: 'Filing Non-Provisional (USPTO)',                     group: 'step2-nonprov', amount: 800 },
+    filingProv:            { label: 'Filing Provisional (USPTO)',                         group: 'step2-prov',    amount: 130 },
+    filingNonProvFromProv: { label: 'Filing Non-Provisional (USPTO) — from Provisional',  group: 'step2-prov',    amount: 800 },
   }
 };
 const USD_RATE = 100, NUM_OA = 2;
 
-// ── State ──────────────────────────────────────────────────────
 let st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional' };
 
-// ── Tabs ───────────────────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
@@ -300,23 +342,21 @@ function switchTab(name, btn) {
   btn.classList.add('active');
 }
 
-// ── Step toggles ───────────────────────────────────────────────
 function setOpt(num, val) {
   st.opts[num] = val;
   ['yes','no'].forEach(v => {
-    document.getElementById('o'+num+'-'+v).className =
-      val === v ? (v==='yes' ? 'yes-on' : 'no-on') : '';
+    document.getElementById('o'+num+'-'+v).className = val===v?(v==='yes'?'yes-on':'no-on'):'';
   });
   const item = document.getElementById('pill-' + num);
-  val === 'yes' ? item.classList.add('active') : item.classList.remove('active');
-  if (num === 2) document.getElementById('draft-type-row').classList.toggle('hidden', val !== 'yes');
+  val==='yes' ? item.classList.add('active') : item.classList.remove('active');
+  if (num===2) document.getElementById('draft-type-row').classList.toggle('hidden', val!=='yes');
   recalc();
 }
 
 function setDraftType(type) {
   st.draftType = type;
-  document.getElementById('dt-non-prov').className = type === 'non-provisional' ? 'dt-on' : '';
-  document.getElementById('dt-prov').className      = type === 'provisional'     ? 'dt-on' : '';
+  document.getElementById('dt-non-prov').className = type==='non-provisional' ? 'dt-on' : '';
+  document.getElementById('dt-prov').className      = type==='provisional'     ? 'dt-on' : '';
   recalc();
 }
 
@@ -328,7 +368,6 @@ function resetAll() {
   recalc();
 }
 
-// ── Indian number format ───────────────────────────────────────
 function inr(n) {
   if (!n) return '–'; n = Math.round(n); if (!n) return '–';
   const s = n.toString();
@@ -338,35 +377,43 @@ function inr(n) {
   return '₹' + rem + ',' + res;
 }
 
-// ── Build rows ────────────────────────────────────────────────
+function profFee(key) {
+  const base = fees.prof[key]?.amount || 0;
+  const disc = userProfile ? (userProfile.prof_discount || 0) : 0;
+  return Math.round(base * (1 - disc / 100));
+}
+
+function govtFeeInr(key) {
+  return Math.round((fees.govt[key]?.amount || 0) * USD_RATE);
+}
+
 function buildRows() {
-  const p = fees.prof, g = fees.govt, rows = [];
+  const rows = [];
   if (st.opts[1]==='yes') {
-    rows.push({hdr:true,label:'Step 1 — Novelty Search'});
-    rows.push({label:'Novelty Search',prof:p.noveltySearch.amount,govt:0});
+    rows.push({hdr:true, label:'Step 1 — Novelty Search'});
+    rows.push({label:'Novelty Search', prof:profFee('noveltySearch'), govt:0});
   }
   if (st.opts[2]==='yes') {
     const isNP = st.draftType==='non-provisional';
-    rows.push({hdr:true,label:`Step 2 — Drafting & Filing (${isNP?'Non-Provisional':'Provisional → Complete'})`});
-    rows.push({label:'Foreign Filing Permission',prof:p.foreignFilingPerm.amount,govt:0,mandatory:true});
+    rows.push({hdr:true, label:`Step 2 — Drafting & Filing (${isNP?'Non-Provisional':'Provisional → Complete'})`});
+    rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, mandatory:true});
     if (isNP) {
-      rows.push({label:'Drafting Complete Specification',prof:p.draftingCompleteSpec.amount,govt:0});
-      rows.push({label:'Filing Non-Provisional Application',prof:p.filingNonProv.amount,govt:g.filingNonProv.amount*USD_RATE,govtUSD:g.filingNonProv.amount});
+      rows.push({label:'Drafting Complete Specification',   prof:profFee('draftingCompleteSpec'), govt:0});
+      rows.push({label:'Filing Non-Provisional Application',prof:profFee('filingNonProv'),        govt:govtFeeInr('filingNonProv'), govtUSD:fees.govt.filingNonProv.amount});
     } else {
-      rows.push({label:'Drafting Provisional Specification',prof:p.draftingProvSpec.amount,govt:0});
-      rows.push({label:'Filing Provisional Application',prof:p.filingProv.amount,govt:g.filingProv.amount*USD_RATE,govtUSD:g.filingProv.amount});
-      rows.push({label:'Drafting Complete Spec (from Provisional)',prof:p.draftingCompleteFromProv.amount,govt:0});
-      rows.push({label:'Filing Non-Provisional Application',prof:p.filingNonProvFromProv.amount,govt:g.filingNonProvFromProv.amount*USD_RATE,govtUSD:g.filingNonProvFromProv.amount});
+      rows.push({label:'Drafting Provisional Specification',        prof:profFee('draftingProvSpec'),         govt:0});
+      rows.push({label:'Filing Provisional Application',            prof:profFee('filingProv'),               govt:govtFeeInr('filingProv'),            govtUSD:fees.govt.filingProv.amount});
+      rows.push({label:'Drafting Complete Spec (from Provisional)', prof:profFee('draftingCompleteFromProv'), govt:0});
+      rows.push({label:'Filing Non-Provisional Application',        prof:profFee('filingNonProvFromProv'),    govt:govtFeeInr('filingNonProvFromProv'), govtUSD:fees.govt.filingNonProvFromProv.amount});
     }
   }
   if (st.opts[3]==='yes') {
-    rows.push({hdr:true,label:'Step 3 — Prosecution (2 Office Action Responses)'});
-    rows.push({label:`Office Action Response × ${NUM_OA}`,prof:p.officeAction.amount*NUM_OA,govt:0});
+    rows.push({hdr:true, label:'Step 3 — Prosecution (2 Office Action Responses)'});
+    rows.push({label:`Office Action Response × ${NUM_OA}`, prof:profFee('officeAction')*NUM_OA, govt:0});
   }
   return rows;
 }
 
-// ── Recalculate ───────────────────────────────────────────────
 function recalc() {
   st.n = Math.max(1, parseInt(document.getElementById('numPatents').value)||1);
   const anyOn = Object.values(st.opts).some(v=>v==='yes');
@@ -379,35 +426,141 @@ function recalc() {
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
   const gProf=totProf*n, gGovt=totGovt*n, gTotal=gProf+gGovt;
+
+  const profDisc = userProfile?.prof_discount || 0;
+  const discNote = profDisc > 0
+    ? `<span class="disc-tag">Prof. fee discount: ${profDisc}% applied</span>` : '';
+
   const al=[];
   if(st.opts[1]==='yes') al.push('Novelty Search');
   if(st.opts[2]==='yes') al.push(`Drafting & Filing (${st.draftType==='non-provisional'?'Non-Provisional':'Provisional → Complete'})`);
   if(st.opts[3]==='yes') al.push('Prosecution');
+
   const sumHTML=`<div class="sum-grid">
     <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">+ GST @ 18% applicable</div></div>
     <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${gGovt?inr(gGovt):'–'}</div><div class="s-note">At 1 USD = ₹100 (indicative)</div></div>
     <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · excl. GST</div></div>
   </div>`;
+
   let tbody='';
   rows.forEach(r=>{
     if(r.hdr){tbody+=`<tr class="opt-hdr"><td colspan="5">${r.label}</td></tr>`;return;}
-    const unit=r.prof+r.govt,total=unit*n;
+    const unit=r.prof+r.govt, total=unit*n;
     const gc=r.govt>0?`${inr(r.govt)}<span class="usd-note">(${r.govtUSD} USD)</span>`:'–';
     const tag=r.mandatory?`<span class="mandatory-tag">Mandatory</span>`:'';
     tbody+=`<tr><td>${r.label}${tag}</td><td>${r.prof>0?inr(r.prof):'–'}</td><td>${gc}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
   });
-  tbody+=`<tr class="subtotal-row"><td>Sub-total (per patent)</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):'–'}</td><td>${inr(totProf+totGovt)}</td><td>—</td></tr>
+  tbody+=`<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):'–'}</td><td>${inr(totProf+totGovt)}</td><td>—</td></tr>
   <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):'–'}</td><td>—</td><td>${inr(gTotal)}</td></tr>`;
+
   area.innerHTML=sumHTML+`<div class="cfg-card">
-    <div class="cfg-head"><div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${al.join(' + ')}</div></div>
-    <span style="font-size:12px;color:var(--muted)">${n} patent${n!==1?'s':''}</span></div>
+    <div class="cfg-head">
+      <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${al.join(' + ')}</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">${n} patent${n!==1?'s':''}</span>
+        <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
+      </div>
+    </div>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="text-align:left;min-width:260px">Description</th><th>Prof. Fee (INR)</th><th>Govt. Fee (INR)</th><th>Unit Total</th><th>Total (×${n})</th></tr></thead>
       <tbody>${tbody}</tbody>
     </table></div></div>`;
 }
 
-// ── Fee Schedule UI ───────────────────────────────────────────
+async function downloadPdf() {
+  const btn = document.querySelector('[onclick="downloadPdf()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+  const client  = document.getElementById('qh-client').value.trim();
+  const contact = document.getElementById('qh-contact').value.trim();
+  const title   = document.getElementById('qh-title').value.trim();
+  const date    = document.getElementById('qh-date').value.trim();
+  const notes   = document.getElementById('qh-notes').value.trim();
+
+  const headerRows = [
+    client  ? `<tr><td style="color:#666;width:160px;padding:4px 0">Client</td><td style="font-weight:600;padding:4px 0">${client}</td></tr>` : '',
+    contact ? `<tr><td style="color:#666;padding:4px 0">Inventor / Contact</td><td style="font-weight:600;padding:4px 0">${contact}</td></tr>` : '',
+    title   ? `<tr><td style="color:#666;padding:4px 0">Invention Title</td><td style="font-weight:600;padding:4px 0">${title}</td></tr>` : '',
+    date    ? `<tr><td style="color:#666;padding:4px 0">Date</td><td style="font-weight:600;padding:4px 0">${date}</td></tr>` : '',
+  ].filter(Boolean).join('');
+
+  const n=st.n, rows=buildRows();
+  let totProf=0, totGovt=0;
+  rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
+  const gProf=totProf*n, gGovt=totGovt*n, gTotal=gProf+gGovt;
+  const profDisc = userProfile?.prof_discount || 0;
+  const discNote = profDisc > 0
+    ? ` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>` : '';
+
+  let pdfTbody='';
+  rows.forEach(r=>{
+    if(r.hdr){pdfTbody+=`<tr style="background:#dce6f5"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1a2f5e">${r.label}</td></tr>`;return;}
+    const unit=r.prof+r.govt, total=unit*n;
+    const gc=r.govt>0?`${inr(r.govt)} (${r.govtUSD} USD)`:'–';
+    const tag=r.mandatory?` <span style="font-size:9px;background:#f0f3f9;color:#888;border-radius:2px;padding:1px 4px">Mandatory</span>`:'';
+    pdfTbody+=`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}${tag}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
+  });
+  pdfTbody+=`<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total (per patent)${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):'–'}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">—</td></tr>
+  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${n} Patent${n!==1?'s':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(gProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${gGovt?inr(gGovt):'–'}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">—</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
+
+  const notesSection = notes ? `
+    <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7c6208;margin-bottom:6px">Notes / Assumptions</div>
+      <div style="font-size:11px;color:#555;line-height:1.6;white-space:pre-wrap">${notes}</div>
+    </div>` : '';
+
+  const html=`
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:780px;margin:0 auto;color:#1a1a2e">
+      <div style="background:#1a2f5e;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;border-radius:8px 8px 0 0">
+        <div>
+          <div style="font-size:24px;font-weight:800;color:#f5c842;letter-spacing:-0.5px">InvnTree</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">IP Services</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:700;color:#fff">USA Patent Fee Estimate</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:3px">Professional &amp; Government Fees</div>
+        </div>
+      </div>
+      ${headerRows?`<div style="border:1px solid #dde4ef;border-top:none;padding:14px 22px;background:#f7f9fd"><table style="border-collapse:collapse;font-size:12px;width:100%">${headerRows}</table></div>`:''}
+      <div style="border:1px solid #dde4ef;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#edf2f9">
+              <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Description</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Prof. Fee</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Govt. Fee</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Unit Total</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Total (×${n})</th>
+            </tr>
+          </thead>
+          <tbody>${pdfTbody}</tbody>
+        </table>
+      </div>
+      ${notesSection}
+      <div style="margin-top:20px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px">
+        GST @ 18% is applicable on Professional Fees and not included above · Govt. fees are USPTO rates shown at 1 USD = ₹100 indicative<br>
+        © 2025 InvnTree IP Services. This estimate is indicative and subject to revision.
+      </div>
+    </div>`;
+
+  const src = document.getElementById('pdf-source');
+  src.style.display = 'block';
+  src.innerHTML = html;
+
+  const clientSlug = client ? client.replace(/[^a-z0-9]/gi,'_').slice(0,30)+'_' : '';
+  const filename = `InvnTree_USA_Patent_${clientSlug}${new Date().toISOString().slice(0,10)}.pdf`;
+
+  await html2pdf().set({
+    margin:[12,10], filename,
+    image:{type:'jpeg',quality:0.97},
+    html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(src).save();
+
+  src.style.display = 'none';
+  if (btn) { btn.disabled=false; btn.textContent='⬇ Download PDF'; }
+}
+
 function buildFeeSchedule() {
   function mk(type,key,cur) {
     const item=fees[type][key],div=document.createElement('div');

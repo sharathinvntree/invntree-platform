@@ -26,14 +26,6 @@
   }
   .toolbar h2 { font-size: 16px; font-weight: 700; color: var(--navy); flex: 1; }
 
-  .setup-note {
-    background: #eff6ff; border: 1px solid #bfdbfe;
-    border-radius: 8px; padding: 13px 16px;
-    font-size: 13px; color: #1e40af; margin-bottom: 20px;
-    display: flex; align-items: flex-start; gap: 10px;
-  }
-  .setup-note a { color: var(--blue); font-weight: 600; }
-
   /* Toggle cell */
   .toggle-cell { display: flex; align-items: center; gap: 8px; }
 
@@ -51,8 +43,6 @@
   .btn-danger { background:#dc2626;color:#fff;border:none; }
   .btn-danger:hover { background:#b91c1c; }
 
-  /* Edit modal fields */
-  .modal-body .field + .field { margin-top: 0; }
   .perm-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     border: 1px solid var(--border); border-radius: 8px; padding: 14px;
@@ -60,6 +50,17 @@
   }
   .perm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .perm-row span { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  .discount-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+    background: #f8fafd;
+  }
+  .discount-item label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+  .discount-item input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; font-family: inherit; }
+  .discount-item input:focus { border-color: var(--blue); }
+
+  .last-login { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -75,7 +76,6 @@
 
   <!-- Stats -->
   <div class="stats-row" id="stats-row"></div>
-
 
   <!-- Users table -->
   <div class="card">
@@ -97,12 +97,14 @@
             <th>Role</th>
             <th>US Patent</th>
             <th>India Patent</th>
+            <th>Entity Type</th>
             <th>Status</th>
+            <th>Last Login</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="users-tbody">
-          <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
+          <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
         </tbody>
       </table>
     </div>
@@ -131,6 +133,13 @@
         <label class="field-label">Password</label>
         <input type="password" id="add-password" placeholder="Min. 6 characters">
       </div>
+      <div class="field">
+        <label class="field-label">Entity Type</label>
+        <select id="add-entity">
+          <option value="other">Other Entity (Standard Rates)</option>
+          <option value="startup_msme">Natural Person / MSME / Startup</option>
+        </select>
+      </div>
       <div>
         <div class="field-label" style="margin-bottom:10px">Module Access</div>
         <div class="perm-grid">
@@ -147,6 +156,15 @@
               <input type="checkbox" id="add-india">
               <span class="toggle-track"></span>
             </label>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Professional Fee Discount (%)</div>
+        <div class="discount-grid" style="grid-template-columns:1fr">
+          <div class="discount-item">
+            <label>Discount on Professional Fees only</label>
+            <input type="number" id="add-prof-disc" value="0" min="0" max="100" step="1" placeholder="0">
           </div>
         </div>
       </div>
@@ -172,10 +190,21 @@
         <input type="text" id="edit-name" placeholder="Full name">
       </div>
       <div class="field">
+        <label class="field-label">New Password <span style="font-weight:400;color:var(--muted)">(leave blank to keep current)</span></label>
+        <input type="password" id="edit-password" placeholder="Min. 6 characters">
+      </div>
+      <div class="field">
         <label class="field-label">Role</label>
         <select id="edit-role">
           <option value="user">User</option>
           <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Entity Type</label>
+        <select id="edit-entity">
+          <option value="other">Other Entity (Standard Rates)</option>
+          <option value="startup_msme">Natural Person / MSME / Startup</option>
         </select>
       </div>
       <div>
@@ -194,6 +223,15 @@
               <input type="checkbox" id="edit-india">
               <span class="toggle-track"></span>
             </label>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Professional Fee Discount (%)</div>
+        <div class="discount-grid" style="grid-template-columns:1fr">
+          <div class="discount-item">
+            <label>Discount on Professional Fees only</label>
+            <input type="number" id="edit-prof-disc" value="0" min="0" max="100" step="1">
           </div>
         </div>
       </div>
@@ -261,14 +299,32 @@
       <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>`;
   }
 
+  // ── Format last login ─────────────────────────────────────────
+  function fmtLogin(ts) {
+    if (!ts) return '<span style="color:var(--muted);font-size:12px">Never</span>';
+    const d = new Date(ts);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 60000); // minutes
+    if (diff < 1)  return '<span style="font-size:12px;color:#1a7a3a">Just now</span>';
+    if (diff < 60) return `<span class="last-login">${diff}m ago</span>`;
+    if (diff < 1440) return `<span class="last-login">${Math.floor(diff/60)}h ago</span>`;
+    return `<span class="last-login">${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>`;
+  }
+
   // ── Render users table ────────────────────────────────────────
   function renderTable(users) {
     const tbody = document.getElementById('users-tbody');
     if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
       return;
     }
-    tbody.innerHTML = users.map(u => `
+    tbody.innerHTML = users.map(u => {
+      const entityBadge = u.entity_type === 'startup_msme'
+        ? `<span class="badge badge-gold" style="font-size:10px">MSME/Startup</span>`
+        : `<span class="badge badge-gray" style="font-size:10px">Other Entity</span>`;
+      const discInfo = u.prof_discount > 0
+        ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">Prof: ${u.prof_discount}% discount</div>` : '';
+      return `
       <tr data-id="${u.id}">
         <td><strong>${esc(u.full_name || '—')}</strong></td>
         <td style="color:var(--muted)">${esc(u.email)}</td>
@@ -285,16 +341,19 @@
             <span class="toggle-track"></span>
           </label>
         </td>
+        <td>${entityBadge}${discInfo}</td>
         <td>
           <span class="badge ${u.is_active ? 'badge-green' : 'badge-red'}">
             ${u.is_active ? 'Active' : 'Inactive'}
           </span>
         </td>
+        <td>${fmtLogin(u.last_login_at)}</td>
         <td style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEdit('${u.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="confirmDelete('${u.id}','${esc(u.full_name||u.email)}')">Delete</button>
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   // ── Quick-toggle a permission directly from the table ─────────
@@ -306,9 +365,8 @@
 
     if (error) {
       alert('Failed to update: ' + error.message);
-      await loadUsers(); // revert UI
+      await loadUsers();
     } else {
-      // update local cache
       const u = allUsers.find(u => u.id === userId);
       if (u) u[field] = value;
       renderStats();
@@ -330,14 +388,16 @@
     if (!u) return;
 
     editingId = userId;
-    document.getElementById('edit-name').value   = u.full_name || '';
-    document.getElementById('edit-role').value   = u.role;
-    document.getElementById('edit-us').checked   = u.us_patenting;
-    document.getElementById('edit-india').checked = u.india_patenting;
-    document.getElementById('edit-active').value = String(u.is_active);
+    document.getElementById('edit-name').value      = u.full_name || '';
+    document.getElementById('edit-password').value  = '';
+    document.getElementById('edit-role').value      = u.role;
+    document.getElementById('edit-entity').value    = u.entity_type || 'other';
+    document.getElementById('edit-us').checked      = u.us_patenting;
+    document.getElementById('edit-india').checked   = u.india_patenting;
+    document.getElementById('edit-prof-disc').value = u.prof_discount || 0;
+    document.getElementById('edit-active').value    = String(u.is_active);
     document.getElementById('modal-error').classList.add('hidden');
 
-    // Prevent admin from demoting themselves
     document.getElementById('edit-role').disabled = (userId === currentAdminId);
 
     document.getElementById('edit-modal').classList.remove('hidden');
@@ -354,25 +414,44 @@
     const btn = document.getElementById('save-btn');
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
 
+    const newPassword = document.getElementById('edit-password').value;
+
     const updates = {
       full_name:       document.getElementById('edit-name').value.trim() || null,
       role:            document.getElementById('edit-role').value,
+      entity_type:     document.getElementById('edit-entity').value,
       us_patenting:    document.getElementById('edit-us').checked,
       india_patenting: document.getElementById('edit-india').checked,
+      prof_discount:   parseInt(document.getElementById('edit-prof-disc').value) || 0,
       is_active:       document.getElementById('edit-active').value === 'true',
     };
 
     const { error } = await db.from('profiles').update(updates).eq('id', editingId);
 
-    btn.disabled = false; btn.innerHTML = 'Save Changes';
-
     if (error) {
       const errEl = document.getElementById('modal-error');
       errEl.textContent = error.message;
       errEl.classList.remove('hidden');
+      btn.disabled = false; btn.innerHTML = 'Save Changes';
       return;
     }
 
+    // Update password via edge function if provided
+    if (newPassword.trim()) {
+      const { data: pwData } = await db.functions.invoke('update-password', {
+        body: { user_id: editingId, password: newPassword.trim() }
+      });
+      if (pwData?.error) {
+        const errEl = document.getElementById('modal-error');
+        errEl.textContent = 'Profile saved but password update failed: ' + pwData.error;
+        errEl.classList.remove('hidden');
+        btn.disabled = false; btn.innerHTML = 'Save Changes';
+        await loadUsers();
+        return;
+      }
+    }
+
+    btn.disabled = false; btn.innerHTML = 'Save Changes';
     closeModal();
     await loadUsers();
   }
@@ -387,11 +466,14 @@
 
   // ── Add User Modal ────────────────────────────────────────────
   function openAddUser() {
-    document.getElementById('add-name').value     = '';
-    document.getElementById('add-email').value    = '';
-    document.getElementById('add-password').value = '';
-    document.getElementById('add-us').checked     = false;
-    document.getElementById('add-india').checked  = false;
+    document.getElementById('add-name').value      = '';
+    document.getElementById('add-email').value     = '';
+    document.getElementById('add-password').value  = '';
+    document.getElementById('add-entity').value    = 'other';
+    document.getElementById('add-us').checked      = false;
+    document.getElementById('add-india').checked   = false;
+    document.getElementById('add-prof-disc').value = 0;
+    document.getElementById('add-govt-disc').value = 0;
     document.getElementById('add-modal-error').classList.add('hidden');
     document.getElementById('add-modal').classList.remove('hidden');
   }
@@ -430,11 +512,12 @@
       return;
     }
 
-    // Set module permissions on the new profile
     const newId = data.user.id;
     await db.from('profiles').update({
       us_patenting:    document.getElementById('add-us').checked,
       india_patenting: document.getElementById('add-india').checked,
+      entity_type:     document.getElementById('add-entity').value,
+      prof_discount:   parseInt(document.getElementById('add-prof-disc').value) || 0,
     }).eq('id', newId);
 
     btn.disabled = false;

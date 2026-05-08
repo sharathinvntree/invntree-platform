@@ -16,6 +16,9 @@ async function requireAuth() {
 
   if (error || !profile) { await db.auth.signOut(); redirect('index.html'); return null; }
 
+  // Stamp last login (fire-and-forget)
+  db.from('profiles').update({ last_login_at: new Date().toISOString() }).eq('id', session.user.id);
+
   if (!profile.is_active) {
     await db.auth.signOut();
     redirect('index.html?reason=inactive');
