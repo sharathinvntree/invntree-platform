@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
         <!-- Footer -->
         <tr>
           <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
-            <p style="font-size:12px;color:#94a3b8;margin:0;">© 2025 InvnTree IP Solutions. All rights reserved.</p>
+            <p style="font-size:12px;color:#94a3b8;margin:0;">© 2025 InvnTree IP Services. All rights reserved.</p>
           </td>
         </tr>
 
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     return new Response(
       JSON.stringify({ error: err.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

@@ -47,8 +47,7 @@ function renderNavbar(profile, pageTitle = '') {
   document.getElementById('navbar-slot').innerHTML = `
     <nav class="navbar">
       <div class="nav-brand">
-        <div class="nav-logo">InvnTree</div>
-        <div class="nav-tag">Intellectual Property</div>
+        <img src="/img/logo.png" alt="InvnTree" style="height:36px;display:block;">
       </div>
       <div class="nav-sep"></div>
       ${pageTitle ? `<div class="nav-title">${pageTitle}</div>` : ''}
