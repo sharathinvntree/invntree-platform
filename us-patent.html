@@ -555,19 +555,24 @@ async function downloadPdf() {
   const filename = `InvnTree_USA_Patent_${clientSlug}${new Date().toISOString().slice(0,10)}.pdf`;
 
   const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:-9999;pointer-events:none;';
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:0;width:750px;background:#fff;';
   tmp.innerHTML = html;
   document.body.appendChild(tmp);
 
-  await html2pdf().set({
-    margin:[12,10], filename,
-    image:{type:'jpeg',quality:0.97},
-    html2canvas:{scale:2,useCORS:true,logging:false},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(tmp).save();
+  // Let the browser fully paint the element before capturing
+  await new Promise(r => setTimeout(r, 300));
 
-  document.body.removeChild(tmp);
-  if (btn) { btn.disabled=false; btn.textContent='⬇ Download PDF'; }
+  try {
+    await html2pdf().set({
+      margin:[12,10], filename,
+      image:{type:'jpeg',quality:0.97},
+      html2canvas:{scale:2,useCORS:true,logging:false,allowTaint:true},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).from(tmp).save();
+  } finally {
+    document.body.removeChild(tmp);
+    if (btn) { btn.disabled=false; btn.textContent='⬇ Download PDF'; }
+  }
 }
 
 function buildFeeSchedule() {
