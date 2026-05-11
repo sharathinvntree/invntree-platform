@@ -276,7 +276,8 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
-let userProfile = null;
+let userProfile    = null;
+let scheduleExtras = [];   // extra line items from assigned fee schedule
 
 (async () => {
   const auth = await requireAuth();
@@ -295,8 +296,9 @@ let userProfile = null;
       .from('fee_schedules').select('fees').eq('id', userProfile.us_fee_schedule_id).single();
     if (sched?.fees) {
       Object.keys(sched.fees).forEach(k => {
-        if (fees.prof[k]) fees.prof[k].amount = sched.fees[k];
+        if (k !== '_extra' && fees.prof[k]) fees.prof[k].amount = sched.fees[k];
       });
+      scheduleExtras = sched.fees._extra || [];
     }
   }
 
@@ -658,6 +660,31 @@ function buildFeeSchedule() {
   g.appendChild(sec('Step 2 — Non-Provisional'));       g.appendChild(mkGovt('filingNonProv'));
   g.appendChild(dvd());
   g.appendChild(sec('Step 2 — Provisional Path'));      g.appendChild(mkGovt('filingProv')); g.appendChild(mkGovt('filingNonProvFromProv'));
+
+  // Extra / additional line items (admin-defined)
+  if (scheduleExtras.length) {
+    p.appendChild(dvd());
+    p.appendChild(sec('Additional Items'));
+    scheduleExtras.forEach(item => {
+      const base  = item.amount;
+      const disc  = userProfile ? (userProfile.prof_discount || 0) : 0;
+      const after = disc > 0 ? Math.round(base * (1 - disc/100)) : base;
+      const div = document.createElement('div');
+      div.className = 'fs-item';
+      const lbl = document.createElement('label'); lbl.textContent = item.label;
+      const right = document.createElement('span');
+      right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
+      if (disc > 0) {
+        right.innerHTML = `<span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${base.toLocaleString('en-IN')}</span>`
+          + `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${after.toLocaleString('en-IN')}</strong>`
+          + `<span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span>`;
+      } else {
+        right.innerHTML = `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${base.toLocaleString('en-IN')}</strong>`;
+      }
+      div.appendChild(lbl); div.appendChild(right);
+      p.appendChild(div);
+    });
+  }
 }
 </script>
 </body>

@@ -891,6 +891,61 @@
         container.appendChild(row);
       });
     });
+
+    // ── Additional / custom line items ────────────────────────
+    const extraHeader = document.createElement('div');
+    extraHeader.className = 'sched-sec';
+    extraHeader.style.cssText = extraHeader.style.cssText + ';display:flex;align-items:center;justify-content:space-between';
+    extraHeader.innerHTML = `<span>Additional Line Items</span>
+      <button type="button" onclick="addExtraLine()"
+        style="background:transparent;border:1.5px solid var(--border);border-radius:5px;padding:2px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--blue);font-family:inherit">
+        + Add Line
+      </button>`;
+    container.appendChild(extraHeader);
+
+    const extraRows = document.createElement('div');
+    extraRows.id = 'sched-extra-rows';
+    container.appendChild(extraRows);
+
+    // Populate existing extra items
+    const existing = existingFees._extra || [];
+    existing.forEach(item => addExtraLine(item.label, item.amount));
+  }
+
+  // ── Add one extra line row ────────────────────────────────────
+  function addExtraLine(label = '', amount = 0) {
+    const container = document.getElementById('sched-extra-rows');
+    const row = document.createElement('div');
+    row.className = 'sched-extra-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+
+    const labelInp = document.createElement('input');
+    labelInp.type = 'text';
+    labelInp.placeholder = 'e.g. Translation Charges, Notarisation…';
+    labelInp.value = label;
+    labelInp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box';
+
+    const cur = document.createElement('span');
+    cur.textContent = '₹';
+    cur.style.cssText = 'font-size:13px;color:var(--muted);flex-shrink:0';
+
+    const amtInp = document.createElement('input');
+    amtInp.type = 'number'; amtInp.min = 0; amtInp.step = 500;
+    amtInp.value = amount;
+    amtInp.style.cssText = 'width:110px;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;text-align:right;outline:none;font-family:inherit;box-sizing:border-box';
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.textContent = '×';
+    del.title = 'Remove line';
+    del.style.cssText = 'background:transparent;border:1.5px solid #fca5a5;border-radius:5px;width:28px;height:28px;font-size:16px;line-height:1;cursor:pointer;color:#dc2626;flex-shrink:0;font-family:inherit';
+    del.onclick = () => row.remove();
+
+    row.appendChild(labelInp); row.appendChild(cur); row.appendChild(amtInp); row.appendChild(del);
+    container.appendChild(row);
+
+    // Focus the label input if it's a new (empty) row
+    if (!label) labelInp.focus();
   }
 
   // ── Save schedule (create or update) ─────────────────────────
@@ -907,13 +962,23 @@
       return;
     }
 
-    // Collect fee values
+    // Collect standard fee values
     const defs = type === 'india' ? INDIA_FEE_DEFS : US_FEE_DEFS;
     const feesObj = {};
     defs.forEach(({ items }) => items.forEach(({ key }) => {
       const inp = document.getElementById(`sf-${key}`);
       feesObj[key] = parseFloat(inp?.value) || 0;
     }));
+
+    // Collect extra / custom line items
+    const extras = [];
+    document.querySelectorAll('.sched-extra-row').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const lbl = inputs[0].value.trim();
+      const amt = parseFloat(inputs[1].value) || 0;
+      if (lbl) extras.push({ label: lbl, amount: amt });
+    });
+    if (extras.length) feesObj._extra = extras;
 
     btn.disabled = true; btn.textContent = 'Saving…';
 
