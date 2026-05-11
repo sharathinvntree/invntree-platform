@@ -229,115 +229,133 @@
 
 <!-- ── Edit User Modal ── -->
 <div class="modal-overlay hidden" id="edit-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:900px;width:95vw">
     <div class="modal-head">
       <h3>Edit User</h3>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-    <div class="modal-body">
-      <div id="modal-error" class="alert alert-error hidden"></div>
-      <div class="field">
-        <label class="field-label">Full Name</label>
-        <input type="text" id="edit-name" placeholder="Full name">
-      </div>
-      <div class="field">
-        <label class="field-label">New Password <span style="font-weight:400;color:var(--muted)">(leave blank to keep current)</span></label>
-        <input type="password" id="edit-password" placeholder="Min. 6 characters">
-      </div>
-      <div class="field">
-        <label class="field-label">Role</label>
-        <select id="edit-role">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-label">Entity Type</label>
-        <select id="edit-entity">
-          <option value="other">Other Entity (Standard Rates)</option>
-          <option value="startup_msme">Natural Person / MSME / Startup</option>
-        </select>
-      </div>
-      <div>
-        <div class="field-label" style="margin-bottom:10px">Module Access</div>
-        <div class="perm-grid">
-          <div class="perm-row">
-            <span>🇺🇸 USA Patent Filing</span>
-            <label class="toggle">
-              <input type="checkbox" id="edit-us">
-              <span class="toggle-track"></span>
-            </label>
+    <div class="modal-body" style="max-height:82vh;overflow-y:auto;display:block;padding:20px">
+      <div id="modal-error" class="alert alert-error hidden" style="margin-bottom:14px"></div>
+
+      <!-- ── Top 2-column grid ── -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Left column -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="field" style="margin:0">
+            <label class="field-label">Full Name</label>
+            <input type="text" id="edit-name" placeholder="Full name">
           </div>
-          <div class="perm-row">
-            <span>🇮🇳 India Patent Filing</span>
-            <label class="toggle">
-              <input type="checkbox" id="edit-india">
-              <span class="toggle-track"></span>
-            </label>
+          <div class="field" style="margin:0">
+            <label class="field-label">New Password <span style="font-weight:400;color:var(--muted)">(leave blank to keep)</span></label>
+            <input type="password" id="edit-password" placeholder="Min. 6 characters">
           </div>
-        </div>
-      </div>
-      <div>
-        <div class="field-label" style="margin-bottom:10px">Professional Fee Discount (%)</div>
-        <div class="discount-grid" style="grid-template-columns:1fr">
-          <div class="discount-item">
-            <label>Discount on Professional Fees only</label>
-            <input type="number" id="edit-prof-disc" value="0" min="0" max="100" step="1">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="field" style="margin:0">
+              <label class="field-label">Role</label>
+              <select id="edit-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <label class="field-label">Account Status</label>
+              <select id="edit-active">
+                <option value="true">Active</option>
+                <option value="false">Deactivated</option>
+              </select>
+            </div>
           </div>
-        </div>
-      </div>
-      <!-- Fee Schedule Access -->
-      <div style="border-top:1px solid var(--border);margin:16px 0 12px;padding-top:14px">
-        <div class="field-label" style="margin-bottom:12px">Fee Schedule Access</div>
-        <div class="perm-row" style="margin-bottom:14px">
-          <span style="font-size:13px;font-weight:500;color:var(--text)">Show Fee Schedule tab to this client</span>
-          <label class="toggle">
-            <input type="checkbox" id="edit-show-fee-schedule">
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div>
-            <label class="field-label" style="display:block;margin-bottom:5px">🇮🇳 India Fee Schedule</label>
-            <select id="edit-india-schedule" class="sched-select">
-              <option value="">— Default rates —</option>
+          <div class="field" style="margin:0">
+            <label class="field-label">Entity Type</label>
+            <select id="edit-entity">
+              <option value="other">Other Entity (Standard Rates)</option>
+              <option value="startup_msme">Natural Person / MSME / Startup</option>
             </select>
           </div>
           <div>
-            <label class="field-label" style="display:block;margin-bottom:5px">🇺🇸 US Fee Schedule</label>
-            <select id="edit-us-schedule" class="sched-select">
-              <option value="">— Default rates —</option>
-            </select>
+            <div class="field-label" style="margin-bottom:8px">Professional Fee Discount (%)</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="edit-prof-disc" value="0" min="0" max="100" step="1"
+                style="width:90px;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">
+              <span style="font-size:12px;color:var(--muted)">% off professional fees only</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div class="field-label" style="margin-bottom:8px">Module Access</div>
+            <div class="perm-grid">
+              <div class="perm-row">
+                <span>🇺🇸 USA Patent Filing</span>
+                <label class="toggle">
+                  <input type="checkbox" id="edit-us">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+              <div class="perm-row">
+                <span>🇮🇳 India Patent Filing</span>
+                <label class="toggle">
+                  <input type="checkbox" id="edit-india">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div style="background:#f8fafd;border:1px solid var(--border);border-radius:8px;padding:14px">
+            <div class="field-label" style="margin-bottom:10px">Fee Schedule Access</div>
+            <div class="perm-row" style="margin-bottom:12px">
+              <span style="font-size:13px;font-weight:500;color:var(--text)">Show Fee Schedule tab to client</span>
+              <label class="toggle">
+                <input type="checkbox" id="edit-show-fee-schedule">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div>
+                <label class="field-label" style="display:block;margin-bottom:4px">🇮🇳 India Fee Schedule</label>
+                <select id="edit-india-schedule" class="sched-select">
+                  <option value="">— Default rates —</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" style="display:block;margin-bottom:4px">🇺🇸 US Fee Schedule</label>
+                <select id="edit-us-schedule" class="sched-select">
+                  <option value="">— Default rates —</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /top grid -->
+
+      <!-- ── Quote Details — full width ── -->
+      <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
+        <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— pre-filled in PDF downloads for this user</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="field" style="margin:0">
+            <label class="field-label">Client / Company Name</label>
+            <input type="text" id="edit-client-name" placeholder="e.g. ABC Technologies Pvt. Ltd.">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Inventor / Contact Person</label>
+            <input type="text" id="edit-contact-person" placeholder="e.g. Mr. Rajesh Kumar">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Patent / Invention Title</label>
+            <input type="text" id="edit-invention-title" placeholder="e.g. Method for Improved Energy Storage">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Notes / Assumptions</label>
+            <textarea id="edit-quote-notes" placeholder="e.g. Assumes English language, ≤30 claims. Valid for 30 days."
+              style="border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;min-height:60px;outline:none"></textarea>
           </div>
         </div>
       </div>
 
-      <div style="border-top:1px solid var(--border);margin:16px 0 12px;padding-top:14px">
-        <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— pre-filled in PDF downloads for this user</span></div>
-        <div class="field">
-          <label class="field-label">Client / Company Name</label>
-          <input type="text" id="edit-client-name" placeholder="e.g. ABC Technologies Pvt. Ltd.">
-        </div>
-        <div class="field">
-          <label class="field-label">Inventor / Contact Person</label>
-          <input type="text" id="edit-contact-person" placeholder="e.g. Mr. Rajesh Kumar">
-        </div>
-        <div class="field">
-          <label class="field-label">Patent / Invention Title</label>
-          <input type="text" id="edit-invention-title" placeholder="e.g. Method for Improved Energy Storage">
-        </div>
-        <div class="field">
-          <label class="field-label">Notes / Assumptions</label>
-          <textarea id="edit-quote-notes" placeholder="e.g. Assumes English language, ≤30 claims. Valid for 30 days." style="border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;min-height:72px;outline:none"></textarea>
-        </div>
-      </div>
-      <div class="field">
-        <label class="field-label">Account Status</label>
-        <select id="edit-active">
-          <option value="true">Active</option>
-          <option value="false">Deactivated</option>
-        </select>
-      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
