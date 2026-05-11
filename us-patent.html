@@ -311,6 +311,7 @@ let scheduleExtras = [];   // extra line items from assigned fee schedule
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
 
+  buildExtraSteps();
   buildFeeSchedule();
   recalc();
 })();
@@ -335,7 +336,7 @@ const fees = {
 };
 const USD_RATE = 100, NUM_OA = 2;
 
-let st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional', showGst:false };
+let st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, extras:{}, draftType:'non-provisional', showGst:false };
 
 function switchTab(name, btn) {
   document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
@@ -371,10 +372,55 @@ function setGst(val) {
 
 function resetAll() {
   document.getElementById('numPatents').value = 1;
-  st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, draftType:'non-provisional', showGst:false };
+  const initExtras = {};
+  scheduleExtras.forEach((_, i) => { initExtras[i] = 'yes'; });
+  st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, extras: initExtras, draftType:'non-provisional', showGst:false };
   [1,2,3].forEach(i => setOpt(i,'yes'));
   setDraftType('non-provisional');
   setGst('no');
+  scheduleExtras.forEach((_, i) => setExtra(i, 'yes'));
+  recalc();
+}
+
+// ── Extra add-on steps (from assigned fee schedule) ────────────
+function buildExtraSteps() {
+  if (!scheduleExtras.length) return;
+
+  scheduleExtras.forEach((_, i) => { st.extras[i] = 'yes'; });
+
+  const list = document.querySelector('.steps-list');
+
+  const hdr = document.createElement('div');
+  hdr.className = 'step-item';
+  hdr.style.cssText = 'background:#fefbec;pointer-events:none';
+  hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items — specific to your engagement</span></div>`;
+  list.appendChild(hdr);
+
+  scheduleExtras.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'step-item active';
+    row.id = `extra-pill-${i}`;
+    row.innerHTML = `
+      <div class="step-main-row">
+        <span class="step-badge" style="color:#b45309;min-width:52px">Add-on</span>
+        <span class="step-title">${item.label}</span>
+        <div class="step-yn">
+          <button id="ex${i}-yes" class="yes-on" onclick="setExtra(${i},'yes')">Yes</button>
+          <button id="ex${i}-no"                 onclick="setExtra(${i},'no')">No</button>
+        </div>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+function setExtra(idx, val) {
+  st.extras[idx] = val;
+  const pill = document.getElementById(`extra-pill-${idx}`);
+  if (pill) pill.classList.toggle('active', val === 'yes');
+  const yBtn = document.getElementById(`ex${idx}-yes`);
+  const nBtn = document.getElementById(`ex${idx}-no`);
+  if (yBtn) yBtn.className = val === 'yes' ? 'yes-on' : '';
+  if (nBtn) nBtn.className = val === 'no'  ? 'no-on'  : '';
   recalc();
 }
 
@@ -435,11 +481,18 @@ function recalc() {
   const n=st.n, rows=buildRows();
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
+
+  // Extra add-on items from assigned schedule (professional fees, discount applies)
+  const profDisc = userProfile?.prof_discount || 0;
+  const extraRows = scheduleExtras
+    .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
+    .filter(e => e.on);
+  extraRows.forEach(e => { totProf += e.amount; });
+
   const gProf=totProf*n, gGovt=totGovt*n;
   const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
   const gTotal = gProf + gGovt + gGst;
 
-  const profDisc = userProfile?.prof_discount || 0;
   const discNote = profDisc > 0
     ? `<span class="disc-tag">Prof. fee discount: ${profDisc}% applied</span>` : '';
 
@@ -468,6 +521,12 @@ function recalc() {
     const tag=r.mandatory?`<span class="mandatory-tag">Mandatory</span>`:'';
     tbody+=`<tr><td>${r.label}${tag}</td><td>${r.prof>0?inr(r.prof):'–'}</td><td>${gc}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
   });
+  if (extraRows.length) {
+    tbody += `<tr class="opt-hdr"><td colspan="5">Additional Items</td></tr>`;
+    extraRows.forEach(e => {
+      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${inr(e.amount)}</td><td>–</td><td>${inr(e.amount)}</td><td><strong>${inr(e.amount * n)}</strong></td></tr>`;
+    });
+  }
   if (st.showGst) {
     tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf * n * 0.18)}</td><td>–</td><td colspan="2">${inr(gGst)}</td></tr>`;
   }
@@ -505,10 +564,14 @@ function downloadPdf() {
   const n=st.n, rows=buildRows();
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
+  const profDisc = userProfile?.prof_discount || 0;
+  const pdfExtraRows = scheduleExtras
+    .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
+    .filter(e => e.on);
+  pdfExtraRows.forEach(e => { totProf += e.amount; });
   const gProf=totProf*n, gGovt=totGovt*n;
   const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
   const gTotal = gProf + gGovt + gGst;
-  const profDisc = userProfile?.prof_discount || 0;
   const discNote = profDisc > 0
     ? ` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>` : '';
 
@@ -520,6 +583,12 @@ function downloadPdf() {
     const tag=r.mandatory?` <span style="font-size:9px;background:#f0f3f9;color:#888;border-radius:2px;padding:1px 4px">Mandatory</span>`:'';
     pdfTbody+=`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}${tag}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
   });
+  if (pdfExtraRows.length) {
+    pdfTbody += `<tr style="background:#fef9ec"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
+    pdfExtraRows.forEach(e => {
+      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(e.amount)}</td><td style="padding:7px 10px;text-align:right;font-size:11px">–</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(e.amount)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(e.amount*n)}</td></tr>`;
+    });
+  }
   if (st.showGst) {
     pdfTbody += `<tr style="background:#f0fff4"><td colspan="2" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td colspan="3" style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
