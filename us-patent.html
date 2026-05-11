@@ -151,7 +151,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 
   <div class="calc-tabs-bar">
     <button class="calc-tab active" onclick="switchTab('calculator',this)">Calculator</button>
-    <button class="calc-tab" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+    <button class="calc-tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
   </div>
 
   <div class="calc-container">
@@ -250,19 +250,19 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 
     <!-- ══ FEE SCHEDULE TAB ══ -->
     <div id="tab-fee-schedule" class="calc-panel">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Edit any fee below — changes reflect live in the Calculator.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule — professional fees applicable to your engagement.</p>
       <div class="fs-grid">
         <div class="fs-card">
           <div class="fs-head">
             <div class="fs-head-title">Professional Fees</div>
-            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; GST @ 18% applicable</div>
+            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; GST @ 18% applicable on professional fees</div>
           </div>
           <div class="fs-items" id="prof-fee-items"></div>
         </div>
         <div class="fs-card">
           <div class="fs-head">
             <div class="fs-head-title">Government Fees (USPTO)</div>
-            <div class="fs-head-sub">Amounts in USD &nbsp;·&nbsp; Shown at USD × 100</div>
+            <div class="fs-head-sub">Statutory fees payable to the USPTO in USD</div>
           </div>
           <div class="fs-items" id="govt-fee-items"></div>
         </div>
@@ -288,6 +288,23 @@ let userProfile = null;
   }
 
   userProfile = auth.profile;
+
+  // Load assigned US fee schedule (if any) — override prof fee amounts before render
+  if (userProfile.us_fee_schedule_id) {
+    const { data: sched } = await db
+      .from('fee_schedules').select('fees').eq('id', userProfile.us_fee_schedule_id).single();
+    if (sched?.fees) {
+      Object.keys(sched.fees).forEach(k => {
+        if (fees.prof[k]) fees.prof[k].amount = sched.fees[k];
+      });
+    }
+  }
+
+  // Show fee schedule tab only if admin enabled it for this user
+  if (!userProfile.show_fee_schedule) {
+    document.getElementById('fee-sched-tab-btn').style.display = 'none';
+  }
+
   renderNavbar(auth.profile, 'USA Patent Fee Calculator');
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
@@ -579,26 +596,68 @@ function downloadPdf() {
   setTimeout(() => w.print(), 600);
 }
 
+// ── Fee Schedule UI (read-only reference table for clients) ───
 function buildFeeSchedule() {
-  function mk(type,key,cur) {
-    const item=fees[type][key],div=document.createElement('div');
-    div.className='fs-item';
-    const lbl=document.createElement('label');lbl.textContent=item.label;
-    const c=document.createElement('span');c.className='fs-cur';c.textContent=cur;
-    const inp=document.createElement('input');inp.type='number';inp.value=item.amount;inp.min=0;inp.step=type==='govt'?'0.01':'1';
-    inp.addEventListener('input',()=>{fees[type][key].amount=parseFloat(inp.value)||0;recalc();});
-    div.appendChild(lbl);div.appendChild(c);div.appendChild(inp);return div;
+  const disc = userProfile ? (userProfile.prof_discount || 0) : 0;
+
+  // Read-only professional fee row (INR)
+  function mkProf(key) {
+    const item = fees.prof[key];
+    const base  = item.amount;
+    const after = disc > 0 ? Math.round(base * (1 - disc/100)) : base;
+    const div = document.createElement('div');
+    div.className = 'fs-item';
+    const lbl = document.createElement('label'); lbl.textContent = item.label;
+    const right = document.createElement('span');
+    right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
+    if (disc > 0) {
+      right.innerHTML = `<span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${base.toLocaleString('en-IN')}</span>`
+        + `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${after.toLocaleString('en-IN')}</strong>`
+        + `<span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span>`;
+    } else {
+      right.innerHTML = `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${base.toLocaleString('en-IN')}</strong>`;
+    }
+    div.appendChild(lbl); div.appendChild(right); return div;
   }
+
+  // Read-only govt fee row (USD)
+  function mkGovt(key) {
+    const item = fees.govt[key];
+    const div = document.createElement('div');
+    div.className = 'fs-item';
+    const lbl = document.createElement('label'); lbl.textContent = item.label;
+    const right = document.createElement('span');
+    right.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0';
+    right.innerHTML = `<span class="fs-cur" style="font-size:12px">USD</span><strong style="font-size:14px;color:var(--navy)">${item.amount.toLocaleString('en-US')}</strong>`;
+    div.appendChild(lbl); div.appendChild(right); return div;
+  }
+
   function sec(t){const d=document.createElement('div');d.className='fs-section-label';d.textContent=t;return d;}
   function dvd(){const d=document.createElement('div');d.className='fs-divider';return d;}
-  const p=document.getElementById('prof-fee-items'),g=document.getElementById('govt-fee-items');
-  p.appendChild(sec('Step 1 — Novelty Search'));p.appendChild(mk('prof','noveltySearch','INR'));
-  p.appendChild(dvd());p.appendChild(sec('Step 2 — Both Paths'));p.appendChild(mk('prof','foreignFilingPerm','INR'));
-  p.appendChild(dvd());p.appendChild(sec('Step 2 — Non-Provisional'));p.appendChild(mk('prof','draftingCompleteSpec','INR'));p.appendChild(mk('prof','filingNonProv','INR'));
-  p.appendChild(dvd());p.appendChild(sec('Step 2 — Provisional Path'));p.appendChild(mk('prof','draftingProvSpec','INR'));p.appendChild(mk('prof','filingProv','INR'));p.appendChild(mk('prof','draftingCompleteFromProv','INR'));p.appendChild(mk('prof','filingNonProvFromProv','INR'));
-  p.appendChild(dvd());p.appendChild(sec('Step 3 — Prosecution'));p.appendChild(mk('prof','officeAction','INR'));
-  g.appendChild(sec('Step 2 — Non-Provisional'));g.appendChild(mk('govt','filingNonProv','USD'));
-  g.appendChild(dvd());g.appendChild(sec('Step 2 — Provisional Path'));g.appendChild(mk('govt','filingProv','USD'));g.appendChild(mk('govt','filingNonProvFromProv','USD'));
+
+  const p = document.getElementById('prof-fee-items');
+  const g = document.getElementById('govt-fee-items');
+
+  if (disc > 0) {
+    const note = document.createElement('div');
+    note.style.cssText = 'background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 12px;font-size:12px;color:#1a7a3a;margin-bottom:12px;font-weight:500';
+    note.textContent = `A ${disc}% discount is applied to all professional fees for your engagement.`;
+    p.appendChild(note);
+  }
+
+  p.appendChild(sec('Step 1 — Novelty Search'));       p.appendChild(mkProf('noveltySearch'));
+  p.appendChild(dvd());
+  p.appendChild(sec('Step 2 — Both Paths'));            p.appendChild(mkProf('foreignFilingPerm'));
+  p.appendChild(dvd());
+  p.appendChild(sec('Step 2 — Non-Provisional'));       p.appendChild(mkProf('draftingCompleteSpec')); p.appendChild(mkProf('filingNonProv'));
+  p.appendChild(dvd());
+  p.appendChild(sec('Step 2 — Provisional Path'));      p.appendChild(mkProf('draftingProvSpec')); p.appendChild(mkProf('filingProv')); p.appendChild(mkProf('draftingCompleteFromProv')); p.appendChild(mkProf('filingNonProvFromProv'));
+  p.appendChild(dvd());
+  p.appendChild(sec('Step 3 — Prosecution'));           p.appendChild(mkProf('officeAction'));
+
+  g.appendChild(sec('Step 2 — Non-Provisional'));       g.appendChild(mkGovt('filingNonProv'));
+  g.appendChild(dvd());
+  g.appendChild(sec('Step 2 — Provisional Path'));      g.appendChild(mkGovt('filingProv')); g.appendChild(mkGovt('filingNonProvFromProv'));
 }
 </script>
 </body>

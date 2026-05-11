@@ -150,7 +150,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 
   <div class="calc-tabs-bar">
     <button class="calc-tab active" onclick="switchTab('calculator',this)">Calculator</button>
-    <button class="calc-tab" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+    <button class="calc-tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
   </div>
 
   <div class="calc-container">
@@ -250,19 +250,19 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 
     <!-- ══ FEE SCHEDULE TAB ══ -->
     <div id="tab-fee-schedule" class="calc-panel">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Edit any fee below — changes reflect live in the Calculator.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule — professional fees applicable to your engagement.</p>
       <div class="fs-grid">
         <div class="fs-card">
           <div class="fs-head">
             <div class="fs-head-title">Professional Fees</div>
-            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; GST @ 18% applicable</div>
+            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; GST @ 18% applicable on professional fees</div>
           </div>
           <div class="fs-items" id="prof-fee-items"></div>
         </div>
         <div class="fs-card">
           <div class="fs-head">
             <div class="fs-head-title">Government Fees (IPO)</div>
-            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; Edit both entity rate columns</div>
+            <div class="fs-head-sub">Statutory fees payable to the Indian Patent Office</div>
           </div>
           <div class="fs-items" id="govt-fee-items"></div>
         </div>
@@ -289,6 +289,23 @@ let userProfile = null;
   }
 
   userProfile = auth.profile;
+
+  // Load assigned India fee schedule (if any) — override prof fee amounts before render
+  if (userProfile.india_fee_schedule_id) {
+    const { data: sched } = await db
+      .from('fee_schedules').select('fees').eq('id', userProfile.india_fee_schedule_id).single();
+    if (sched?.fees) {
+      Object.keys(sched.fees).forEach(k => {
+        if (fees.prof[k]) fees.prof[k].amount = sched.fees[k];
+      });
+    }
+  }
+
+  // Show fee schedule tab only if admin enabled it for this user
+  if (!userProfile.show_fee_schedule) {
+    document.getElementById('fee-sched-tab-btn').style.display = 'none';
+  }
+
   renderNavbar(auth.profile, 'India Patent Fee Calculator');
 
   // Show entity badge
@@ -675,69 +692,88 @@ function downloadPdf() {
   setTimeout(() => w.print(), 600);
 }
 
-// ── Fee Schedule UI ───────────────────────────────────────────
+// ── Fee Schedule UI (read-only reference table for clients) ───
 function buildFeeSchedule() {
-  function mk(type, key) {
-    const item = fees[type][key], div = document.createElement('div');
+  const disc = userProfile ? (userProfile.prof_discount || 0) : 0;
+
+  // Read-only professional fee row
+  function mk(key) {
+    const item = fees.prof[key];
+    const base = item.amount;
+    const after = disc > 0 ? Math.round(base * (1 - disc/100)) : base;
+    const div = document.createElement('div');
     div.className = 'fs-item';
     const lbl = document.createElement('label'); lbl.textContent = item.label;
-    const c   = document.createElement('span');  c.className = 'fs-cur'; c.textContent = '₹';
-    const inp = document.createElement('input'); inp.type = 'number'; inp.value = item.amount; inp.min = 0; inp.step = 1;
-    inp.addEventListener('input', () => { fees[type][key].amount = parseFloat(inp.value)||0; recalc(); });
-    div.appendChild(lbl); div.appendChild(c); div.appendChild(inp); return div;
+    const right = document.createElement('span');
+    right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
+    if (disc > 0) {
+      right.innerHTML = `<span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${base.toLocaleString('en-IN')}</span>`
+        + `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${after.toLocaleString('en-IN')}</strong>`
+        + `<span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span>`;
+    } else {
+      right.innerHTML = `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${base.toLocaleString('en-IN')}</strong>`;
+    }
+    div.appendChild(lbl); div.appendChild(right); return div;
   }
+
+  // Read-only govt pair row (Other | MSME)
   function mkGovtPair(key, label) {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;align-items:center;gap:6px';
     const lbl = document.createElement('span'); lbl.textContent = label; lbl.style.cssText = 'flex:1;font-size:13px;color:var(--text)';
 
-    const mkInp = (type, placeholder) => {
-      const w = document.createElement('div'); w.style.cssText = 'display:flex;align-items:center;gap:3px';
+    const mkAmt = (type) => {
+      const w = document.createElement('div'); w.style.cssText = 'display:flex;align-items:center;gap:3px;width:90px;justify-content:flex-end';
       const c = document.createElement('span'); c.className = 'fs-cur'; c.textContent = '₹';
-      const inp = document.createElement('input');
-      inp.type = 'number'; inp.value = fees[type][key].amount; inp.min = 0; inp.step = 1;
-      inp.style.cssText = 'width:80px;border:1.5px solid var(--border);border-radius:6px;padding:5px 6px;font-size:12px;text-align:right;outline:none;font-family:inherit';
-      inp.title = placeholder;
-      inp.addEventListener('input', () => { fees[type][key].amount = parseFloat(inp.value)||0; recalc(); });
-      w.appendChild(c); w.appendChild(inp); return w;
+      const v = document.createElement('span'); v.style.cssText = 'font-size:13px;font-weight:600;color:var(--navy)';
+      v.textContent = fees[type][key].amount.toLocaleString('en-IN');
+      w.appendChild(c); w.appendChild(v); return w;
     };
 
     wrap.appendChild(lbl);
-    wrap.appendChild(mkInp('govt', 'Other Entity'));
-    wrap.appendChild(mkInp('govtSM', 'MSME/Startup'));
+    wrap.appendChild(mkAmt('govt'));
+    wrap.appendChild(mkAmt('govtSM'));
     return wrap;
   }
+
   function sec(t) { const d = document.createElement('div'); d.className = 'fs-section-label'; d.textContent = t; return d; }
   function dvd()  { const d = document.createElement('div'); d.className = 'fs-divider'; return d; }
 
   const p = document.getElementById('prof-fee-items');
   const g = document.getElementById('govt-fee-items');
 
+  if (disc > 0) {
+    const note = document.createElement('div');
+    note.style.cssText = 'background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 12px;font-size:12px;color:#1a7a3a;margin-bottom:12px;font-weight:500';
+    note.textContent = `A ${disc}% discount is applied to all professional fees for your engagement.`;
+    p.appendChild(note);
+  }
+
   // Prof fees
   p.appendChild(sec('Step 1 — Novelty Search'));
-  p.appendChild(mk('prof','noveltySearch'));
+  p.appendChild(mk('noveltySearch'));
   p.appendChild(dvd());
   p.appendChild(sec('Step 2 — Both Paths'));
-  p.appendChild(mk('prof','form3'));
-  p.appendChild(mk('prof','assignmentDeed'));
+  p.appendChild(mk('form3'));
+  p.appendChild(mk('assignmentDeed'));
   p.appendChild(dvd());
   p.appendChild(sec('Step 2 — Complete Specification'));
-  p.appendChild(mk('prof','draftingCompleteSpec'));
-  p.appendChild(mk('prof','filingComplete'));
-  p.appendChild(mk('prof','examinationReqComplete'));
-  p.appendChild(mk('prof','earlyPublicationComplete'));
+  p.appendChild(mk('draftingCompleteSpec'));
+  p.appendChild(mk('filingComplete'));
+  p.appendChild(mk('examinationReqComplete'));
+  p.appendChild(mk('earlyPublicationComplete'));
   p.appendChild(dvd());
   p.appendChild(sec('Step 2 — Provisional → Complete'));
-  p.appendChild(mk('prof','draftingProvSpec'));
-  p.appendChild(mk('prof','filingProv'));
-  p.appendChild(mk('prof','draftingCompleteFromProv'));
-  p.appendChild(mk('prof','filingCompleteFromProv'));
-  p.appendChild(mk('prof','examinationReqProv'));
-  p.appendChild(mk('prof','earlyPublicationProv'));
+  p.appendChild(mk('draftingProvSpec'));
+  p.appendChild(mk('filingProv'));
+  p.appendChild(mk('draftingCompleteFromProv'));
+  p.appendChild(mk('filingCompleteFromProv'));
+  p.appendChild(mk('examinationReqProv'));
+  p.appendChild(mk('earlyPublicationProv'));
   p.appendChild(dvd());
   p.appendChild(sec('Step 3 — Prosecution'));
-  p.appendChild(mk('prof','ferResponse'));
-  p.appendChild(mk('prof','hearing'));
+  p.appendChild(mk('ferResponse'));
+  p.appendChild(mk('hearing'));
 
   // Govt fees — two columns: Other Entity | MSME/Startup
   const legend = document.createElement('div');
