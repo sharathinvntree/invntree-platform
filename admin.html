@@ -447,7 +447,7 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="field" style="margin:0">
-          <label class="field-label">Amount (₹)</label>
+          <label class="field-label">Professional Fee (₹)</label>
           <input type="number" id="addon-amount" min="0" step="500" placeholder="0">
         </div>
         <div class="field" style="margin:0">
@@ -457,6 +457,16 @@
             <option value="india">🇮🇳 India only</option>
             <option value="us">🇺🇸 US only</option>
           </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="margin:0">
+          <label class="field-label">🇮🇳 IPO Govt. Fee (₹)</label>
+          <input type="number" id="addon-govt-inr" min="0" step="100" placeholder="0">
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">🇺🇸 USPTO Fee (USD)</label>
+          <input type="number" id="addon-govt-usd" min="0" step="10" placeholder="0">
         </div>
       </div>
     </div>
@@ -1082,7 +1092,11 @@
       const assignedStr = assignedTo.length ? assignedTo.join(', ') : '<span style="color:var(--muted)">—</span>';
       return `<tr>
         <td><strong>${esc(a.label)}</strong></td>
-        <td>₹${a.amount.toLocaleString('en-IN')}</td>
+        <td>
+          <div style="font-size:12px">Prof: ₹${a.amount.toLocaleString('en-IN')}</div>
+          ${a.govt_fee_inr ? `<div style="font-size:11px;color:var(--muted)">IPO: ₹${a.govt_fee_inr.toLocaleString('en-IN')}</div>` : ''}
+          ${a.govt_fee_usd ? `<div style="font-size:11px;color:var(--muted)">USPTO: $${a.govt_fee_usd}</div>` : ''}
+        </td>
         <td><span class="badge ${a.type === 'india' ? 'badge-blue' : a.type === 'us' ? 'badge-gold' : 'badge-gray'}">${typeLabel[a.type]}</span></td>
         <td style="font-size:12px;color:var(--muted)">${assignedStr}</td>
         <td style="display:flex;gap:6px">
@@ -1096,9 +1110,11 @@
   function openNewAddon() {
     editingAddonId = null;
     document.getElementById('addon-modal-title').textContent = 'New Add-on Item';
-    document.getElementById('addon-label').value  = '';
-    document.getElementById('addon-amount').value = '';
-    document.getElementById('addon-type').value   = 'both';
+    document.getElementById('addon-label').value    = '';
+    document.getElementById('addon-amount').value  = '';
+    document.getElementById('addon-type').value    = 'both';
+    document.getElementById('addon-govt-inr').value = '';
+    document.getElementById('addon-govt-usd').value = '';
     document.getElementById('addon-modal-error').classList.add('hidden');
     document.getElementById('addon-modal').classList.remove('hidden');
     setTimeout(() => document.getElementById('addon-label').focus(), 50);
@@ -1109,9 +1125,11 @@
     if (!a) return;
     editingAddonId = id;
     document.getElementById('addon-modal-title').textContent = 'Edit Add-on Item';
-    document.getElementById('addon-label').value  = a.label;
-    document.getElementById('addon-amount').value = a.amount;
-    document.getElementById('addon-type').value   = a.type;
+    document.getElementById('addon-label').value    = a.label;
+    document.getElementById('addon-amount').value  = a.amount;
+    document.getElementById('addon-type').value    = a.type;
+    document.getElementById('addon-govt-inr').value = a.govt_fee_inr || '';
+    document.getElementById('addon-govt-usd').value = a.govt_fee_usd || '';
     document.getElementById('addon-modal-error').classList.add('hidden');
     document.getElementById('addon-modal').classList.remove('hidden');
   }
@@ -1124,9 +1142,11 @@
   async function saveAddon() {
     const btn   = document.getElementById('addon-save-btn');
     const errEl = document.getElementById('addon-modal-error');
-    const label  = document.getElementById('addon-label').value.trim();
-    const amount = parseInt(document.getElementById('addon-amount').value) || 0;
-    const type   = document.getElementById('addon-type').value;
+    const label        = document.getElementById('addon-label').value.trim();
+    const amount       = parseInt(document.getElementById('addon-amount').value)   || 0;
+    const type         = document.getElementById('addon-type').value;
+    const govt_fee_inr = parseInt(document.getElementById('addon-govt-inr').value) || 0;
+    const govt_fee_usd = parseInt(document.getElementById('addon-govt-usd').value) || 0;
 
     errEl.classList.add('hidden');
     if (!label) { errEl.textContent = 'Please enter a label.'; errEl.classList.remove('hidden'); return; }
@@ -1135,9 +1155,9 @@
 
     let error;
     if (editingAddonId) {
-      ({ error } = await db.from('addon_items').update({ label, amount, type }).eq('id', editingAddonId));
+      ({ error } = await db.from('addon_items').update({ label, amount, type, govt_fee_inr, govt_fee_usd }).eq('id', editingAddonId));
     } else {
-      ({ error } = await db.from('addon_items').insert({ label, amount, type }));
+      ({ error } = await db.from('addon_items').insert({ label, amount, type, govt_fee_inr, govt_fee_usd }));
     }
 
     btn.disabled = false; btn.textContent = 'Save';

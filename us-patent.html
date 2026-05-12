@@ -489,12 +489,18 @@ function recalc() {
   let totProf=0, totGovt=0;
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
 
-  // Extra add-on items from assigned schedule (professional fees, discount applies)
+  // Extra add-on items (prof fee discounted, USPTO fee no discount, converted to INR)
   const profDisc = userProfile?.prof_discount || 0;
   const extraRows = userAddons
-    .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
+    .map((item, i) => ({
+      label:    item.label,
+      prof:     Math.round(item.amount * (1 - profDisc/100)),
+      govt:     Math.round((item.govt_fee_usd || 0) * USD_RATE),
+      govtUSD:  item.govt_fee_usd || 0,
+      on:       st.extras[i] === 'yes'
+    }))
     .filter(e => e.on);
-  extraRows.forEach(e => { totProf += e.amount; });
+  extraRows.forEach(e => { totProf += e.prof; totGovt += e.govt; });
 
   const gProf=totProf*n, gGovt=totGovt*n;
   const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
@@ -531,7 +537,9 @@ function recalc() {
   if (extraRows.length) {
     tbody += `<tr class="opt-hdr"><td colspan="5">Additional Items</td></tr>`;
     extraRows.forEach(e => {
-      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${inr(e.amount)}</td><td>–</td><td>${inr(e.amount)}</td><td><strong>${inr(e.amount * n)}</strong></td></tr>`;
+      const unit = e.prof + e.govt;
+      const gc = e.govt > 0 ? `${inr(e.govt)}<span class="usd-note">(${e.govtUSD} USD)</span>` : '–';
+      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):'–'}</td><td>${gc}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
     });
   }
   if (st.showGst) {
@@ -573,9 +581,15 @@ function downloadPdf() {
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
   const profDisc = userProfile?.prof_discount || 0;
   const pdfExtraRows = userAddons
-    .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
+    .map((item, i) => ({
+      label:   item.label,
+      prof:    Math.round(item.amount * (1 - profDisc/100)),
+      govt:    Math.round((item.govt_fee_usd || 0) * USD_RATE),
+      govtUSD: item.govt_fee_usd || 0,
+      on:      st.extras[i] === 'yes'
+    }))
     .filter(e => e.on);
-  pdfExtraRows.forEach(e => { totProf += e.amount; });
+  pdfExtraRows.forEach(e => { totProf += e.prof; totGovt += e.govt; });
   const gProf=totProf*n, gGovt=totGovt*n;
   const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
   const gTotal = gProf + gGovt + gGst;
@@ -593,7 +607,9 @@ function downloadPdf() {
   if (pdfExtraRows.length) {
     pdfTbody += `<tr style="background:#fef9ec"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
     pdfExtraRows.forEach(e => {
-      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(e.amount)}</td><td style="padding:7px 10px;text-align:right;font-size:11px">–</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(e.amount)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(e.amount*n)}</td></tr>`;
+      const unit = e.prof + e.govt;
+      const gc = e.govt > 0 ? `${inr(e.govt)} (${e.govtUSD} USD)` : '–';
+      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(unit*n)}</td></tr>`;
     });
   }
   if (st.showGst) {
@@ -741,21 +757,23 @@ function buildFeeSchedule() {
     p.appendChild(dvd());
     p.appendChild(sec('Additional Items'));
     userAddons.forEach(item => {
-      const base  = item.amount;
-      const disc  = userProfile ? (userProfile.prof_discount || 0) : 0;
-      const after = disc > 0 ? Math.round(base * (1 - disc/100)) : base;
+      const disc    = userProfile ? (userProfile.prof_discount || 0) : 0;
+      const prof    = disc > 0 ? Math.round(item.amount * (1 - disc/100)) : item.amount;
+      const govtUSD = item.govt_fee_usd || 0;
+
       const div = document.createElement('div');
       div.className = 'fs-item';
       const lbl = document.createElement('label'); lbl.textContent = item.label;
       const right = document.createElement('span');
-      right.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
-      if (disc > 0) {
-        right.innerHTML = `<span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${base.toLocaleString('en-IN')}</span>`
-          + `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${after.toLocaleString('en-IN')}</strong>`
-          + `<span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span>`;
-      } else {
-        right.innerHTML = `<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${base.toLocaleString('en-IN')}</strong>`;
-      }
+      right.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0';
+
+      let profHtml = disc > 0
+        ? `<span style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${item.amount.toLocaleString('en-IN')}</span><strong style="color:var(--navy)">₹${prof.toLocaleString('en-IN')}</strong><span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span></span>`
+        : `<span><strong style="color:var(--navy)">₹${prof.toLocaleString('en-IN')}</strong> <span style="font-size:11px;color:var(--muted)">prof</span></span>`;
+      let govtHtml = govtUSD > 0
+        ? `<span style="font-size:11px;color:var(--muted)">+ $${govtUSD} USPTO (≈ ₹${(govtUSD*USD_RATE).toLocaleString('en-IN')})</span>` : '';
+
+      right.innerHTML = profHtml + govtHtml;
       div.appendChild(lbl); div.appendChild(right);
       p.appendChild(div);
     });
