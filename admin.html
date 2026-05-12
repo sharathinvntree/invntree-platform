@@ -426,62 +426,71 @@
 
 <!-- ── Add-on Item Modal ── -->
 <div class="modal-overlay hidden" id="addon-modal">
-  <div class="modal" style="max-width:780px;width:95vw">
+  <div class="modal" style="max-width:480px">
     <div class="modal-head">
       <h3 id="addon-modal-title">New Add-on Item</h3>
       <button class="modal-close" onclick="closeAddonModal()">×</button>
     </div>
-    <div class="modal-body" style="display:block;padding:20px">
-      <div id="addon-modal-error" class="alert alert-error hidden" style="margin-bottom:14px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
-
-        <!-- Left: fee details -->
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="field" style="margin:0">
-            <label class="field-label">Label / Description</label>
-            <input type="text" id="addon-label" placeholder="e.g. Translation Charges, Notarisation…">
-          </div>
-          <div class="field" style="margin:0">
-            <label class="field-label">Applies to</label>
-            <select id="addon-type">
-              <option value="both">🌐 Both calculators</option>
-              <option value="india">🇮🇳 India only</option>
-              <option value="us">🇺🇸 US only</option>
-            </select>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="field" style="margin:0">
-              <label class="field-label">Professional Fee (₹)</label>
-              <input type="number" id="addon-amount" min="0" step="500" placeholder="0">
-            </div>
-            <div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="field" style="margin:0">
-              <label class="field-label">🇮🇳 IPO Govt. Fee (₹)</label>
-              <input type="number" id="addon-govt-inr" min="0" step="100" placeholder="0">
-            </div>
-            <div class="field" style="margin:0">
-              <label class="field-label">🇺🇸 USPTO Fee (USD)</label>
-              <input type="number" id="addon-govt-usd" min="0" step="10" placeholder="0">
-            </div>
-          </div>
+    <div class="modal-body">
+      <div id="addon-modal-error" class="alert alert-error hidden"></div>
+      <div class="field">
+        <label class="field-label">Label / Description</label>
+        <input type="text" id="addon-label" placeholder="e.g. Translation Charges, Notarisation…">
+      </div>
+      <div class="field">
+        <label class="field-label">Applies to</label>
+        <select id="addon-type">
+          <option value="both">🌐 Both calculators</option>
+          <option value="india">🇮🇳 India only</option>
+          <option value="us">🇺🇸 US only</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="field" style="margin:0">
+          <label class="field-label">Prof. Fee (₹)</label>
+          <input type="number" id="addon-amount" min="0" step="500" placeholder="0">
         </div>
-
-        <!-- Right: assign to users -->
-        <div>
-          <div class="field-label" style="margin-bottom:8px">Assign to Clients</div>
-          <div id="addon-user-list"
-            style="border:1px solid var(--border);border-radius:7px;padding:10px 12px;background:#fafbfc;max-height:260px;overflow-y:auto">
-            <div style="font-size:12px;color:var(--muted)">Loading users…</div>
-          </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">🇮🇳 IPO Fee (₹)</label>
+          <input type="number" id="addon-govt-inr" min="0" step="100" placeholder="0">
         </div>
-
+        <div class="field" style="margin:0">
+          <label class="field-label">🇺🇸 USPTO (USD)</label>
+          <input type="number" id="addon-govt-usd" min="0" step="10" placeholder="0">
+        </div>
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeAddonModal()">Cancel</button>
       <button class="btn btn-primary" id="addon-save-btn" onclick="saveAddon()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Assign Clients Modal ── -->
+<div class="modal-overlay hidden" id="assign-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3 id="assign-modal-title">Assign Clients</h3>
+      <button class="modal-close" onclick="closeAssignModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px" id="assign-modal-subtitle"></div>
+      <!-- Search + bulk actions -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <input type="text" id="assign-search" placeholder="Search clients…" oninput="filterAssignList()"
+          style="flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:13px;outline:none;font-family:inherit">
+        <button class="btn btn-ghost btn-sm" onclick="assignSelectAll()">All</button>
+        <button class="btn btn-ghost btn-sm" onclick="assignClearAll()">None</button>
+      </div>
+      <!-- Scrollable client list -->
+      <div id="assign-client-list"
+        style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;background:#fafbfc;max-height:320px;overflow-y:auto">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn btn-primary" id="assign-save-btn" onclick="saveAddonAssignment()">Save Assignments</button>
     </div>
   </div>
 </div>
@@ -1086,39 +1095,22 @@
         <td style="font-size:12px;color:var(--muted)">${assignedStr}</td>
         <td style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEditAddon('${a.id}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--blue)" onclick="openAssignAddon('${a.id}')">Assign</button>
           <button class="btn btn-danger btn-sm" onclick="confirmDeleteAddon('${a.id}','${esc(a.label)}')">Delete</button>
         </td>
       </tr>`;
     }).join('');
   }
 
-  function renderAddonUserList(assignedIds = []) {
-    const ul = document.getElementById('addon-user-list');
-    const clients = allUsers.filter(u => u.role !== 'admin');
-    if (!clients.length) {
-      ul.innerHTML = '<div style="font-size:12px;color:var(--muted)">No clients yet.</div>';
-      return;
-    }
-    ul.innerHTML = clients.map(u => `
-      <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer">
-        <input type="checkbox" class="addon-user-check" value="${u.id}"
-          ${assignedIds.includes(u.id) ? 'checked' : ''}
-          style="width:14px;height:14px;cursor:pointer;flex-shrink:0">
-        <span style="flex:1;font-size:13px;color:var(--text)">${esc(u.full_name || u.email.split('@')[0])}</span>
-        <span style="font-size:11px;color:var(--muted)">${esc(u.email)}</span>
-      </label>`).join('');
-  }
-
   function openNewAddon() {
     editingAddonId = null;
     document.getElementById('addon-modal-title').textContent = 'New Add-on Item';
-    document.getElementById('addon-label').value     = '';
-    document.getElementById('addon-amount').value    = '';
-    document.getElementById('addon-type').value      = 'both';
-    document.getElementById('addon-govt-inr').value  = '';
-    document.getElementById('addon-govt-usd').value  = '';
+    document.getElementById('addon-label').value    = '';
+    document.getElementById('addon-amount').value   = '';
+    document.getElementById('addon-type').value     = 'both';
+    document.getElementById('addon-govt-inr').value = '';
+    document.getElementById('addon-govt-usd').value = '';
     document.getElementById('addon-modal-error').classList.add('hidden');
-    renderAddonUserList([]);
     document.getElementById('addon-modal').classList.remove('hidden');
     setTimeout(() => document.getElementById('addon-label').focus(), 50);
   }
@@ -1128,17 +1120,100 @@
     if (!a) return;
     editingAddonId = id;
     document.getElementById('addon-modal-title').textContent = 'Edit Add-on Item';
-    document.getElementById('addon-label').value     = a.label;
-    document.getElementById('addon-amount').value    = a.amount;
-    document.getElementById('addon-type').value      = a.type;
-    document.getElementById('addon-govt-inr').value  = a.govt_fee_inr || '';
-    document.getElementById('addon-govt-usd').value  = a.govt_fee_usd || '';
+    document.getElementById('addon-label').value    = a.label;
+    document.getElementById('addon-amount').value   = a.amount;
+    document.getElementById('addon-type').value     = a.type;
+    document.getElementById('addon-govt-inr').value = a.govt_fee_inr || '';
+    document.getElementById('addon-govt-usd').value = a.govt_fee_usd || '';
     document.getElementById('addon-modal-error').classList.add('hidden');
-    // Pre-check users who already have this addon assigned
-    const assigned = allUsers.filter(u => (u.addon_ids || []).includes(id)).map(u => u.id);
-    renderAddonUserList(assigned);
     document.getElementById('addon-modal').classList.remove('hidden');
   }
+
+  // ── Assign Clients Modal ──────────────────────────────────────
+  let assigningAddonId = null;
+
+  function openAssignAddon(id) {
+    const a = allAddons.find(a => a.id === id);
+    if (!a) return;
+    assigningAddonId = id;
+
+    document.getElementById('assign-modal-title').textContent = `Assign — ${a.label}`;
+    document.getElementById('assign-modal-subtitle').textContent =
+      `Select which clients should see this add-on in their calculator.`;
+    document.getElementById('assign-search').value = '';
+
+    const assigned = allUsers.filter(u => (u.addon_ids || []).includes(id)).map(u => u.id);
+    renderAssignList(assigned, '');
+    document.getElementById('assign-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('assign-search').focus(), 50);
+  }
+
+  function renderAssignList(checkedIds, query) {
+    const clients = allUsers.filter(u => u.role !== 'admin');
+    const q = query.toLowerCase();
+    const filtered = q
+      ? clients.filter(u => (u.full_name || '').toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+      : clients;
+
+    const list = document.getElementById('assign-client-list');
+    if (!filtered.length) {
+      list.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">No clients match your search.</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(u => `
+      <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-bottom:1px solid var(--border)">
+        <input type="checkbox" class="assign-check" value="${u.id}"
+          ${checkedIds.includes(u.id) ? 'checked' : ''}
+          style="width:15px;height:15px;cursor:pointer;flex-shrink:0">
+        <span style="flex:1;font-size:13px;font-weight:500;color:var(--text)">${esc(u.full_name || u.email.split('@')[0])}</span>
+        <span style="font-size:11px;color:var(--muted)">${esc(u.email)}</span>
+      </label>`).join('');
+  }
+
+  function filterAssignList() {
+    const q     = document.getElementById('assign-search').value;
+    const checked = Array.from(document.querySelectorAll('.assign-check:checked')).map(c => c.value);
+    renderAssignList(checked, q);
+  }
+
+  function assignSelectAll() {
+    document.querySelectorAll('.assign-check').forEach(c => c.checked = true);
+  }
+  function assignClearAll() {
+    document.querySelectorAll('.assign-check').forEach(c => c.checked = false);
+  }
+
+  function closeAssignModal() {
+    document.getElementById('assign-modal').classList.add('hidden');
+    assigningAddonId = null;
+  }
+
+  async function saveAddonAssignment() {
+    if (!assigningAddonId) return;
+    const btn = document.getElementById('assign-save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const selectedIds = Array.from(document.querySelectorAll('.assign-check:checked')).map(c => c.value);
+    const updatePromises = allUsers.map(u => {
+      const cur        = u.addon_ids || [];
+      const shouldHave = selectedIds.includes(u.id);
+      const hasIt      = cur.includes(assigningAddonId);
+      if (shouldHave && !hasIt) return db.from('profiles').update({ addon_ids: [...cur, assigningAddonId] }).eq('id', u.id);
+      if (!shouldHave && hasIt)  return db.from('profiles').update({ addon_ids: cur.filter(x => x !== assigningAddonId) }).eq('id', u.id);
+      return null;
+    }).filter(Boolean);
+
+    await Promise.all(updatePromises);
+
+    btn.disabled = false; btn.textContent = 'Save Assignments';
+    closeAssignModal();
+    await loadUsers();
+    renderAddonsTable();
+  }
+
+  document.getElementById('assign-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('assign-modal')) closeAssignModal();
+  });
 
   function closeAddonModal() {
     document.getElementById('addon-modal').classList.add('hidden');
@@ -1180,22 +1255,9 @@
       return;
     }
 
-    // Apply user assignments
-    const selectedIds = Array.from(document.querySelectorAll('.addon-user-check:checked')).map(cb => cb.value);
-    const updatePromises = allUsers.map(u => {
-      const cur       = u.addon_ids || [];
-      const shouldHave = selectedIds.includes(u.id);
-      const hasIt      = cur.includes(addonId);
-      if (shouldHave && !hasIt) return db.from('profiles').update({ addon_ids: [...cur, addonId] }).eq('id', u.id);
-      if (!shouldHave && hasIt)  return db.from('profiles').update({ addon_ids: cur.filter(x => x !== addonId) }).eq('id', u.id);
-      return null;
-    }).filter(Boolean);
-
-    await Promise.all(updatePromises);
-
     btn.disabled = false; btn.textContent = 'Save';
     closeAddonModal();
-    await Promise.all([loadUsers(), loadAddons()]);
+    await loadAddons();
   }
 
   async function confirmDeleteAddon(id, name) {
