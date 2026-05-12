@@ -804,6 +804,7 @@
         <td style="font-size:12px;color:var(--muted)">${assigned}</td>
         <td style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEditSchedule('${s.id}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="duplicateSchedule('${s.id}')">Duplicate</button>
           <button class="btn btn-danger btn-sm" onclick="confirmDeleteSchedule('${s.id}','${esc(s.name)}')">Delete</button>
         </td>
       </tr>`;
@@ -1002,6 +1003,21 @@
     closeScheduleModal();
     await loadSchedules();
     renderSchedulesTable(); // re-render with updated assigned-users list
+  }
+
+  // ── Duplicate schedule ────────────────────────────────────────
+  async function duplicateSchedule(id) {
+    const original = allSchedules.find(s => s.id === id);
+    if (!original) return;
+
+    const { error } = await db.from('fee_schedules').insert({
+      name: original.name + ' (Copy)',
+      type: original.type,
+      fees: original.fees,
+    });
+
+    if (error) { alert('Failed to duplicate: ' + error.message); return; }
+    await loadSchedules();
   }
 
   // ── Delete schedule ───────────────────────────────────────────
