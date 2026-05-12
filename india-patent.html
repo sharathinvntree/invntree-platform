@@ -432,17 +432,13 @@ function buildExtraSteps() {
   userAddons.forEach((_, i) => { st.extras[i] = 'yes'; });
 
   const list = document.querySelector('.steps-list');
+  const lastInserted = {}; // 'stepN' -> last DOM element inserted after that step pill
 
-  const hdr = document.createElement('div');
-  hdr.className = 'step-item';
-  hdr.style.cssText = 'background:#fefbec;pointer-events:none';
-  hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items specific to your engagement</span></div>`;
-  list.appendChild(hdr);
-
-  userAddons.forEach((item, i) => {
+  function makeAddonRow(item, i, extraStyle) {
     const row = document.createElement('div');
     row.className = 'step-item active';
     row.id = `extra-pill-${i}`;
+    if (extraStyle) row.style.background = '#fffbf0';
     row.innerHTML = `
       <div class="step-main-row">
         <span class="step-badge" style="color:#b45309;min-width:52px">Add-on</span>
@@ -452,8 +448,33 @@ function buildExtraSteps() {
           <button id="ex${i}-no"                 onclick="setExtra(${i},'no')">No</button>
         </div>
       </div>`;
-    list.appendChild(row);
+    return row;
+  }
+
+  // First pass: step-specific add-ons injected right after their step pill
+  userAddons.forEach((item, i) => {
+    const ds = item.display_step || 'additional';
+    if (ds === 'additional') return;
+    const stepNum = ds.replace('step', '');
+    const row = makeAddonRow(item, i, true);
+    const anchor = lastInserted[ds] || document.getElementById('pill-' + stepNum);
+    anchor.insertAdjacentElement('afterend', row);
+    lastInserted[ds] = row;
   });
+
+  // Second pass: 'additional' add-ons grouped at the bottom
+  const hasAdditional = userAddons.some(item => (item.display_step || 'additional') === 'additional');
+  if (hasAdditional) {
+    const hdr = document.createElement('div');
+    hdr.className = 'step-item';
+    hdr.style.cssText = 'background:#fefbec;pointer-events:none';
+    hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items specific to your engagement</span></div>`;
+    list.appendChild(hdr);
+    userAddons.forEach((item, i) => {
+      if ((item.display_step || 'additional') !== 'additional') return;
+      list.appendChild(makeAddonRow(item, i, false));
+    });
+  }
 }
 
 function setExtra(idx, val) {
@@ -494,13 +515,13 @@ function buildRows() {
   const rows = [];
 
   if (st.opts[1] === 'yes') {
-    rows.push({hdr:true, label:'Step 1 Novelty Search'});
+    rows.push({hdr:true, step:1, label:'Step 1 Novelty Search'});
     rows.push({label:'Novelty Search', prof:profFee('noveltySearch'), govt:0});
   }
 
   if (st.opts[2] === 'yes') {
     const isCS = st.draftType === 'complete';
-    rows.push({hdr:true, label:`Step 2 Drafting & Filing (${isCS ? 'Complete Specification' : 'Provisional → Complete'})`});
+    rows.push({hdr:true, step:2, label:`Step 2 Drafting & Filing (${isCS ? 'Complete Specification' : 'Provisional → Complete'})`});
 
     rows.push({label:'Form 3 Statements & Undertakings',  prof:profFee('form3'),          govt:0});
     rows.push({label:'Assignment Deed',                      prof:profFee('assignmentDeed'), govt:0});
@@ -521,7 +542,7 @@ function buildRows() {
   }
 
   if (st.opts[3] === 'yes') {
-    rows.push({hdr:true, label:'Step 3 Prosecution (1 FER Response + 1 Hearing)'});
+    rows.push({hdr:true, step:3, label:'Step 3 Prosecution (1 FER Response + 1 Hearing)'});
     rows.push({label:'Response to First Examination Report (FER)', prof:profFee('ferResponse'), govt:govtFee('ferAmendments')});
     rows.push({label:'Hearing & Written Submissions',              prof:profFee('hearing'),     govt:govtFee('hearingAmendments')});
   }
@@ -548,17 +569,18 @@ function recalc() {
     }
   });
 
-  // Extra add-on items (prof fee discounted, govt fee no discount)
+  // Extra add-on items grouped by display step
   const profDisc = userProfile?.prof_discount || 0;
-  const extraRows = userAddons
-    .map((item, i) => ({
-      label: item.label,
-      prof:  Math.round(item.amount * (1 - profDisc/100)),
-      govt:  item.govt_fee_inr || 0,
-      on:    st.extras[i] === 'yes'
-    }))
-    .filter(e => e.on);
-  extraRows.forEach(e => { totProf += e.prof; totGovt += e.govt; });
+  const addonsByStep = { 1:[], 2:[], 3:[], additional:[] };
+  userAddons.forEach((item, i) => {
+    if (st.extras[i] !== 'yes') return;
+    const ds = item.display_step || 'additional';
+    let key;
+    if (ds === 'additional') { key = 'additional'; }
+    else { const sn = parseInt(ds.replace('step', '')); key = st.opts[sn] === 'yes' ? sn : 'additional'; }
+    addonsByStep[key].push({ label: item.label, prof: Math.round(item.amount * (1 - profDisc/100)), govt: item.govt_fee_inr || 0 });
+  });
+  [1, 2, 3, 'additional'].forEach(k => addonsByStep[k].forEach(e => { totProf += e.prof; totGovt += e.govt; }));
 
   const gProf  = totProf * n;
   const gGovt  = totGovt * n;
@@ -585,9 +607,16 @@ function recalc() {
     <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
   </div>`;
 
+  const addonRowHtml = e => { const u=e.prof+e.govt; return `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):''}</td><td>${e.govt>0?inr(e.govt):''}</td><td>${inr(u)}</td><td><strong>${inr(u*n)}</strong></td></tr>`; };
+
   let tbody = '';
+  let curStep = null;
   rows.forEach(r => {
-    if (r.hdr) { tbody += `<tr class="opt-hdr"><td colspan="5">${r.label}</td></tr>`; return; }
+    if (r.hdr) {
+      if (curStep !== null) addonsByStep[curStep].forEach(e => { tbody += addonRowHtml(e); });
+      curStep = r.step || null;
+      tbody += `<tr class="opt-hdr"><td colspan="5">${r.label}</td></tr>`; return;
+    }
 
     if (r.earlyPub) {
       const on = st.earlyPub === 'yes';
@@ -602,13 +631,10 @@ function recalc() {
     const unit = r.prof + r.govt, total = unit * n;
     tbody += `<tr><td>${r.label}</td><td>${r.prof>0?inr(r.prof):''}</td><td>${r.govt>0?inr(r.govt):''}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
   });
-
-  if (extraRows.length) {
+  if (curStep !== null) addonsByStep[curStep].forEach(e => { tbody += addonRowHtml(e); });
+  if (addonsByStep.additional.length) {
     tbody += `<tr class="opt-hdr"><td colspan="5">Additional Items</td></tr>`;
-    extraRows.forEach(e => {
-      const unit = e.prof + e.govt;
-      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):''}</td><td>${e.govt>0?inr(e.govt):''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
-    });
+    addonsByStep.additional.forEach(e => { tbody += addonRowHtml(e); });
   }
 
   if (st.showGst) {
@@ -659,24 +685,30 @@ function downloadPdf() {
     }
   });
   const profDisc = userProfile?.prof_discount || 0;
-  const pdfExtraRows = userAddons
-    .map((item, i) => ({
-      label: item.label,
-      prof:  Math.round(item.amount * (1 - profDisc/100)),
-      govt:  item.govt_fee_inr || 0,
-      on:    st.extras[i] === 'yes'
-    }))
-    .filter(e => e.on);
-  pdfExtraRows.forEach(e => { totProf += e.prof; totGovt += e.govt; });
+  const pdfAddonsByStep = { 1:[], 2:[], 3:[], additional:[] };
+  userAddons.forEach((item, i) => {
+    if (st.extras[i] !== 'yes') return;
+    const ds = item.display_step || 'additional';
+    let key;
+    if (ds === 'additional') { key = 'additional'; }
+    else { const sn = parseInt(ds.replace('step', '')); key = st.opts[sn] === 'yes' ? sn : 'additional'; }
+    pdfAddonsByStep[key].push({ label: item.label, prof: Math.round(item.amount * (1 - profDisc/100)), govt: item.govt_fee_inr || 0 });
+  });
+  [1, 2, 3, 'additional'].forEach(k => pdfAddonsByStep[k].forEach(e => { totProf += e.prof; totGovt += e.govt; }));
   const gProf = totProf * n, gGovt = totGovt * n;
   const gGst  = st.showGst ? Math.round(gProf * 0.18) : 0;
   const gTotal = gProf + gGovt + gGst;
   const discNote = profDisc > 0
     ? ` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>` : '';
 
+  const pdfAddonRow = e => { const u=e.prof+e.govt; return `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.govt>0?inr(e.govt):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(u)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(u*n)}</td></tr>`; };
+
   let pdfTbody = '';
+  let pdfCurStep = null;
   rows.forEach(r => {
     if (r.hdr) {
+      if (pdfCurStep !== null) pdfAddonsByStep[pdfCurStep].forEach(e => { pdfTbody += pdfAddonRow(e); });
+      pdfCurStep = r.step || null;
       pdfTbody += `<tr style="background:#dce6f5"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1a2f5e">${r.label}</td></tr>`;
       return;
     }
@@ -684,12 +716,10 @@ function downloadPdf() {
     const unit = r.prof + r.govt, total = unit * n;
     pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.govt>0?inr(r.govt):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
   });
-  if (pdfExtraRows.length) {
+  if (pdfCurStep !== null) pdfAddonsByStep[pdfCurStep].forEach(e => { pdfTbody += pdfAddonRow(e); });
+  if (pdfAddonsByStep.additional.length) {
     pdfTbody += `<tr style="background:#fef9ec"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
-    pdfExtraRows.forEach(e => {
-      const unit = e.prof + e.govt;
-      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.govt>0?inr(e.govt):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(unit*n)}</td></tr>`;
-    });
+    pdfAddonsByStep.additional.forEach(e => { pdfTbody += pdfAddonRow(e); });
   }
 
   if (st.showGst) {

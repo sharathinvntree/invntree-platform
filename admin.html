@@ -445,6 +445,15 @@
           <option value="us">🇺🇸 US only</option>
         </select>
       </div>
+      <div class="field">
+        <label class="field-label">Display in Step</label>
+        <select id="addon-step">
+          <option value="additional">Additional Items (end of calculator)</option>
+          <option value="step1">Step 1 – Novelty Search</option>
+          <option value="step2">Step 2 – Drafting &amp; Filing</option>
+          <option value="step3">Step 3 – Prosecution</option>
+        </select>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
         <div class="field" style="margin:0">
           <label class="field-label">Prof. Fee (₹)</label>
@@ -1108,6 +1117,7 @@
     document.getElementById('addon-label').value    = '';
     document.getElementById('addon-amount').value   = '';
     document.getElementById('addon-type').value     = 'both';
+    document.getElementById('addon-step').value     = 'additional';
     document.getElementById('addon-govt-inr').value = '';
     document.getElementById('addon-govt-usd').value = '';
     document.getElementById('addon-modal-error').classList.add('hidden');
@@ -1123,6 +1133,7 @@
     document.getElementById('addon-label').value    = a.label;
     document.getElementById('addon-amount').value   = a.amount;
     document.getElementById('addon-type').value     = a.type;
+    document.getElementById('addon-step').value     = a.display_step || 'additional';
     document.getElementById('addon-govt-inr').value = a.govt_fee_inr || '';
     document.getElementById('addon-govt-usd').value = a.govt_fee_usd || '';
     document.getElementById('addon-modal-error').classList.add('hidden');
@@ -1226,6 +1237,7 @@
     const label        = document.getElementById('addon-label').value.trim();
     const amount       = parseInt(document.getElementById('addon-amount').value)   || 0;
     const type         = document.getElementById('addon-type').value;
+    const display_step = document.getElementById('addon-step').value || 'additional';
     const govt_fee_inr = parseInt(document.getElementById('addon-govt-inr').value) || 0;
     const govt_fee_usd = parseInt(document.getElementById('addon-govt-usd').value) || 0;
 
@@ -1239,11 +1251,11 @@
 
     if (editingAddonId) {
       ({ error } = await db.from('addon_items')
-        .update({ label, amount, type, govt_fee_inr, govt_fee_usd })
+        .update({ label, amount, type, display_step, govt_fee_inr, govt_fee_usd })
         .eq('id', editingAddonId));
     } else {
       const { data: newRow, error: insertErr } = await db.from('addon_items')
-        .insert({ label, amount, type, govt_fee_inr, govt_fee_usd })
+        .insert({ label, amount, type, display_step, govt_fee_inr, govt_fee_usd })
         .select().single();
       error = insertErr;
       if (newRow) addonId = newRow.id;
