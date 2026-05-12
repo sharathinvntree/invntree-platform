@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree — Admin Panel</title>
+<title>InvnTree Admin Panel</title>
 <link rel="icon" href="/img/favicon.png">
 <link rel="stylesheet" href="css/shared.css">
 <style>
@@ -140,7 +140,7 @@
       <div class="card-header">
         <div>
           <h2 style="margin:0">Fee Schedules</h2>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Define base professional fees — assign different schedules to different clients</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Define base professional fees assign different schedules to different clients</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openNewSchedule()">+ New Schedule</button>
       </div>
@@ -168,7 +168,7 @@
       <div class="card-header">
         <div>
           <h2 style="margin:0">Add-on Items</h2>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Custom line items — assign any combination to individual clients. They appear in the client's calculator and PDF.</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Custom line items assign any combination to individual clients. They appear in the client's calculator and PDF.</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openNewAddon()">+ New Add-on</button>
       </div>
@@ -341,13 +341,13 @@
               <div>
                 <label class="field-label" style="display:block;margin-bottom:4px">🇮🇳 India Fee Schedule</label>
                 <select id="edit-india-schedule" class="sched-select">
-                  <option value="">— Default rates —</option>
+                  <option value=""> Default rates </option>
                 </select>
               </div>
               <div>
                 <label class="field-label" style="display:block;margin-bottom:4px">🇺🇸 US Fee Schedule</label>
                 <select id="edit-us-schedule" class="sched-select">
-                  <option value="">— Default rates —</option>
+                  <option value=""> Default rates </option>
                 </select>
               </div>
             </div>
@@ -356,9 +356,9 @@
 
       </div><!-- /top grid -->
 
-      <!-- ── Quote Details — full width ── -->
+      <!-- ── Quote Details full width ── -->
       <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
-        <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— pre-filled in PDF downloads for this user</span></div>
+        <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px"> pre-filled in PDF downloads for this user</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="field" style="margin:0">
             <label class="field-label">Client / Company Name</label>
@@ -413,7 +413,7 @@
         <div id="sched-type-label" style="font-size:13px;color:var(--text);padding:7px 0"></div>
       </div>
       <div style="border-top:1px solid var(--border);margin:4px 0 12px;padding-top:14px">
-        <div class="field-label" style="margin-bottom:2px">Professional Fee Amounts <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">(INR — govt fees are fixed by law and not editable here)</span></div>
+        <div class="field-label" style="margin-bottom:2px">Professional Fee Amounts <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">(INR govt fees are fixed by law and not editable here)</span></div>
         <div id="sched-fee-inputs" style="margin-top:10px"></div>
       </div>
     </div>
@@ -571,7 +571,7 @@
         ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">Prof: ${u.prof_discount}% discount</div>` : '';
       return `
       <tr data-id="${u.id}">
-        <td><strong>${esc(u.full_name || '—')}</strong></td>
+        <td><strong>${esc(u.full_name || '')}</strong></td>
         <td style="color:var(--muted)">${esc(u.email)}</td>
         <td><span class="badge ${u.role === 'admin' ? 'role-admin' : 'role-user'}">${u.role}</span></td>
         <td>
@@ -820,17 +820,17 @@
     { section: 'Step 1', items: [
       { key: 'noveltySearch',            label: 'Novelty Search',                             def: 35000  },
     ]},
-    { section: 'Step 2 — Both Paths', items: [
-      { key: 'form3',                    label: 'Form 3 — Statements & Undertakings',         def: 5000   },
+    { section: 'Step 2 Both Paths', items: [
+      { key: 'form3',                    label: 'Form 3 Statements & Undertakings',         def: 5000   },
       { key: 'assignmentDeed',           label: 'Assignment Deed',                            def: 8000   },
     ]},
-    { section: 'Step 2 — Complete Specification', items: [
+    { section: 'Step 2 Complete Specification', items: [
       { key: 'draftingCompleteSpec',     label: 'Drafting Complete Specification',            def: 120000 },
       { key: 'filingComplete',           label: 'Filing Complete Application',                def: 15000  },
       { key: 'examinationReqComplete',   label: 'Examination Request (Normal)',               def: 5000   },
       { key: 'earlyPublicationComplete', label: 'Request for Early Publication',              def: 5000   },
     ]},
-    { section: 'Step 2 — Provisional → Complete', items: [
+    { section: 'Step 2 Provisional → Complete', items: [
       { key: 'draftingProvSpec',         label: 'Drafting Provisional Specification',        def: 80000  },
       { key: 'filingProv',               label: 'Filing Provisional Application',            def: 15000  },
       { key: 'draftingCompleteFromProv', label: 'Drafting Complete Spec (from Provisional)', def: 50000  },
@@ -838,7 +838,7 @@
       { key: 'examinationReqProv',       label: 'Examination Request (Normal)',               def: 5000   },
       { key: 'earlyPublicationProv',     label: 'Request for Early Publication',              def: 5000   },
     ]},
-    { section: 'Step 3 — Prosecution', items: [
+    { section: 'Step 3 Prosecution', items: [
       { key: 'ferResponse',              label: 'Response to First Examination Report',       def: 60000  },
       { key: 'hearing',                  label: 'Hearing & Written Submissions',             def: 60000  },
     ]},
@@ -848,20 +848,20 @@
     { section: 'Step 1', items: [
       { key: 'noveltySearch',            label: 'Novelty Search',                             def: 35000  },
     ]},
-    { section: 'Step 2 — Both Paths', items: [
+    { section: 'Step 2 Both Paths', items: [
       { key: 'foreignFilingPerm',        label: 'Foreign Filing Permission',                  def: 12000  },
     ]},
-    { section: 'Step 2 — Non-Provisional', items: [
+    { section: 'Step 2 Non-Provisional', items: [
       { key: 'draftingCompleteSpec',     label: 'Drafting Complete Specification',            def: 110000 },
       { key: 'filingNonProv',            label: 'Filing Non-Provisional Application',         def: 45000  },
     ]},
-    { section: 'Step 2 — Provisional → Complete', items: [
+    { section: 'Step 2 Provisional → Complete', items: [
       { key: 'draftingProvSpec',         label: 'Drafting Provisional Specification',        def: 80000  },
       { key: 'filingProv',               label: 'Filing Provisional Application',            def: 35000  },
       { key: 'draftingCompleteFromProv', label: 'Drafting Complete Spec (from Provisional)', def: 50000  },
       { key: 'filingNonProvFromProv',    label: 'Filing Non-Provisional (from Prov)',         def: 45000  },
     ]},
-    { section: 'Step 3 — Prosecution', items: [
+    { section: 'Step 3 Prosecution', items: [
       { key: 'officeAction',             label: 'Office Action Response',                     def: 70000  },
     ]},
   ];
@@ -893,7 +893,7 @@
     tbody.innerHTML = allSchedules.map(s => {
       const assigned = allUsers.filter(u =>
         u.india_fee_schedule_id === s.id || u.us_fee_schedule_id === s.id
-      ).map(u => esc(u.full_name || u.email)).join(', ') || '—';
+      ).map(u => esc(u.full_name || u.email)).join(', ') || '';
       return `
       <tr>
         <td><strong>${esc(s.name)}</strong></td>
@@ -911,7 +911,7 @@
   // ── Populate schedule dropdowns in edit-user modal ────────────
   function populateScheduleDropdowns(selectedIndia = '', selectedUs = '') {
     const mk = (schedules, selected) =>
-      `<option value="">— Default rates —</option>` +
+      `<option value=""> Default rates </option>` +
       schedules.map(s => `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
 
     document.getElementById('edit-india-schedule').innerHTML =
@@ -1083,7 +1083,7 @@
     const typeLabel = { india: '🇮🇳 India', us: '🇺🇸 US', both: '🌐 Both' };
     tbody.innerHTML = allAddons.map(a => {
       const assignedTo = allUsers.filter(u => (u.addon_ids || []).includes(a.id)).map(u => esc(u.full_name || u.email.split('@')[0]));
-      const assignedStr = assignedTo.length ? assignedTo.join(', ') : '<span style="color:var(--muted)">—</span>';
+      const assignedStr = assignedTo.length ? assignedTo.join(', ') : '<span style="color:var(--muted)"></span>';
       return `<tr>
         <td><strong>${esc(a.label)}</strong></td>
         <td>
@@ -1137,7 +1137,7 @@
     if (!a) return;
     assigningAddonId = id;
 
-    document.getElementById('assign-modal-title').textContent = `Assign — ${a.label}`;
+    document.getElementById('assign-modal-title').textContent = `Assign ${a.label}`;
     document.getElementById('assign-modal-subtitle').textContent =
       `Select which clients should see this add-on in their calculator.`;
     document.getElementById('assign-search').value = '';

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree — India Patent Fee Calculator</title>
+<title>InvnTree India Patent Fee Calculator</title>
 <link rel="icon" href="/img/favicon.png">
 <link rel="stylesheet" href="css/shared.css">
 <style>
@@ -232,9 +232,9 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
       </div>
 
       <div class="notes-bar">
-        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include in totals.</span>
+        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees toggle above to include in totals.</span>
         <span class="note-item"><strong>Govt. Fees</strong> are official IPO fees. Rate shown reflects entity type.</span>
-        <span class="note-item"><strong>Step 3 — Prosecution</strong> assumes 1 FER Response + 1 Hearing.</span>
+        <span class="note-item"><strong>Step 3 Prosecution</strong> assumes 1 FER Response + 1 Hearing.</span>
       </div>
 
       <div id="results-area">
@@ -250,7 +250,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 
     <!-- ══ FEE SCHEDULE TAB ══ -->
     <div id="tab-fee-schedule" class="calc-panel">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule — professional fees applicable to your engagement.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule professional fees applicable to your engagement.</p>
       <div class="fs-grid">
         <div class="fs-card">
           <div class="fs-head">
@@ -291,7 +291,7 @@ let userAddons  = [];   // add-on items assigned to this user (india + both)
 
   userProfile = auth.profile;
 
-  // Load assigned India fee schedule (if any) — override prof fee amounts before render
+  // Load assigned India fee schedule (if any) override prof fee amounts before render
   if (userProfile.india_fee_schedule_id) {
     const { data: sched } = await db
       .from('fee_schedules').select('fees').eq('id', userProfile.india_fee_schedule_id).single();
@@ -334,7 +334,7 @@ let userAddons  = [];   // add-on items assigned to this user (india + both)
 const fees = {
   prof: {
     noveltySearch:            { label: 'Novelty Search',                              group: 'step1',          amount: 35000  },
-    form3:                    { label: 'Form 3 — Statements & Undertakings',          group: 'step2-common',   amount: 5000   },
+    form3:                    { label: 'Form 3 Statements & Undertakings',          group: 'step2-common',   amount: 5000   },
     assignmentDeed:           { label: 'Assignment Deed',                             group: 'step2-common',   amount: 8000   },
     draftingCompleteSpec:     { label: 'Drafting Complete Specification',             group: 'step2-complete', amount: 120000 },
     filingComplete:           { label: 'Filing Complete Patent Application',          group: 'step2-complete', amount: 15000  },
@@ -357,8 +357,8 @@ const fees = {
     filingProv:               { label: 'Filing Provisional Application',       amount: 8000  },
     examinationReqProv:       { label: 'Examination Request',                  amount: 20000 },
     earlyPublicationProv:     { label: 'Request for Early Publication',        amount: 12500 },
-    ferAmendments:            { label: 'Filing Amendments — FER Response',    amount: 4000  },
-    hearingAmendments:        { label: 'Filing Amendments — Hearing',         amount: 4000  },
+    ferAmendments:            { label: 'Filing Amendments FER Response',    amount: 4000  },
+    hearingAmendments:        { label: 'Filing Amendments Hearing',         amount: 4000  },
   },
   // Natural Person / MSME / Startup govt fees
   govtSM: {
@@ -368,8 +368,8 @@ const fees = {
     filingProv:               { label: 'Filing Provisional Application',       amount: 1600  },
     examinationReqProv:       { label: 'Examination Request',                  amount: 4000  },
     earlyPublicationProv:     { label: 'Request for Early Publication',        amount: 2500  },
-    ferAmendments:            { label: 'Filing Amendments — FER Response',    amount: 800   },
-    hearingAmendments:        { label: 'Filing Amendments — Hearing',         amount: 800   },
+    ferAmendments:            { label: 'Filing Amendments FER Response',    amount: 800   },
+    hearingAmendments:        { label: 'Filing Amendments Hearing',         amount: 800   },
   }
 };
 
@@ -436,7 +436,7 @@ function buildExtraSteps() {
   const hdr = document.createElement('div');
   hdr.className = 'step-item';
   hdr.style.cssText = 'background:#fefbec;pointer-events:none';
-  hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items — specific to your engagement</span></div>`;
+  hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items specific to your engagement</span></div>`;
   list.appendChild(hdr);
 
   userAddons.forEach((item, i) => {
@@ -469,7 +469,7 @@ function setExtra(idx, val) {
 
 // ── Indian number format ──────────────────────────────────────
 function inr(n) {
-  if (!n) return '–'; n = Math.round(n); if (!n) return '–';
+  if (!n) return ''; n = Math.round(n); if (!n) return '';
   const s = n.toString();
   if (s.length <= 3) return '₹' + s;
   let res = s.slice(-3), rem = s.slice(0,-3);
@@ -494,15 +494,15 @@ function buildRows() {
   const rows = [];
 
   if (st.opts[1] === 'yes') {
-    rows.push({hdr:true, label:'Step 1 — Novelty Search'});
+    rows.push({hdr:true, label:'Step 1 Novelty Search'});
     rows.push({label:'Novelty Search', prof:profFee('noveltySearch'), govt:0});
   }
 
   if (st.opts[2] === 'yes') {
     const isCS = st.draftType === 'complete';
-    rows.push({hdr:true, label:`Step 2 — Drafting & Filing (${isCS ? 'Complete Specification' : 'Provisional → Complete'})`});
+    rows.push({hdr:true, label:`Step 2 Drafting & Filing (${isCS ? 'Complete Specification' : 'Provisional → Complete'})`});
 
-    rows.push({label:'Form 3 — Statements & Undertakings',  prof:profFee('form3'),          govt:0});
+    rows.push({label:'Form 3 Statements & Undertakings',  prof:profFee('form3'),          govt:0});
     rows.push({label:'Assignment Deed',                      prof:profFee('assignmentDeed'), govt:0});
 
     if (isCS) {
@@ -521,7 +521,7 @@ function buildRows() {
   }
 
   if (st.opts[3] === 'yes') {
-    rows.push({hdr:true, label:'Step 3 — Prosecution (1 FER Response + 1 Hearing)'});
+    rows.push({hdr:true, label:'Step 3 Prosecution (1 FER Response + 1 Hearing)'});
     rows.push({label:'Response to First Examination Report (FER)', prof:profFee('ferResponse'), govt:govtFee('ferAmendments')});
     rows.push({label:'Hearing & Written Submissions',              prof:profFee('hearing'),     govt:govtFee('hearingAmendments')});
   }
@@ -580,7 +580,7 @@ function recalc() {
 
   const sumHTML = `<div class="${sumClass}">
     <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst ? 'Excl. GST' : '+ GST @ 18% applicable'}</div></div>
-    <div class="s-card"><div class="s-lbl">Govt. Fees (IPO)</div><div class="s-amt">${gGovt ? inr(gGovt) : '–'}</div><div class="s-note">${userProfile?.entity_type==='startup_msme'?'MSME/Startup rates':'Large entity rates'}</div></div>
+    <div class="s-card"><div class="s-lbl">Govt. Fees (IPO)</div><div class="s-amt">${gGovt ? inr(gGovt) : ''}</div><div class="s-note">${userProfile?.entity_type==='startup_msme'?'MSME/Startup rates':'Large entity rates'}</div></div>
     ${gstCard}
     <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
   </div>`;
@@ -595,28 +595,28 @@ function recalc() {
         <button style="padding:2px 10px;border:none;border-right:1px solid var(--border);background:${on?'#dcf5e4':'#fff'};color:${on?'#1a7a3a':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('yes')">Yes</button>
         <button style="padding:2px 10px;border:none;background:${!on?'#fde8e8':'#fff'};color:${!on?'#b91c1c':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('no')">No</button>
       </span>`;
-      tbody += `<tr><td>${r.label}${toggle}</td><td>${on && r.prof>0?inr(r.prof):'–'}</td><td>${on && r.govt>0?inr(r.govt):'–'}</td><td>${on?inr(r.prof+r.govt):'–'}</td><td>${on?'<strong>'+inr((r.prof+r.govt)*n)+'</strong>':'–'}</td></tr>`;
+      tbody += `<tr><td>${r.label}${toggle}</td><td>${on && r.prof>0?inr(r.prof):''}</td><td>${on && r.govt>0?inr(r.govt):''}</td><td>${on?inr(r.prof+r.govt):''}</td><td>${on?'<strong>'+inr((r.prof+r.govt)*n)+'</strong>':''}</td></tr>`;
       return;
     }
 
     const unit = r.prof + r.govt, total = unit * n;
-    tbody += `<tr><td>${r.label}</td><td>${r.prof>0?inr(r.prof):'–'}</td><td>${r.govt>0?inr(r.govt):'–'}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
+    tbody += `<tr><td>${r.label}</td><td>${r.prof>0?inr(r.prof):''}</td><td>${r.govt>0?inr(r.govt):''}</td><td>${inr(unit)}</td><td><strong>${inr(total)}</strong></td></tr>`;
   });
 
   if (extraRows.length) {
     tbody += `<tr class="opt-hdr"><td colspan="5">Additional Items</td></tr>`;
     extraRows.forEach(e => {
       const unit = e.prof + e.govt;
-      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):'–'}</td><td>${e.govt>0?inr(e.govt):'–'}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
+      tbody += `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):''}</td><td>${e.govt>0?inr(e.govt):''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
     });
   }
 
   if (st.showGst) {
-    tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf * n * 0.18)}</td><td>–</td><td colspan="2">${inr(gGst)}</td></tr>`;
+    tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf * n * 0.18)}</td><td></td><td colspan="2">${inr(gGst)}</td></tr>`;
   }
 
-  tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):'–'}</td><td>${inr(totProf+totGovt)}</td><td>—</td></tr>
-  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):'–'}</td><td>—</td><td>${inr(gTotal)}</td></tr>`;
+  tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td><td></td></tr>
+  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
 
   area.innerHTML = sumHTML + `<div class="cfg-card">
     <div class="cfg-head">
@@ -682,13 +682,13 @@ function downloadPdf() {
     }
     if (r.earlyPub && st.earlyPub === 'no') return;
     const unit = r.prof + r.govt, total = unit * n;
-    pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.govt>0?inr(r.govt):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
+    pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.govt>0?inr(r.govt):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
   });
   if (pdfExtraRows.length) {
     pdfTbody += `<tr style="background:#fef9ec"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
     pdfExtraRows.forEach(e => {
       const unit = e.prof + e.govt;
-      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.govt>0?inr(e.govt):'–'}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(unit*n)}</td></tr>`;
+      pdfTbody += `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.govt>0?inr(e.govt):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${inr(unit)}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(unit*n)}</td></tr>`;
     });
   }
 
@@ -696,8 +696,8 @@ function downloadPdf() {
     pdfTbody += `<tr style="background:#f0fff4"><td colspan="2" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td colspan="3" style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
 
-  pdfTbody += `<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total (per patent)${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):'–'}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">—</td></tr>
-  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(gProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${gGovt?inr(gGovt):'–'}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">—</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
+  pdfTbody += `<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total (per patent)${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):''}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e"></td></tr>
+  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(gProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${gGovt?inr(gGovt):''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff"></td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
 
   const notesSection = notes ? `
     <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
@@ -754,7 +754,7 @@ function downloadPdf() {
 <html>
 <head>
 <meta charset="UTF-8">
-<title>InvnTree — India Patent Fee Estimate</title>
+<title>InvnTree India Patent Fee Estimate</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#fff}
@@ -839,20 +839,20 @@ function buildFeeSchedule() {
   }
 
   // Prof fees
-  p.appendChild(sec('Step 1 — Novelty Search'));
+  p.appendChild(sec('Step 1 Novelty Search'));
   p.appendChild(mk('noveltySearch'));
   p.appendChild(dvd());
-  p.appendChild(sec('Step 2 — Both Paths'));
+  p.appendChild(sec('Step 2 Both Paths'));
   p.appendChild(mk('form3'));
   p.appendChild(mk('assignmentDeed'));
   p.appendChild(dvd());
-  p.appendChild(sec('Step 2 — Complete Specification'));
+  p.appendChild(sec('Step 2 Complete Specification'));
   p.appendChild(mk('draftingCompleteSpec'));
   p.appendChild(mk('filingComplete'));
   p.appendChild(mk('examinationReqComplete'));
   p.appendChild(mk('earlyPublicationComplete'));
   p.appendChild(dvd());
-  p.appendChild(sec('Step 2 — Provisional → Complete'));
+  p.appendChild(sec('Step 2 Provisional → Complete'));
   p.appendChild(mk('draftingProvSpec'));
   p.appendChild(mk('filingProv'));
   p.appendChild(mk('draftingCompleteFromProv'));
@@ -860,27 +860,27 @@ function buildFeeSchedule() {
   p.appendChild(mk('examinationReqProv'));
   p.appendChild(mk('earlyPublicationProv'));
   p.appendChild(dvd());
-  p.appendChild(sec('Step 3 — Prosecution'));
+  p.appendChild(sec('Step 3 Prosecution'));
   p.appendChild(mk('ferResponse'));
   p.appendChild(mk('hearing'));
 
-  // Govt fees — two columns: Other Entity | MSME/Startup
+  // Govt fees two columns: Other Entity | MSME/Startup
   const legend = document.createElement('div');
   legend.style.cssText = 'display:flex;gap:6px;align-items:center;justify-content:flex-end;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px';
   legend.innerHTML = '<span style="width:90px;text-align:right">Other</span><span style="width:90px;text-align:right">MSME/SM</span>';
   g.appendChild(legend);
 
-  g.appendChild(sec('Step 2 — Complete Specification'));
+  g.appendChild(sec('Step 2 Complete Specification'));
   g.appendChild(mkGovtPair('filingComplete',           'Filing Complete Application'));
   g.appendChild(mkGovtPair('examinationReqComplete',   'Examination Request'));
   g.appendChild(mkGovtPair('earlyPublicationComplete', 'Early Publication'));
   g.appendChild(dvd());
-  g.appendChild(sec('Step 2 — Provisional → Complete'));
+  g.appendChild(sec('Step 2 Provisional → Complete'));
   g.appendChild(mkGovtPair('filingProv',               'Filing Provisional Application'));
   g.appendChild(mkGovtPair('examinationReqProv',       'Examination Request'));
   g.appendChild(mkGovtPair('earlyPublicationProv',     'Early Publication'));
   g.appendChild(dvd());
-  g.appendChild(sec('Step 3 — Prosecution'));
+  g.appendChild(sec('Step 3 Prosecution'));
   g.appendChild(mkGovtPair('ferAmendments',            'FER Response Amendments'));
   g.appendChild(mkGovtPair('hearingAmendments',        'Hearing Amendments'));
 
