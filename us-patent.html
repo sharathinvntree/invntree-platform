@@ -555,8 +555,8 @@ function downloadPdf() {
   const date    = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'});
 
   const headerRows = [
-    client  ? `<tr><td style="color:#666;width:160px;padding:4px 0">Client</td><td style="font-weight:600;padding:4px 0">${client}</td></tr>` : '',
-    contact ? `<tr><td style="color:#666;padding:4px 0">Inventor / Contact</td><td style="font-weight:600;padding:4px 0">${contact}</td></tr>` : '',
+    client  ? `<tr><td style="color:#666;width:160px;padding:4px 0">Company</td><td style="font-weight:600;padding:4px 0">${client}</td></tr>` : '',
+    contact ? `<tr><td style="color:#666;padding:4px 0">Contact</td><td style="font-weight:600;padding:4px 0">${contact}</td></tr>` : '',
     title   ? `<tr><td style="color:#666;padding:4px 0">Invention Title</td><td style="font-weight:600;padding:4px 0">${title}</td></tr>` : '',
     date    ? `<tr><td style="color:#666;padding:4px 0">Date</td><td style="font-weight:600;padding:4px 0">${date}</td></tr>` : '',
   ].filter(Boolean).join('');
@@ -605,8 +605,7 @@ function downloadPdf() {
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:780px;margin:0 auto;color:#1a1a2e">
       <div style="background:#1a2f5e;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;border-radius:8px 8px 0 0">
         <div>
-          <div style="font-size:24px;font-weight:800;color:#f5c842;letter-spacing:-0.5px">InvnTree</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">IP Services</div>
+          <img src="${window.location.origin}/img/logo-white.png" style="height:44px;display:block" alt="InvnTree">
         </div>
         <div style="text-align:right">
           <div style="font-size:14px;font-weight:700;color:#fff">USA Patent Fee Estimate</div>
