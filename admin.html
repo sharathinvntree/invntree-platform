@@ -90,6 +90,7 @@
   <div class="admin-tabbar">
     <button class="admin-tab active" id="atab-users"     onclick="switchAdminTab('users')">👥 Users</button>
     <button class="admin-tab"        id="atab-schedules" onclick="switchAdminTab('schedules')">📋 Fee Schedules</button>
+    <button class="admin-tab"        id="atab-addons"    onclick="switchAdminTab('addons')">✦ Add-ons</button>
   </div>
 
   <!-- ── Users Panel ── -->
@@ -160,6 +161,29 @@
       </div>
     </div>
   </div><!-- /apanel-schedules -->
+
+  <!-- ── Add-ons Panel ── -->
+  <div id="apanel-addons" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 style="margin:0">Add-on Items</h2>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Custom line items — assign any combination to individual clients. They appear in the client's calculator and PDF.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNewAddon()">+ New Add-on</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-table" id="addons-table">
+          <thead>
+            <tr><th>Label / Description</th><th>Amount (₹)</th><th>Calculator</th><th>Assigned to</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="addons-tbody">
+            <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /apanel-addons -->
 
 </div>
 
@@ -332,6 +356,14 @@
 
       </div><!-- /top grid -->
 
+      <!-- ── Add-on Items checklist — full width ── -->
+      <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
+        <div class="field-label" style="margin-bottom:10px">Add-on Items <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— tick which custom items appear in this client's calculator</span></div>
+        <div id="edit-addon-list" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;padding:10px 12px;background:#fafbfc">
+          <div style="font-size:12px;color:var(--muted)">Loading add-ons…</div>
+        </div>
+      </div>
+
       <!-- ── Quote Details — full width ── -->
       <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
         <div class="field-label" style="margin-bottom:12px">Quote Details <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px">— pre-filled in PDF downloads for this user</span></div>
@@ -400,6 +432,41 @@
   </div>
 </div>
 
+<!-- ── Add-on Item Modal ── -->
+<div class="modal-overlay hidden" id="addon-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <h3 id="addon-modal-title">New Add-on Item</h3>
+      <button class="modal-close" onclick="closeAddonModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="addon-modal-error" class="alert alert-error hidden"></div>
+      <div class="field">
+        <label class="field-label">Label / Description</label>
+        <input type="text" id="addon-label" placeholder="e.g. Translation Charges, Notarisation…">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="margin:0">
+          <label class="field-label">Amount (₹)</label>
+          <input type="number" id="addon-amount" min="0" step="500" placeholder="0">
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">Applies to</label>
+          <select id="addon-type">
+            <option value="both">🌐 Both calculators</option>
+            <option value="india">🇮🇳 India only</option>
+            <option value="us">🇺🇸 US only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAddonModal()">Cancel</button>
+      <button class="btn btn-primary" id="addon-save-btn" onclick="saveAddon()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
@@ -415,7 +482,7 @@
     currentAdminId = auth.profile.id;
     renderNavbar(auth.profile, 'Admin Panel');
 
-    await Promise.all([loadUsers(), loadSchedules()]);
+    await Promise.all([loadUsers(), loadSchedules(), loadAddons()]);
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main').style.display   = 'block';
@@ -556,6 +623,29 @@
 
     document.getElementById('edit-role').disabled = (userId === currentAdminId);
 
+    // Populate addon checklist
+    const userAddonIds = u.addon_ids || [];
+    const addonList = document.getElementById('edit-addon-list');
+    if (!allAddons.length) {
+      addonList.innerHTML = '<div style="font-size:12px;color:var(--muted)">No add-on items yet — create some in the Add-ons tab first.</div>';
+    } else {
+      const groups = [
+        { label: '🌐 Both calculators', items: allAddons.filter(a => a.type === 'both') },
+        { label: '🇮🇳 India',           items: allAddons.filter(a => a.type === 'india') },
+        { label: '🇺🇸 US',             items: allAddons.filter(a => a.type === 'us') },
+      ].filter(g => g.items.length);
+
+      addonList.innerHTML = groups.map(g => `
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:8px 0 4px">${g.label}</div>
+        ${g.items.map(a => `
+          <label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer">
+            <input type="checkbox" class="addon-check" value="${a.id}" ${userAddonIds.includes(a.id) ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer;flex-shrink:0">
+            <span style="flex:1;font-size:13px;color:var(--text)">${esc(a.label)}</span>
+            <span style="font-size:12px;color:var(--muted);flex-shrink:0">₹${a.amount.toLocaleString('en-IN')}</span>
+          </label>`).join('')}
+      `).join('');
+    }
+
     document.getElementById('edit-modal').classList.remove('hidden');
   }
 
@@ -587,6 +677,7 @@
       invention_title:  document.getElementById('edit-invention-title').value.trim() || null,
       quote_notes:      document.getElementById('edit-quote-notes').value.trim() || null,
       is_active:        document.getElementById('edit-active').value === 'true',
+      addon_ids:        Array.from(document.querySelectorAll('.addon-check:checked')).map(cb => cb.value),
     };
 
     const { error } = await db.from('profiles').update(updates).eq('id', editingId);
@@ -717,6 +808,8 @@
 
   let allSchedules   = [];
   let editingSchedId = null;
+  let allAddons      = [];
+  let editingAddonId = null;
 
   // Fee definitions used to render modal inputs
   const INDIA_FEE_DEFS = [
@@ -771,7 +864,7 @@
 
   // ── Switch admin tab ──────────────────────────────────────────
   function switchAdminTab(tab) {
-    ['users','schedules'].forEach(t => {
+    ['users','schedules','addons'].forEach(t => {
       document.getElementById(`apanel-${t}`).style.display = t === tab ? 'block' : 'none';
       document.getElementById(`atab-${t}`).classList.toggle('active', t === tab);
     });
@@ -893,60 +986,6 @@
       });
     });
 
-    // ── Additional / custom line items ────────────────────────
-    const extraHeader = document.createElement('div');
-    extraHeader.className = 'sched-sec';
-    extraHeader.style.cssText = extraHeader.style.cssText + ';display:flex;align-items:center;justify-content:space-between';
-    extraHeader.innerHTML = `<span>Additional Line Items</span>
-      <button type="button" onclick="addExtraLine()"
-        style="background:transparent;border:1.5px solid var(--border);border-radius:5px;padding:2px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--blue);font-family:inherit">
-        + Add Line
-      </button>`;
-    container.appendChild(extraHeader);
-
-    const extraRows = document.createElement('div');
-    extraRows.id = 'sched-extra-rows';
-    container.appendChild(extraRows);
-
-    // Populate existing extra items
-    const existing = existingFees._extra || [];
-    existing.forEach(item => addExtraLine(item.label, item.amount));
-  }
-
-  // ── Add one extra line row ────────────────────────────────────
-  function addExtraLine(label = '', amount = 0) {
-    const container = document.getElementById('sched-extra-rows');
-    const row = document.createElement('div');
-    row.className = 'sched-extra-row';
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
-
-    const labelInp = document.createElement('input');
-    labelInp.type = 'text';
-    labelInp.placeholder = 'e.g. Translation Charges, Notarisation…';
-    labelInp.value = label;
-    labelInp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box';
-
-    const cur = document.createElement('span');
-    cur.textContent = '₹';
-    cur.style.cssText = 'font-size:13px;color:var(--muted);flex-shrink:0';
-
-    const amtInp = document.createElement('input');
-    amtInp.type = 'number'; amtInp.min = 0; amtInp.step = 500;
-    amtInp.value = amount;
-    amtInp.style.cssText = 'width:110px;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;text-align:right;outline:none;font-family:inherit;box-sizing:border-box';
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.textContent = '×';
-    del.title = 'Remove line';
-    del.style.cssText = 'background:transparent;border:1.5px solid #fca5a5;border-radius:5px;width:28px;height:28px;font-size:16px;line-height:1;cursor:pointer;color:#dc2626;flex-shrink:0;font-family:inherit';
-    del.onclick = () => row.remove();
-
-    row.appendChild(labelInp); row.appendChild(cur); row.appendChild(amtInp); row.appendChild(del);
-    container.appendChild(row);
-
-    // Focus the label input if it's a new (empty) row
-    if (!label) labelInp.focus();
   }
 
   // ── Save schedule (create or update) ─────────────────────────
@@ -971,15 +1010,6 @@
       feesObj[key] = parseFloat(inp?.value) || 0;
     }));
 
-    // Collect extra / custom line items
-    const extras = [];
-    document.querySelectorAll('.sched-extra-row').forEach(row => {
-      const inputs = row.querySelectorAll('input');
-      const lbl = inputs[0].value.trim();
-      const amt = parseFloat(inputs[1].value) || 0;
-      if (lbl) extras.push({ label: lbl, amount: amt });
-    });
-    if (extras.length) feesObj._extra = extras;
 
     btn.disabled = true; btn.textContent = 'Saving…';
 
@@ -1027,6 +1057,106 @@
     if (error) { alert('Failed to delete: ' + error.message); return; }
     await loadSchedules();
   }
+
+  // ════════════════════════════════════════════════════════════
+  // ADD-ON ITEMS
+  // ════════════════════════════════════════════════════════════
+
+  async function loadAddons() {
+    const { data, error } = await db.from('addon_items').select('*').order('created_at', { ascending: true });
+    if (error) { console.error('loadAddons:', error); return; }
+    allAddons = data || [];
+    renderAddonsTable();
+  }
+
+  function renderAddonsTable() {
+    const tbody = document.getElementById('addons-tbody');
+    if (!tbody) return;
+    if (!allAddons.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">No add-on items yet. Click <strong>+ New Add-on</strong> to create one.</td></tr>`;
+      return;
+    }
+    const typeLabel = { india: '🇮🇳 India', us: '🇺🇸 US', both: '🌐 Both' };
+    tbody.innerHTML = allAddons.map(a => {
+      const assignedTo = allUsers.filter(u => (u.addon_ids || []).includes(a.id)).map(u => esc(u.full_name || u.email.split('@')[0]));
+      const assignedStr = assignedTo.length ? assignedTo.join(', ') : '<span style="color:var(--muted)">—</span>';
+      return `<tr>
+        <td><strong>${esc(a.label)}</strong></td>
+        <td>₹${a.amount.toLocaleString('en-IN')}</td>
+        <td><span class="badge ${a.type === 'india' ? 'badge-blue' : a.type === 'us' ? 'badge-gold' : 'badge-gray'}">${typeLabel[a.type]}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${assignedStr}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditAddon('${a.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteAddon('${a.id}','${esc(a.label)}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function openNewAddon() {
+    editingAddonId = null;
+    document.getElementById('addon-modal-title').textContent = 'New Add-on Item';
+    document.getElementById('addon-label').value  = '';
+    document.getElementById('addon-amount').value = '';
+    document.getElementById('addon-type').value   = 'both';
+    document.getElementById('addon-modal-error').classList.add('hidden');
+    document.getElementById('addon-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('addon-label').focus(), 50);
+  }
+
+  function openEditAddon(id) {
+    const a = allAddons.find(a => a.id === id);
+    if (!a) return;
+    editingAddonId = id;
+    document.getElementById('addon-modal-title').textContent = 'Edit Add-on Item';
+    document.getElementById('addon-label').value  = a.label;
+    document.getElementById('addon-amount').value = a.amount;
+    document.getElementById('addon-type').value   = a.type;
+    document.getElementById('addon-modal-error').classList.add('hidden');
+    document.getElementById('addon-modal').classList.remove('hidden');
+  }
+
+  function closeAddonModal() {
+    document.getElementById('addon-modal').classList.add('hidden');
+    editingAddonId = null;
+  }
+
+  async function saveAddon() {
+    const btn   = document.getElementById('addon-save-btn');
+    const errEl = document.getElementById('addon-modal-error');
+    const label  = document.getElementById('addon-label').value.trim();
+    const amount = parseInt(document.getElementById('addon-amount').value) || 0;
+    const type   = document.getElementById('addon-type').value;
+
+    errEl.classList.add('hidden');
+    if (!label) { errEl.textContent = 'Please enter a label.'; errEl.classList.remove('hidden'); return; }
+
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    let error;
+    if (editingAddonId) {
+      ({ error } = await db.from('addon_items').update({ label, amount, type }).eq('id', editingAddonId));
+    } else {
+      ({ error } = await db.from('addon_items').insert({ label, amount, type }));
+    }
+
+    btn.disabled = false; btn.textContent = 'Save';
+    if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+
+    closeAddonModal();
+    await loadAddons();
+  }
+
+  async function confirmDeleteAddon(id, name) {
+    if (!confirm(`Delete add-on "${name}"?\n\nIt will be removed from all clients it's currently assigned to.`)) return;
+    const { error } = await db.from('addon_items').delete().eq('id', id);
+    if (error) { alert('Failed to delete: ' + error.message); return; }
+    await loadAddons();
+  }
+
+  document.getElementById('addon-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('addon-modal')) closeAddonModal();
+  });
 
   // Close schedule modal on overlay click
   document.getElementById('schedule-modal').addEventListener('click', e => {

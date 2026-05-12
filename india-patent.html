@@ -277,8 +277,8 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 <script src="js/auth.js"></script>
 <script>
 // ── Auth gate ─────────────────────────────────────────────────
-let userProfile     = null;
-let scheduleExtras  = [];   // extra line items from assigned fee schedule
+let userProfile = null;
+let userAddons  = [];   // add-on items assigned to this user (india + both)
 
 (async () => {
   const auth = await requireAuth();
@@ -297,10 +297,17 @@ let scheduleExtras  = [];   // extra line items from assigned fee schedule
       .from('fee_schedules').select('fees').eq('id', userProfile.india_fee_schedule_id).single();
     if (sched?.fees) {
       Object.keys(sched.fees).forEach(k => {
-        if (k !== '_extra' && fees.prof[k]) fees.prof[k].amount = sched.fees[k];
+        if (fees.prof[k]) fees.prof[k].amount = sched.fees[k];
       });
-      scheduleExtras = sched.fees._extra || [];
     }
+  }
+
+  // Load user's assigned add-on items (india + both)
+  if (userProfile.addon_ids && userProfile.addon_ids.length > 0) {
+    const { data: addons } = await db.from('addon_items').select('*')
+      .in('id', userProfile.addon_ids)
+      .in('type', ['india', 'both']);
+    userAddons = addons || [];
   }
 
   // Show fee schedule tab only if admin enabled it for this user
@@ -409,20 +416,20 @@ function setGst(val) {
 function resetAll() {
   document.getElementById('numPatents').value = 1;
   const initExtras = {};
-  scheduleExtras.forEach((_, i) => { initExtras[i] = 'yes'; });
+  userAddons.forEach((_, i) => { initExtras[i] = 'yes'; });
   st = { n:1, opts:{1:'yes',2:'yes',3:'yes'}, extras: initExtras, draftType:'complete', earlyPub:'yes', showGst:false };
   [1,2,3].forEach(i => setOpt(i,'yes'));
   setDraftType('complete');
   setGst('no');
-  scheduleExtras.forEach((_, i) => setExtra(i, 'yes'));
+  userAddons.forEach((_, i) => setExtra(i, 'yes'));
   recalc();
 }
 
 // ── Extra add-on steps (from assigned fee schedule) ────────────
 function buildExtraSteps() {
-  if (!scheduleExtras.length) return;
+  if (!userAddons.length) return;
 
-  scheduleExtras.forEach((_, i) => { st.extras[i] = 'yes'; });
+  userAddons.forEach((_, i) => { st.extras[i] = 'yes'; });
 
   const list = document.querySelector('.steps-list');
 
@@ -432,7 +439,7 @@ function buildExtraSteps() {
   hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items — specific to your engagement</span></div>`;
   list.appendChild(hdr);
 
-  scheduleExtras.forEach((item, i) => {
+  userAddons.forEach((item, i) => {
     const row = document.createElement('div');
     row.className = 'step-item active';
     row.id = `extra-pill-${i}`;
@@ -543,7 +550,7 @@ function recalc() {
 
   // Extra add-on items from assigned schedule (professional fees, discount applies)
   const profDisc = userProfile?.prof_discount || 0;
-  const extraRows = scheduleExtras
+  const extraRows = userAddons
     .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
     .filter(e => e.on);
   extraRows.forEach(e => { totProf += e.amount; });
@@ -646,7 +653,7 @@ function downloadPdf() {
     }
   });
   const profDisc = userProfile?.prof_discount || 0;
-  const pdfExtraRows = scheduleExtras
+  const pdfExtraRows = userAddons
     .map((item, i) => ({ label: item.label, amount: Math.round(item.amount * (1 - profDisc/100)), on: st.extras[i] === 'yes' }))
     .filter(e => e.on);
   pdfExtraRows.forEach(e => { totProf += e.amount; });
@@ -866,10 +873,10 @@ function buildFeeSchedule() {
   g.appendChild(mkGovtPair('hearingAmendments',        'Hearing Amendments'));
 
   // Extra / additional line items (admin-defined)
-  if (scheduleExtras.length) {
+  if (userAddons.length) {
     p.appendChild(dvd());
     p.appendChild(sec('Additional Items'));
-    scheduleExtras.forEach(item => {
+    userAddons.forEach(item => {
       const base  = item.amount;
       const disc  = userProfile ? (userProfile.prof_discount || 0) : 0;
       const after = disc > 0 ? Math.round(base * (1 - disc/100)) : base;
