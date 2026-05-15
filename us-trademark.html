@@ -173,19 +173,21 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
         <div class="cfg-head"><h2>Configuration</h2></div>
         <div class="cfg-body">
 
-          <!-- Mark type + Classes row -->
-          <div class="mark-type-row">
+          <!-- Marks + Classes inputs -->
+          <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid var(--border)">
             <div style="display:flex;align-items:center;gap:10px">
-              <span class="mark-type-label">Mark Type</span>
-              <div class="draft-btns">
-                <button id="mt-wordmark" class="dt-on" onclick="setMarkType('wordmark')">Wordmark</button>
-                <button id="mt-device"               onclick="setMarkType('device')">Device / Logo</button>
-              </div>
+              <span class="field-label-sm">Wordmarks</span>
+              <input type="number" id="numWordmarks" value="1" min="0" max="99" step="1" oninput="recalc()">
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="field-label-sm">Device / Logo Marks</span>
+              <input type="number" id="numDeviceMarks" value="0" min="0" max="99" step="1" oninput="recalc()">
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
               <span class="field-label-sm">No. of Classes</span>
               <input type="number" id="numClasses" value="1" min="1" max="45" step="1" oninput="recalc()">
             </div>
+            <div id="marks-warning" style="display:none;font-size:12px;font-weight:600;color:#b91c1c">⚠ Enter at least 1 mark to calculate fees</div>
           </div>
 
           <div class="steps-label">Steps to include</div>
@@ -243,16 +245,15 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
                   <button id="o3-no"                 onclick="setOpt(3,'no')">No</button>
                 </div>
               </div>
-              <!-- OA count + complexity sub-row -->
+              <!-- OA complexity sub-row -->
               <div class="step-sub" id="oa-row">
-                <span class="step-sub-label">Office Actions:</span>
-                <input type="number" class="inline-num" id="numOA" value="1" min="0" max="10" step="1" oninput="recalc()">
-                <span class="step-sub-label" style="margin-left:4px">Complexity:</span>
+                <span class="step-sub-label">OA Complexity:</span>
                 <div class="draft-btns">
                   <button id="oa-simple"   onclick="setOAComplexity('simple')">Simple</button>
                   <button id="oa-standard" class="dt-on" onclick="setOAComplexity('standard')">Standard</button>
                   <button id="oa-complex"  onclick="setOAComplexity('complex')">Complex</button>
                 </div>
+                <span class="step-sub-note">1 Office Action Response per mark included</span>
               </div>
               <!-- Extensions sub-row (ITU only) -->
               <div class="step-sub hidden" id="ext-row" style="background:#fff8ed">
@@ -427,13 +428,13 @@ const fees = {
 const USD_RATE = 100;
 
 let st = {
+  numWordmarks: 1,
+  numDeviceMarks: 0,
   classes: 1,
   opts: {1:'yes', 2:'yes', 3:'yes', 4:'no'},
   extras: {},
-  markType: 'wordmark',
   filingBasis: 'itu',
   descType: 'teas-plus',
-  numOA: 1,
   oaComplexity: 'standard',
   numExtensions: 0,
   maintType: '8+15',
@@ -469,13 +470,6 @@ function setOpt(num, val) {
   if (num===4) {
     document.getElementById('maint-type-row').classList.toggle('hidden', val!=='yes');
   }
-  recalc();
-}
-
-function setMarkType(type) {
-  st.markType = type;
-  document.getElementById('mt-wordmark').className = type==='wordmark' ? 'dt-on' : '';
-  document.getElementById('mt-device').className   = type==='device'   ? 'dt-on' : '';
   recalc();
 }
 
@@ -535,18 +529,19 @@ function setGst(val) {
 }
 
 function resetAll() {
-  document.getElementById('numClasses').value   = 1;
-  document.getElementById('numOA').value        = 1;
-  document.getElementById('numExtensions').value= 0;
+  document.getElementById('numWordmarks').value  = 1;
+  document.getElementById('numDeviceMarks').value= 0;
+  document.getElementById('numClasses').value    = 1;
+  document.getElementById('numExtensions').value = 0;
   const initExtras = {};
   userAddons.forEach((_, i) => { initExtras[i] = 'yes'; });
   st = {
-    classes:1, opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
-    markType:'wordmark', filingBasis:'itu', descType:'teas-plus',
-    numOA:1, oaComplexity:'standard', numExtensions:0, maintType:'8+15', showGst:false
+    numWordmarks:1, numDeviceMarks:0, classes:1,
+    opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
+    filingBasis:'itu', descType:'teas-plus',
+    oaComplexity:'standard', numExtensions:0, maintType:'8+15', showGst:false
   };
   [1,2,3,4].forEach(i => setOpt(i, i===4?'no':'yes'));
-  setMarkType('wordmark');
   setFilingBasis('itu');
   setDescType('teas-plus');
   setOAComplexity('standard');
@@ -635,20 +630,33 @@ function govtFeeUsd(key) { return fees.govt[key]?.amount || 0; }
 // ── Build fee rows ────────────────────────────────────────────────
 function buildRows() {
   const rows = [];
-  const nc   = st.classes;
-  const isITU     = st.filingBasis === 'itu';
+  const nc  = st.classes;
+  const nWM = st.numWordmarks;
+  const nDM = st.numDeviceMarks;
+  const nm  = nWM + nDM;  // total marks
+  const isITU      = st.filingBasis === 'itu';
   const isTEASPlus = isITU && st.descType === 'teas-plus';
   const filingGovtKey = isTEASPlus ? 'filingTEASPlus' : 'filingTEASStd';
 
   // ── Step 1: Search ──────────────────────────────────────────────
   if (st.opts[1]==='yes') {
     rows.push({hdr:true, step:1, label:'Step 1 – Trademark Search'});
-    const sk = st.markType==='wordmark' ? 'searchWordmark' : 'searchDevice';
-    rows.push({label: fees.prof[sk].label, prof: profFee(sk), govt:0, govtUSD:0});
+    if (nWM > 0) {
+      rows.push({
+        label: nWM>1 ? `Trademark Search – Wordmark (×${nWM})` : 'Trademark Search – Wordmark',
+        prof: profFee('searchWordmark') * nWM, govt:0, govtUSD:0
+      });
+    }
+    if (nDM > 0) {
+      rows.push({
+        label: nDM>1 ? `Trademark Search – Device Mark (×${nDM})` : 'Trademark Search – Device Mark',
+        prof: profFee('searchDevice') * nDM, govt:0, govtUSD:0
+      });
+    }
   }
 
   // ── Step 2: Filing ──────────────────────────────────────────────
-  if (st.opts[2]==='yes') {
+  if (st.opts[2]==='yes' && nm > 0) {
     const basisLbl = isITU
       ? (isTEASPlus ? 'ITU · TEAS Plus ($350/class)' : 'ITU · TEAS Standard ($550/class)')
       : 'In Use · TEAS Standard ($550/class)';
@@ -657,20 +665,23 @@ function buildRows() {
     const firstKey = isITU ? 'filingFirst' : 'filingFirstIU';
     const gUSD1 = govtFeeUsd(filingGovtKey);
     rows.push({
-      label: `Filing – First Class`,
-      prof:  profFee(firstKey),
-      govt:  govtFeeInr(filingGovtKey),
-      govtUSD: gUSD1
+      label:   nm>1 ? `Filing – First Class (×${nm} marks)` : 'Filing – First Class',
+      prof:    profFee(firstKey) * nm,
+      govt:    govtFeeInr(filingGovtKey) * nm,
+      govtUSD: gUSD1 * nm
     });
 
     if (nc > 1) {
-      const subKey  = isITU ? 'filingSub' : 'filingSubIU';
-      const extra   = nc - 1;
+      const subKey = isITU ? 'filingSub' : 'filingSubIU';
+      const extra  = nc - 1;
+      const acLbl  = nm>1
+        ? `Filing – Additional Classes (×${nm} marks × ${extra} class${extra>1?'es':''})`
+        : `Filing – Additional Classes (×${extra})`;
       rows.push({
-        label:   `Filing – Additional Classes (×${extra})`,
-        prof:    profFee(subKey) * extra,
-        govt:    govtFeeInr(filingGovtKey) * extra,
-        govtUSD: gUSD1 * extra
+        label:   acLbl,
+        prof:    profFee(subKey) * extra * nm,
+        govt:    govtFeeInr(filingGovtKey) * extra * nm,
+        govtUSD: gUSD1 * extra * nm
       });
     }
   }
@@ -679,56 +690,54 @@ function buildRows() {
   if (st.opts[3]==='yes') {
     rows.push({hdr:true, step:3, label:'Step 3 – Prosecution'});
 
-    const nOA = Math.max(0, parseInt(document.getElementById('numOA')?.value)||0);
-    if (nOA > 0) {
-      const oaKey = st.oaComplexity==='simple' ? 'oaSimple' : st.oaComplexity==='complex' ? 'oaComplex' : 'oaStandard';
-      const cplxLbl = st.oaComplexity.charAt(0).toUpperCase() + st.oaComplexity.slice(1);
-      rows.push({
-        label: `Office Action Response × ${nOA} (${cplxLbl})`,
-        prof:  profFee(oaKey) * nOA,
-        govt:  0,
-        govtUSD: 0
-      });
-    }
+    const oaKey  = st.oaComplexity==='simple' ? 'oaSimple' : st.oaComplexity==='complex' ? 'oaComplex' : 'oaStandard';
+    const cplxLbl = st.oaComplexity.charAt(0).toUpperCase() + st.oaComplexity.slice(1);
+    rows.push({
+      label:   nm>1 ? `Office Action Response – ${cplxLbl} (×${nm} marks)` : `Office Action Response – ${cplxLbl}`,
+      prof:    profFee(oaKey) * nm,
+      govt:    0, govtUSD: 0
+    });
 
-    if (isITU) {
-      // Statement of Use: flat prof fee, per-class govt
+    if (isITU && nm > 0) {
       rows.push({
-        label:   `Statement of Use (×${nc} class${nc>1?'es':''})`,
-        prof:    profFee('sou'),
-        govt:    govtFeeInr('sou') * nc,
-        govtUSD: govtFeeUsd('sou') * nc,
+        label:     nm>1
+          ? `Statement of Use (×${nm} marks × ${nc} class${nc>1?'es':''})`
+          : `Statement of Use (×${nc} class${nc>1?'es':''})`,
+        prof:      profFee('sou') * nm,
+        govt:      govtFeeInr('sou') * nm * nc,
+        govtUSD:   govtFeeUsd('sou') * nm * nc,
         mandatory: true
       });
 
-      const nExt = Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
+      const nExt = st.numExtensions;
       if (nExt > 0) {
         rows.push({
-          label:   `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nc} class${nc>1?'es':''})`,
-          prof:    profFee('extResponse') * nExt,
-          govt:    govtFeeInr('extResponse') * nExt * nc,
-          govtUSD: govtFeeUsd('extResponse') * nExt * nc
+          label:   nm>1
+            ? `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nm} marks × ${nc} class${nc>1?'es':''})`
+            : `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nc} class${nc>1?'es':''})`,
+          prof:    profFee('extResponse') * nExt * nm,
+          govt:    govtFeeInr('extResponse') * nExt * nm * nc,
+          govtUSD: govtFeeUsd('extResponse') * nExt * nm * nc
         });
       }
     }
   }
 
   // ── Step 4: Maintenance ─────────────────────────────────────────
-  if (st.opts[4]==='yes') {
+  if (st.opts[4]==='yes' && nm > 0) {
     const mt = st.maintType;
-    const mtLabels = {'8':'§8 Declaration (5–6 yr)','15':'§15 Declaration (5–6 yr)','8+15':'§8 + §15 Declaration','8+9':'§8 + §9 Renewal'};
+    const mtLabels   = {'8':'§8 Declaration (5–6 yr)','15':'§15 Declaration (5–6 yr)','8+15':'§8 + §15 Declaration','8+9':'§8 + §9 Renewal'};
     const mtProfKeys = {'8':'section8','15':'section15','8+15':'section8and15','8+9':'section8and9'};
-    const mtGovtKeys = {'8':'section8','15':'section15','8+15':'section8and15','8+9':'section8and9'};
-    const mtLbl  = mtLabels[mt];
-    const pKey   = mtProfKeys[mt];
-    const gKey   = mtGovtKeys[mt];
-
+    const mtLbl = mtLabels[mt];
+    const pKey  = mtProfKeys[mt];
     rows.push({hdr:true, step:4, label:`Step 4 – Maintenance (${mtLbl})`});
     rows.push({
-      label:   `${mtLbl} (×${nc} class${nc>1?'es':''})`,
-      prof:    profFee(pKey),
-      govt:    govtFeeInr(gKey) * nc,
-      govtUSD: govtFeeUsd(gKey) * nc
+      label:   nm>1
+        ? `${mtLbl} (×${nm} marks × ${nc} class${nc>1?'es':''})`
+        : `${mtLbl} (×${nc} class${nc>1?'es':''})`,
+      prof:    profFee(pKey) * nm,
+      govt:    govtFeeInr(pKey) * nm * nc,
+      govtUSD: govtFeeUsd(pKey) * nm * nc
     });
   }
 
@@ -737,14 +746,19 @@ function buildRows() {
 
 // ── Recalculate & render ──────────────────────────────────────────
 function recalc() {
-  st.classes      = Math.max(1, parseInt(document.getElementById('numClasses').value)||1);
-  st.numOA        = Math.max(0, parseInt(document.getElementById('numOA')?.value)||0);
-  st.numExtensions= Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
+  st.numWordmarks   = Math.max(0, parseInt(document.getElementById('numWordmarks').value)||0);
+  st.numDeviceMarks = Math.max(0, parseInt(document.getElementById('numDeviceMarks').value)||0);
+  st.classes        = Math.max(1, parseInt(document.getElementById('numClasses').value)||1);
+  st.numExtensions  = Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
+
+  const nm    = st.numWordmarks + st.numDeviceMarks;
+  const warnEl= document.getElementById('marks-warning');
+  if (warnEl) warnEl.style.display = nm === 0 ? 'block' : 'none';
 
   const anyOn = Object.values(st.opts).some(v=>v==='yes');
   const area  = document.getElementById('results-area');
-  if (!anyOn) {
-    area.innerHTML='<div class="cfg-card"><div class="empty-state"><div class="es-icon">™</div><div class="es-text">Toggle at least one step above to generate the fee estimate.</div></div></div>';
+  if (!anyOn || nm === 0) {
+    area.innerHTML='<div class="cfg-card"><div class="empty-state"><div class="es-icon">™</div><div class="es-text">Enter at least one mark and toggle a step above to generate the fee estimate.</div></div></div>';
     return;
   }
 
@@ -784,6 +798,10 @@ function recalc() {
   if(st.opts[4]==='yes') al.push('Maintenance');
 
   const nc = st.classes;
+  const nWM = st.numWordmarks, nDM = st.numDeviceMarks;
+  const marksNote = [nWM>0?`${nWM} Wordmark${nWM>1?'s':''}`:null, nDM>0?`${nDM} Device Mark${nDM>1?'s':''}`:null].filter(Boolean).join(' + ')
+    + ` · ${nc} Class${nc>1?'es':''}`;
+
   const sumClass = st.showGst ? 'sum-grid' : 'sum-grid no-gst';
   const gstCard  = st.showGst
     ? `<div class="s-card"><div class="s-lbl">GST (18% on Prof.)</div><div class="s-amt">${inr(gGst)}</div><div class="s-note">Applicable on professional fees</div></div>`
@@ -791,9 +809,9 @@ function recalc() {
 
   const sumHTML=`<div class="${sumClass}">
     <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(totProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
-    <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${totGovt?inr(totGovt):'–'}</div><div class="s-note">1 USD = ₹100 · ${nc} class${nc>1?'es':''}</div></div>
+    <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${totGovt?inr(totGovt):'–'}</div><div class="s-note">1 USD = ₹100 · per class per mark</div></div>
     ${gstCard}
-    <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">${nc} class${nc>1?'es':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
+    <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">${marksNote} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
   </div>`;
 
   const addonRowHtml = e => {
@@ -824,13 +842,13 @@ function recalc() {
     tbody+=`<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf*0.18)}</td><td></td><td>${inr(gGst)}</td></tr>`;
   }
   tbody+=`<tr class="subtotal-row"><td>Sub-total ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td></tr>
-  <tr class="grand-row"><td>GRAND TOTAL · ${nc} Class${nc>1?'es':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(gTotal)}</td></tr>`;
+  <tr class="grand-row"><td>GRAND TOTAL · ${marksNote} ${st.showGst?'(incl. GST)':''}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(gTotal)}</td></tr>`;
 
   area.innerHTML=sumHTML+`<div class="cfg-card">
     <div class="cfg-head">
       <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${al.join(' + ')}</div></div>
       <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:12px;color:var(--muted)">${nc} class${nc>1?'es':''}</span>
+        <span style="font-size:12px;color:var(--muted)">${marksNote}</span>
         <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
       </div>
     </div>
@@ -878,6 +896,9 @@ function downloadPdf() {
   const gTotal = totProf+totGovt+gGst;
   const discNote = profDisc>0?` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>`:'';
   const nc = st.classes;
+  const nWM = st.numWordmarks, nDM = st.numDeviceMarks;
+  const marksNote = [nWM>0?`${nWM} Wordmark${nWM>1?'s':''}`:null, nDM>0?`${nDM} Device Mark${nDM>1?'s':''}`:null].filter(Boolean).join(' + ')
+    + ` · ${nc} Class${nc>1?'es':''}`;
 
   const pdfAddonRow=e=>{
     const u=e.prof+e.govt;
@@ -907,7 +928,7 @@ function downloadPdf() {
     pdfTbody+=`<tr style="background:#f0fff4"><td colspan="2" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td colspan="2" style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
   pdfTbody+=`<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):''}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td></tr>
-  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${nc} Class${nc>1?'es':''} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(totProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${totGovt?inr(totGovt):''}</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
+  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${marksNote} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(totProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${totGovt?inr(totGovt):''}</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
 
   const notesSection=notes?`
     <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
@@ -921,7 +942,7 @@ function downloadPdf() {
         <img src="${window.location.origin}/img/logo-white.png" style="height:44px;display:block" alt="InvnTree">
         <div style="text-align:right">
           <div style="font-size:14px;font-weight:700;color:#fff">US Trademark Fee Estimate</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:3px">Professional &amp; Government Fees · ${nc} Class${nc>1?'es':''}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:3px">Professional &amp; Government Fees · ${marksNote}</div>
         </div>
       </div>
       ${headerRows?`<div style="border:1px solid #dde4ef;border-top:none;padding:14px 22px;background:#f7f9fd"><table style="border-collapse:collapse;font-size:12px;width:100%">${headerRows}</table></div>`:''}
@@ -1028,12 +1049,6 @@ function buildFeeSchedule() {
   p.appendChild(sec('Step 3 – Prosecution'));
   p.appendChild(mkProf('oaSimple')); p.appendChild(mkProf('oaStandard')); p.appendChild(mkProf('oaComplex'));
   p.appendChild(mkProf('sou')); p.appendChild(mkProf('extResponse'));
-  p.appendChild(dvd());
-
-  p.appendChild(sec('Step 4 – Maintenance'));
-  p.appendChild(mkProf('section8')); p.appendChild(mkProf('section15'));
-  p.appendChild(mkProf('section8and15')); p.appendChild(mkProf('section8and9'));
-
   // Govt fees
   g.appendChild(sec('Step 2 – Filing'));
   g.appendChild(mkGovt('filingTEASPlus')); g.appendChild(mkGovt('filingTEASStd'));
@@ -1041,11 +1056,6 @@ function buildFeeSchedule() {
 
   g.appendChild(sec('Step 3 – Prosecution (ITU)'));
   g.appendChild(mkGovt('sou')); g.appendChild(mkGovt('extResponse'));
-  g.appendChild(dvd());
-
-  g.appendChild(sec('Step 4 – Maintenance'));
-  g.appendChild(mkGovt('section8')); g.appendChild(mkGovt('section15'));
-  g.appendChild(mkGovt('section8and15')); g.appendChild(mkGovt('section8and9'));
 
   // Add-on items
   if(userAddons.length){
