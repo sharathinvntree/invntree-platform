@@ -208,12 +208,21 @@
         <label class="field-label">Password</label>
         <input type="password" id="add-password" placeholder="Min. 6 characters">
       </div>
-      <div class="field">
-        <label class="field-label">Entity Type</label>
-        <select id="add-entity">
-          <option value="other">Other Entity (Standard Rates)</option>
-          <option value="startup_msme">Natural Person / MSME / Startup</option>
-        </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="margin:0">
+          <label class="field-label">🇮🇳 India Entity Type</label>
+          <select id="add-entity">
+            <option value="other">Other Entity</option>
+            <option value="startup_msme">MSME / Startup</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">🇺🇸 US Entity Type</label>
+          <select id="add-us-entity">
+            <option value="small">Small Entity</option>
+            <option value="large">Large Entity</option>
+          </select>
+        </div>
       </div>
       <div>
         <div class="field-label" style="margin-bottom:10px">Module Access</div>
@@ -290,12 +299,21 @@
               </select>
             </div>
           </div>
-          <div class="field" style="margin:0">
-            <label class="field-label">Entity Type</label>
-            <select id="edit-entity">
-              <option value="other">Other Entity (Standard Rates)</option>
-              <option value="startup_msme">Natural Person / MSME / Startup</option>
-            </select>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="field" style="margin:0">
+              <label class="field-label">🇮🇳 India Entity Type</label>
+              <select id="edit-entity">
+                <option value="other">Other Entity</option>
+                <option value="startup_msme">MSME / Startup</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <label class="field-label">🇺🇸 US Entity Type</label>
+              <select id="edit-us-entity">
+                <option value="small">Small Entity</option>
+                <option value="large">Large Entity</option>
+              </select>
+            </div>
           </div>
           <div>
             <div class="field-label" style="margin-bottom:8px">Professional Fee Discount (%)</div>
@@ -645,7 +663,8 @@
     document.getElementById('edit-name').value      = u.full_name || '';
     document.getElementById('edit-password').value  = '';
     document.getElementById('edit-role').value      = u.role;
-    document.getElementById('edit-entity').value    = u.entity_type || 'other';
+    document.getElementById('edit-entity').value    = u.entity_type    || 'other';
+    document.getElementById('edit-us-entity').value = u.us_entity_type || 'small';
     document.getElementById('edit-us').checked      = u.us_patenting;
     document.getElementById('edit-india').checked   = u.india_patenting;
     document.getElementById('edit-prof-disc').value       = u.prof_discount || 0;
@@ -680,6 +699,7 @@
       full_name:       document.getElementById('edit-name').value.trim() || null,
       role:            document.getElementById('edit-role').value,
       entity_type:     document.getElementById('edit-entity').value,
+      us_entity_type:  document.getElementById('edit-us-entity').value,
       us_patenting:    document.getElementById('edit-us').checked,
       india_patenting: document.getElementById('edit-india').checked,
       prof_discount:          parseInt(document.getElementById('edit-prof-disc').value) || 0,
@@ -783,6 +803,7 @@
       us_patenting:    document.getElementById('add-us').checked,
       india_patenting: document.getElementById('add-india').checked,
       entity_type:     document.getElementById('add-entity').value,
+      us_entity_type:  document.getElementById('add-us-entity').value,
       prof_discount:   parseInt(document.getElementById('add-prof-disc').value) || 0,
     }).eq('id', newId);
 

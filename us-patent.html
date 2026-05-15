@@ -337,9 +337,14 @@ const fees = {
     officeAction:             { label: 'Office Action Response',                    group: 'step3',         amount: 70000  },
   },
   govt: {
-    filingNonProv:         { label: 'Filing Non-Provisional (USPTO)',                     group: 'step2-nonprov', amount: 800 },
-    filingProv:            { label: 'Filing Provisional (USPTO)',                         group: 'step2-prov',    amount: 130 },
-    filingNonProvFromProv: { label: 'Filing Non-Provisional (USPTO) from Provisional',  group: 'step2-prov',    amount: 800 },
+    filingNonProv:         { label: 'Filing Non-Provisional (USPTO)',                    group: 'step2-nonprov', amount: 800  },
+    filingProv:            { label: 'Filing Provisional (USPTO)',                        group: 'step2-prov',    amount: 130  },
+    filingNonProvFromProv: { label: 'Filing Non-Provisional (USPTO) from Provisional',  group: 'step2-prov',    amount: 800  },
+  },
+  govtLarge: {
+    filingNonProv:         { label: 'Filing Non-Provisional (USPTO)',                    group: 'step2-nonprov', amount: 1760 },
+    filingProv:            { label: 'Filing Provisional (USPTO)',                        group: 'step2-prov',    amount: 320  },
+    filingNonProvFromProv: { label: 'Filing Non-Provisional (USPTO) from Provisional',  group: 'step2-prov',    amount: 1760 },
   }
 };
 const USD_RATE = 100, NUM_OA = 2;
@@ -468,8 +473,14 @@ function profFee(key) {
   return Math.round(base * (1 - disc / 100));
 }
 
+function usGovtSrc() {
+  return userProfile?.us_entity_type === 'large' ? fees.govtLarge : fees.govt;
+}
 function govtFeeInr(key) {
-  return Math.round((fees.govt[key]?.amount || 0) * USD_RATE);
+  return Math.round((usGovtSrc()[key]?.amount || 0) * USD_RATE);
+}
+function govtFeeUsd(key) {
+  return usGovtSrc()[key]?.amount || 0;
 }
 
 function buildRows() {
@@ -484,12 +495,12 @@ function buildRows() {
     rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, mandatory:true});
     if (isNP) {
       rows.push({label:'Drafting Complete Specification',   prof:profFee('draftingCompleteSpec'), govt:0});
-      rows.push({label:'Filing Non-Provisional Application',prof:profFee('filingNonProv'),        govt:govtFeeInr('filingNonProv'), govtUSD:fees.govt.filingNonProv.amount});
+      rows.push({label:'Filing Non-Provisional Application',prof:profFee('filingNonProv'),        govt:govtFeeInr('filingNonProv'), govtUSD:govtFeeUsd('filingNonProv')});
     } else {
       rows.push({label:'Drafting Provisional Specification',        prof:profFee('draftingProvSpec'),         govt:0});
-      rows.push({label:'Filing Provisional Application',            prof:profFee('filingProv'),               govt:govtFeeInr('filingProv'),            govtUSD:fees.govt.filingProv.amount});
+      rows.push({label:'Filing Provisional Application',            prof:profFee('filingProv'),               govt:govtFeeInr('filingProv'),            govtUSD:govtFeeUsd('filingProv')});
       rows.push({label:'Drafting Complete Spec (from Provisional)', prof:profFee('draftingCompleteFromProv'), govt:0});
-      rows.push({label:'Filing Non-Provisional Application',        prof:profFee('filingNonProvFromProv'),    govt:govtFeeInr('filingNonProvFromProv'), govtUSD:fees.govt.filingNonProvFromProv.amount});
+      rows.push({label:'Filing Non-Provisional Application',        prof:profFee('filingNonProvFromProv'),    govt:govtFeeInr('filingNonProvFromProv'), govtUSD:govtFeeUsd('filingNonProvFromProv')});
     }
   }
   if (st.opts[3]==='yes') {
@@ -543,7 +554,7 @@ function recalc() {
 
   const sumHTML=`<div class="${sumClass}">
     <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
-    <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${gGovt?inr(gGovt):''}</div><div class="s-note">At 1 USD = ₹100 (indicative)</div></div>
+    <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${gGovt?inr(gGovt):''}</div><div class="s-note">${userProfile?.us_entity_type==='large'?'Large entity':'Small entity'} rates · 1 USD = ₹100</div></div>
     ${gstCard}
     <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
   </div>`;
@@ -743,9 +754,9 @@ function buildFeeSchedule() {
     div.appendChild(lbl); div.appendChild(right); return div;
   }
 
-  // Read-only govt fee row (USD)
+  // Read-only govt fee row (USD) — entity-type-aware
   function mkGovt(key) {
-    const item = fees.govt[key];
+    const item = usGovtSrc()[key];
     const div = document.createElement('div');
     div.className = 'fs-item';
     const lbl = document.createElement('label'); lbl.textContent = item.label;
@@ -777,6 +788,12 @@ function buildFeeSchedule() {
   p.appendChild(sec('Step 2 Provisional Path'));      p.appendChild(mkProf('draftingProvSpec')); p.appendChild(mkProf('filingProv')); p.appendChild(mkProf('draftingCompleteFromProv')); p.appendChild(mkProf('filingNonProvFromProv'));
   p.appendChild(dvd());
   p.appendChild(sec('Step 3 Prosecution'));           p.appendChild(mkProf('officeAction'));
+
+  const entityNote = document.createElement('div');
+  const isLargeEnt = userProfile?.us_entity_type === 'large';
+  entityNote.style.cssText = 'background:#f0f6ff;border:1px solid #c3d9f5;border-radius:6px;padding:8px 12px;font-size:12px;color:var(--blue);margin-bottom:12px;font-weight:500';
+  entityNote.textContent = isLargeEnt ? 'Large Entity USPTO fee rates.' : 'Small Entity USPTO fee rates.';
+  g.appendChild(entityNote);
 
   g.appendChild(sec('Step 2 Non-Provisional'));       g.appendChild(mkGovt('filingNonProv'));
   g.appendChild(dvd());
