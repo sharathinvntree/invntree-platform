@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvnTree US Trademark Fee Calculator</title>
+<link rel="icon" href="/img/favicon.png">
+<link rel="stylesheet" href="css/shared.css">
+<style>
+:root{--stage-bg:#edf2f9}
+
+.calc-tabs-bar{background:var(--navy);padding:0 32px;display:flex;border-bottom:2px solid var(--gold)}
+.calc-tab{padding:10px 22px 12px;background:transparent;border:none;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;position:relative;top:2px;transition:color .15s;font-family:inherit}
+.calc-tab::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:transparent;transition:background .15s}
+.calc-tab.active{color:#fff;font-weight:600}
+.calc-tab.active::after{background:var(--gold)}
+.calc-tab:hover:not(.active){color:rgba(255,255,255,.8)}
+
+.calc-container{max-width:1140px;margin:0 auto;padding:28px 24px 56px}
+.calc-panel{display:none}
+.calc-panel.active{display:block}
+
+.cfg-card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
+.cfg-head{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cfg-head h2{font-size:14px;font-weight:600;color:var(--navy)}
+.cfg-body{padding:22px}
+
+.field-label-sm{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+input[type=number]{border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;background:#fff;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:90px}
+input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+
+.steps-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.steps-list{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+.step-item{border-bottom:1px solid var(--border)}
+.step-item:last-child{border-bottom:none}
+.step-main-row{display:flex;align-items:center;gap:16px;padding:13px 18px}
+.step-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);white-space:nowrap;min-width:52px}
+.step-item.active .step-badge{color:var(--blue)}
+.step-title{flex:1;font-size:14px;font-weight:600;color:#8899b5}
+.step-item.active .step-title{color:var(--navy)}
+.step-yn{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.step-yn button{padding:6px 18px;border:none;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
+.step-yn button:first-child{border-right:1px solid var(--border)}
+.step-yn button.yes-on{background:#dcf5e4;color:#1a7a3a}
+.step-yn button.no-on{background:#fde8e8;color:#b91c1c}
+
+.step-sub{background:#f0f6ff;border-top:1.5px dashed #b8cfe8;padding:10px 18px 10px 86px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.step-sub.hidden{display:none !important}
+.step-sub-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);white-space:nowrap}
+.draft-btns{display:flex;border:1.5px solid #aac4e4;border-radius:6px;overflow:hidden}
+.draft-btns button{padding:5px 16px;border:none;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
+.draft-btns button:not(:last-child){border-right:1px solid #aac4e4}
+.draft-btns button.dt-on{background:var(--blue);color:#fff;font-weight:600}
+.step-sub-note{font-size:11px;color:var(--muted);font-style:italic}
+.itu-note{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #f0d97a;border-radius:5px;padding:4px 10px;white-space:nowrap}
+
+.cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+
+.cfg-opts-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.cfg-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500}
+.cfg-opt .step-yn{border-radius:5px}
+.cfg-opt .step-yn button{padding:4px 13px;font-size:11px}
+
+/* Mark-type selector */
+.mark-type-row{display:flex;align-items:center;gap:24px;margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.mark-type-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;margin-right:4px}
+
+/* Quote header */
+.qh-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qh-field{display:flex;flex-direction:column;gap:5px}
+.qh-field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.qh-field input,.qh-field textarea{border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;background:#fff;width:100%;box-sizing:border-box}
+.qh-field input:focus,.qh-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.qh-field textarea{resize:vertical;min-height:72px}
+.qh-field.full{grid-column:1/-1}
+
+.disc-tag{font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+
+/* Notes bar */
+.notes-bar{background:#fefbec;border:1px solid #f0d97a;border-radius:8px;padding:11px 16px;font-size:12.5px;color:#7c6208;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap}
+.note-item::before{content:'ⓘ  '}
+.note-item strong{font-weight:600}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sum-grid.no-gst{grid-template-columns:1fr 1fr 1.15fr}
+.s-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#234b8c 100%);border-color:var(--navy)}
+.s-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+.s-card.grand .s-lbl{color:rgba(255,255,255,.55)}
+.s-amt{font-size:24px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.s-card.grand .s-amt{color:var(--gold);font-size:28px}
+.s-note{font-size:11px;color:var(--muted);margin-top:4px}
+.s-card.grand .s-note{color:rgba(255,255,255,.45)}
+
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--stage-bg);padding:10px 15px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:right;white-space:nowrap;border-bottom:2px solid var(--border)}
+thead th:first-child{text-align:left}
+.opt-hdr td{background:linear-gradient(90deg,#d6e4f7,#edf2f9);color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:7px 15px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)}
+.mandatory-tag{font-size:10px;font-weight:600;color:#888;background:#f0f3f9;border-radius:3px;padding:1px 5px;margin-left:6px;text-transform:uppercase;letter-spacing:.4px;vertical-align:middle}
+tbody td{padding:10px 15px;text-align:right;border-bottom:1px solid #f0f3f9;color:var(--text);font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left}
+tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f7faff}
+.usd-note{font-size:11px;color:var(--muted);margin-left:4px}
+.gst-row td{background:#f9fef9;color:#1a7a3a;font-size:12.5px;font-style:italic;padding:8px 15px;border-bottom:1px solid #d4f0d4}
+.subtotal-row td{background:#f4f8ff;font-weight:600;color:var(--navy);padding:11px 15px;border-top:2px solid var(--border);font-size:13px}
+.grand-row td{background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:13px 15px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:56px 20px}
+.es-icon{font-size:40px;margin-bottom:12px;opacity:.45}
+.es-text{font-size:15px;color:var(--muted)}
+
+/* Fee schedule */
+.fs-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.fs-card{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.fs-head{padding:13px 18px;background:var(--navy);color:#fff}
+.fs-head-title{font-size:14px;font-weight:600}
+.fs-head-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.fs-items{padding:16px;display:flex;flex-direction:column;gap:10px}
+.fs-item{display:flex;align-items:center;gap:10px}
+.fs-item label{flex:1;font-size:13px;color:var(--text)}
+.fs-cur{font-size:12px;font-weight:600;color:var(--muted);width:28px;text-align:center}
+.fs-item input{width:128px;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;text-align:right;outline:none;transition:border-color .15s;font-family:inherit;font-variant-numeric:tabular-nums}
+.fs-item input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.fs-divider{height:1px;background:var(--border);margin:4px 0}
+.fs-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);padding:2px 0 4px}
+
+.page-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
+.page-loader p{font-size:13px;color:var(--muted)}
+
+/* OA count inline input */
+.inline-num{border:1.5px solid #aac4e4;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:600;color:var(--navy);outline:none;text-align:center;width:56px;font-family:inherit;background:#fff;transition:border-color .15s}
+.inline-num:focus{border-color:var(--blue)}
+
+@media(max-width:768px){
+  .calc-tabs-bar{padding:0 16px}
+  .calc-container{padding:16px 12px 40px}
+  .sum-grid{grid-template-columns:1fr 1fr}
+  .fs-grid{grid-template-columns:1fr}
+  .step-sub{padding-left:18px}
+  .qh-grid{grid-template-columns:1fr}
+  .mark-type-row{flex-wrap:wrap}
+}
+@media(max-width:500px){.sum-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="page-loader" id="loader">
+  <span class="spinner spinner-blue" style="width:28px;height:28px;border-width:3px"></span>
+  <p>Loading…</p>
+</div>
+
+<div id="navbar-slot"></div>
+
+<div id="app" style="display:none">
+
+  <div class="calc-tabs-bar">
+    <button class="calc-tab active" onclick="switchTab('calculator',this)">Calculator</button>
+    <button class="calc-tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+  </div>
+
+  <div class="calc-container">
+
+    <!-- ══ CALCULATOR TAB ══ -->
+    <div id="tab-calculator" class="calc-panel active">
+
+      <!-- Configuration -->
+      <div class="cfg-card">
+        <div class="cfg-head"><h2>Configuration</h2></div>
+        <div class="cfg-body">
+
+          <!-- Mark type + Classes row -->
+          <div class="mark-type-row">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="mark-type-label">Mark Type</span>
+              <div class="draft-btns">
+                <button id="mt-wordmark" class="dt-on" onclick="setMarkType('wordmark')">Wordmark</button>
+                <button id="mt-device"               onclick="setMarkType('device')">Device / Logo</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+              <span class="field-label-sm">No. of Classes</span>
+              <input type="number" id="numClasses" value="1" min="1" max="45" step="1" oninput="recalc()">
+            </div>
+          </div>
+
+          <div class="steps-label">Steps to include</div>
+          <div class="steps-list">
+
+            <!-- Step 1: Search -->
+            <div class="step-item active" id="pill-1">
+              <div class="step-main-row">
+                <span class="step-badge">Step 1</span>
+                <span class="step-title">Trademark Search</span>
+                <div class="step-yn">
+                  <button id="o1-yes" class="yes-on" onclick="setOpt(1,'yes')">Yes</button>
+                  <button id="o1-no"                 onclick="setOpt(1,'no')">No</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Filing -->
+            <div class="step-item active" id="pill-2">
+              <div class="step-main-row">
+                <span class="step-badge">Step 2</span>
+                <span class="step-title">Filing</span>
+                <div class="step-yn">
+                  <button id="o2-yes" class="yes-on" onclick="setOpt(2,'yes')">Yes</button>
+                  <button id="o2-no"                 onclick="setOpt(2,'no')">No</button>
+                </div>
+              </div>
+              <!-- Filing Basis sub-row -->
+              <div class="step-sub" id="filing-basis-row">
+                <span class="step-sub-label">Filing Basis:</span>
+                <div class="draft-btns">
+                  <button id="fb-itu"    class="dt-on" onclick="setFilingBasis('itu')">ITU (Intent to Use)</button>
+                  <button id="fb-in-use"               onclick="setFilingBasis('in-use')">In Use</button>
+                </div>
+                <span class="step-sub-note" id="basis-note">Application based on intent to use the mark in commerce</span>
+              </div>
+              <!-- Description Type sub-row (ITU only) -->
+              <div class="step-sub" id="desc-type-row" style="background:#e8f4fe">
+                <span class="step-sub-label">Fee Type:</span>
+                <div class="draft-btns">
+                  <button id="dt-teas-plus" class="dt-on" onclick="setDescType('teas-plus')">TEAS Plus ($350/class)</button>
+                  <button id="dt-teas-std"               onclick="setDescType('teas-standard')">TEAS Standard ($550/class)</button>
+                </div>
+                <span class="itu-note">&#9432; TEAS Plus requires pre-approved ID of goods/services</span>
+              </div>
+            </div>
+
+            <!-- Step 3: Prosecution -->
+            <div class="step-item active" id="pill-3">
+              <div class="step-main-row">
+                <span class="step-badge">Step 3</span>
+                <span class="step-title">Prosecution</span>
+                <div class="step-yn">
+                  <button id="o3-yes" class="yes-on" onclick="setOpt(3,'yes')">Yes</button>
+                  <button id="o3-no"                 onclick="setOpt(3,'no')">No</button>
+                </div>
+              </div>
+              <!-- OA count + complexity sub-row -->
+              <div class="step-sub" id="oa-row">
+                <span class="step-sub-label">Office Actions:</span>
+                <input type="number" class="inline-num" id="numOA" value="1" min="0" max="10" step="1" oninput="recalc()">
+                <span class="step-sub-label" style="margin-left:4px">Complexity:</span>
+                <div class="draft-btns">
+                  <button id="oa-simple"   onclick="setOAComplexity('simple')">Simple</button>
+                  <button id="oa-standard" class="dt-on" onclick="setOAComplexity('standard')">Standard</button>
+                  <button id="oa-complex"  onclick="setOAComplexity('complex')">Complex</button>
+                </div>
+              </div>
+              <!-- Extensions sub-row (ITU only) -->
+              <div class="step-sub hidden" id="ext-row" style="background:#fff8ed">
+                <span class="step-sub-label">SOU Extensions:</span>
+                <input type="number" class="inline-num" id="numExtensions" value="0" min="0" max="5" step="1" oninput="recalc()">
+                <span class="step-sub-note">Extension periods to file Statement of Use ($125/class each)</span>
+              </div>
+            </div>
+
+            <!-- Step 4: Maintenance -->
+            <div class="step-item" id="pill-4">
+              <div class="step-main-row">
+                <span class="step-badge">Step 4</span>
+                <span class="step-title">Maintenance</span>
+                <div class="step-yn">
+                  <button id="o4-yes"               onclick="setOpt(4,'yes')">Yes</button>
+                  <button id="o4-no"  class="no-on" onclick="setOpt(4,'no')">No</button>
+                </div>
+              </div>
+              <!-- Maintenance type sub-row -->
+              <div class="step-sub hidden" id="maint-type-row">
+                <span class="step-sub-label">Type:</span>
+                <div class="draft-btns">
+                  <button id="mt-s8"    onclick="setMaintType('8')">§8 Only</button>
+                  <button id="mt-s15"   onclick="setMaintType('15')">§15 Only</button>
+                  <button id="mt-s8s15" class="dt-on" onclick="setMaintType('8+15')">§8 + §15</button>
+                  <button id="mt-s8s9"  onclick="setMaintType('8+9')">§8 + §9 Renewal</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="cfg-opts-row">
+            <div class="cfg-opt">
+              <span>Show GST (18% on Prof. Fees)</span>
+              <div class="step-yn">
+                <button id="gst-yes" onclick="setGst('yes')">Yes</button>
+                <button id="gst-no" class="no-on" onclick="setGst('no')">No</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="cfg-footer">
+            <button class="btn btn-ghost" onclick="resetAll()">↺ Reset / Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes-bar">
+        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include.</span>
+        <span class="note-item"><strong>Govt. Fees</strong> are shown as INR equivalent at an indicative rate of <strong>1 USD = ₹100</strong>.</span>
+        <span class="note-item"><strong>ITU basis</strong> requires filing a Statement of Use (or extension) after Notice of Allowance.</span>
+        <span class="note-item"><strong>§8 + §9</strong> Renewal filing is due between years 9–10 and every 10 years thereafter.</span>
+      </div>
+
+      <div id="results-area">
+        <div class="cfg-card">
+          <div class="empty-state">
+            <div class="es-icon">™</div>
+            <div class="es-text">Toggle at least one step above to generate the fee estimate.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ FEE SCHEDULE TAB ══ -->
+    <div id="tab-fee-schedule" class="calc-panel">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule applicable to your trademark engagement.</p>
+      <div class="fs-grid">
+        <div class="fs-card">
+          <div class="fs-head">
+            <div class="fs-head-title">Professional Fees</div>
+            <div class="fs-head-sub">Amounts in INR &nbsp;·&nbsp; GST @ 18% applicable on professional fees</div>
+          </div>
+          <div class="fs-items" id="prof-fee-items"></div>
+        </div>
+        <div class="fs-card">
+          <div class="fs-head">
+            <div class="fs-head-title">Government Fees (USPTO)</div>
+            <div class="fs-head-sub">Statutory fees payable to the USPTO in USD · per class</div>
+          </div>
+          <div class="fs-items" id="govt-fee-items"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+let userProfile = null;
+let userAddons  = [];
+
+(async () => {
+  const auth = await requireAuth();
+  if (!auth) return;
+
+  if (!auth.profile.us_trademark) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  userProfile = auth.profile;
+
+  // Load assigned trademark fee schedule (if any)
+  if (userProfile.trademark_fee_schedule_id) {
+    const { data: sched } = await db
+      .from('fee_schedules').select('fees').eq('id', userProfile.trademark_fee_schedule_id).single();
+    if (sched?.fees) {
+      Object.keys(sched.fees).forEach(k => {
+        if (fees.prof[k]) fees.prof[k].amount = sched.fees[k];
+      });
+    }
+  }
+
+  // Load assigned trademark add-on items
+  if (userProfile.addon_ids && userProfile.addon_ids.length > 0) {
+    const { data: addons } = await db.from('addon_items').select('*')
+      .in('id', userProfile.addon_ids)
+      .in('type', ['trademark', 'both']);
+    userAddons = addons || [];
+  }
+
+  if (!userProfile.show_fee_schedule) {
+    document.getElementById('fee-sched-tab-btn').style.display = 'none';
+  }
+
+  renderNavbar(auth.profile, 'US Trademark Fee Calculator');
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('app').style.display    = 'block';
+
+  buildExtraSteps();
+  buildFeeSchedule();
+  recalc();
+})();
+
+// ── Fee data ─────────────────────────────────────────────────────
+const fees = {
+  prof: {
+    searchWordmark:  { label: 'Trademark Search (Wordmark)',                    amount: 7500  },
+    searchDevice:    { label: 'Trademark Search (Device / Logo)',               amount: 10000 },
+    filingFirst:     { label: 'Filing – First Class (ITU)',                     amount: 40000 },
+    filingFirstIU:   { label: 'Filing – First Class (In Use)',                  amount: 50000 },
+    filingSub:       { label: 'Filing – Additional Class (ITU)',                amount: 30000 },
+    filingSubIU:     { label: 'Filing – Additional Class (In Use)',             amount: 40000 },
+    sou:             { label: 'Statement of Use (ITU)',                         amount: 10000 },
+    oaSimple:        { label: 'Office Action Response (Simple)',                amount: 25000 },
+    oaStandard:      { label: 'Office Action Response (Standard)',              amount: 45000 },
+    oaComplex:       { label: 'Office Action Response (Complex)',               amount: 70000 },
+    extResponse:     { label: 'Extension of Time to file SOU',                 amount: 5000  },
+    section8:        { label: 'Section 8 Declaration (5–6 yr)',                amount: 15000 },
+    section15:       { label: 'Section 15 Declaration (5–6 yr)',               amount: 15000 },
+    section8and15:   { label: 'Section 8 + 15 Declaration',                    amount: 20000 },
+    section8and9:    { label: 'Section 8 + 9 Renewal',                         amount: 20000 },
+  },
+  govt: {
+    filingTEASPlus:  { label: 'Filing – TEAS Plus (per class)',                amount: 350   },
+    filingTEASStd:   { label: 'Filing – TEAS Standard (per class)',            amount: 550   },
+    sou:             { label: 'Statement of Use (per class)',                   amount: 150   },
+    extResponse:     { label: 'Extension of Time – SOU (per class)',           amount: 125   },
+    section8:        { label: 'Section 8 (per class)',                         amount: 325   },
+    section15:       { label: 'Section 15 (per class)',                        amount: 250   },
+    section8and15:   { label: 'Section 8 + 15 (per class)',                    amount: 425   },
+    section8and9:    { label: 'Section 8 + 9 Renewal (per class)',             amount: 575   },
+  }
+};
+const USD_RATE = 100;
+
+let st = {
+  classes: 1,
+  opts: {1:'yes', 2:'yes', 3:'yes', 4:'no'},
+  extras: {},
+  markType: 'wordmark',
+  filingBasis: 'itu',
+  descType: 'teas-plus',
+  numOA: 1,
+  oaComplexity: 'standard',
+  numExtensions: 0,
+  maintType: '8+15',
+  showGst: false
+};
+
+// ── Tab switch ────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Step toggles ─────────────────────────────────────────────────
+function setOpt(num, val) {
+  st.opts[num] = val;
+  ['yes','no'].forEach(v => {
+    const btn = document.getElementById('o'+num+'-'+v);
+    if (btn) btn.className = val===v ? (v==='yes'?'yes-on':'no-on') : '';
+  });
+  const pill = document.getElementById('pill-'+num);
+  if (pill) val==='yes' ? pill.classList.add('active') : pill.classList.remove('active');
+
+  if (num===2) {
+    document.getElementById('filing-basis-row').classList.toggle('hidden', val!=='yes');
+    updateDescTypeVisibility();
+  }
+  if (num===3) {
+    document.getElementById('oa-row').classList.toggle('hidden', val!=='yes');
+    updateExtRowVisibility();
+  }
+  if (num===4) {
+    document.getElementById('maint-type-row').classList.toggle('hidden', val!=='yes');
+  }
+  recalc();
+}
+
+function setMarkType(type) {
+  st.markType = type;
+  document.getElementById('mt-wordmark').className = type==='wordmark' ? 'dt-on' : '';
+  document.getElementById('mt-device').className   = type==='device'   ? 'dt-on' : '';
+  recalc();
+}
+
+function setFilingBasis(basis) {
+  st.filingBasis = basis;
+  document.getElementById('fb-itu').className    = basis==='itu'    ? 'dt-on' : '';
+  document.getElementById('fb-in-use').className = basis==='in-use' ? 'dt-on' : '';
+  document.getElementById('basis-note').textContent =
+    basis === 'itu'
+      ? 'Application based on intent to use the mark in commerce'
+      : 'Mark already in use in interstate commerce at time of filing';
+  updateDescTypeVisibility();
+  updateExtRowVisibility();
+  recalc();
+}
+
+function updateDescTypeVisibility() {
+  const show = st.opts[2]==='yes' && st.filingBasis==='itu';
+  document.getElementById('desc-type-row').classList.toggle('hidden', !show);
+}
+
+function updateExtRowVisibility() {
+  const show = st.opts[3]==='yes' && st.filingBasis==='itu';
+  document.getElementById('ext-row').classList.toggle('hidden', !show);
+}
+
+function setDescType(type) {
+  st.descType = type;
+  document.getElementById('dt-teas-plus').className = type==='teas-plus'     ? 'dt-on' : '';
+  document.getElementById('dt-teas-std').className  = type==='teas-standard' ? 'dt-on' : '';
+  recalc();
+}
+
+function setOAComplexity(c) {
+  st.oaComplexity = c;
+  ['simple','standard','complex'].forEach(v => {
+    document.getElementById('oa-'+v).className = v===c ? 'dt-on' : '';
+  });
+  recalc();
+}
+
+function setMaintType(t) {
+  st.maintType = t;
+  ['s8','s15','s8s15','s8s9'].forEach(id => {
+    document.getElementById('mt-'+id).className = '';
+  });
+  const map = {'8':'mt-s8','15':'mt-s15','8+15':'mt-s8s15','8+9':'mt-s8s9'};
+  document.getElementById(map[t]).className = 'dt-on';
+  recalc();
+}
+
+function setGst(val) {
+  st.showGst = (val==='yes');
+  document.getElementById('gst-yes').className = st.showGst ? 'yes-on' : '';
+  document.getElementById('gst-no').className  = !st.showGst ? 'no-on' : '';
+  recalc();
+}
+
+function resetAll() {
+  document.getElementById('numClasses').value   = 1;
+  document.getElementById('numOA').value        = 1;
+  document.getElementById('numExtensions').value= 0;
+  const initExtras = {};
+  userAddons.forEach((_, i) => { initExtras[i] = 'yes'; });
+  st = {
+    classes:1, opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
+    markType:'wordmark', filingBasis:'itu', descType:'teas-plus',
+    numOA:1, oaComplexity:'standard', numExtensions:0, maintType:'8+15', showGst:false
+  };
+  [1,2,3,4].forEach(i => setOpt(i, i===4?'no':'yes'));
+  setMarkType('wordmark');
+  setFilingBasis('itu');
+  setDescType('teas-plus');
+  setOAComplexity('standard');
+  setMaintType('8+15');
+  setGst('no');
+  userAddons.forEach((_, i) => setExtra(i, 'yes'));
+  recalc();
+}
+
+// ── Add-on steps (assigned by admin) ─────────────────────────────
+function buildExtraSteps() {
+  if (!userAddons.length) return;
+  userAddons.forEach((_, i) => { st.extras[i] = 'yes'; });
+  const list = document.querySelector('.steps-list');
+  const lastInserted = {};
+
+  function makeAddonRow(item, i, extraStyle) {
+    const row = document.createElement('div');
+    row.className = 'step-item active';
+    row.id = `extra-pill-${i}`;
+    if (extraStyle) row.style.background = '#fffbf0';
+    row.innerHTML = `
+      <div class="step-main-row">
+        <span class="step-badge" style="color:#b45309;min-width:52px">Add-on</span>
+        <span class="step-title">${item.label}</span>
+        <div class="step-yn">
+          <button id="ex${i}-yes" class="yes-on" onclick="setExtra(${i},'yes')">Yes</button>
+          <button id="ex${i}-no"                 onclick="setExtra(${i},'no')">No</button>
+        </div>
+      </div>`;
+    return row;
+  }
+
+  userAddons.forEach((item, i) => {
+    const ds = item.display_step || 'additional';
+    if (ds === 'additional') return;
+    const stepNum = ds.replace('step', '');
+    const row = makeAddonRow(item, i, true);
+    const anchor = lastInserted[ds] || document.getElementById('pill-' + stepNum);
+    if (anchor) { anchor.insertAdjacentElement('afterend', row); lastInserted[ds] = row; }
+  });
+
+  const hasAdditional = userAddons.some(item => (item.display_step || 'additional') === 'additional');
+  if (hasAdditional) {
+    const hdr = document.createElement('div');
+    hdr.className = 'step-item';
+    hdr.style.cssText = 'background:#fefbec;pointer-events:none';
+    hdr.innerHTML = `<div class="step-main-row" style="padding:8px 18px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">✦ Additional Items specific to your engagement</span></div>`;
+    list.appendChild(hdr);
+    userAddons.forEach((item, i) => {
+      if ((item.display_step || 'additional') !== 'additional') return;
+      list.appendChild(makeAddonRow(item, i, false));
+    });
+  }
+}
+
+function setExtra(idx, val) {
+  st.extras[idx] = val;
+  const pill = document.getElementById(`extra-pill-${idx}`);
+  if (pill) pill.classList.toggle('active', val==='yes');
+  const yBtn = document.getElementById(`ex${idx}-yes`);
+  const nBtn = document.getElementById(`ex${idx}-no`);
+  if (yBtn) yBtn.className = val==='yes' ? 'yes-on' : '';
+  if (nBtn) nBtn.className = val==='no'  ? 'no-on'  : '';
+  recalc();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function inr(n) {
+  if (!n) return ''; n = Math.round(n); if (!n) return '';
+  const s = n.toString();
+  if (s.length<=3) return '₹'+s;
+  let res=s.slice(-3), rem=s.slice(0,-3);
+  while(rem.length>2){res=rem.slice(-2)+','+res;rem=rem.slice(0,-2);}
+  return '₹'+rem+','+res;
+}
+
+function profFee(key) {
+  const base = fees.prof[key]?.amount || 0;
+  const disc = userProfile ? (userProfile.prof_discount || 0) : 0;
+  return Math.round(base * (1 - disc/100));
+}
+function govtFeeInr(key) { return Math.round((fees.govt[key]?.amount || 0) * USD_RATE); }
+function govtFeeUsd(key) { return fees.govt[key]?.amount || 0; }
+
+// ── Build fee rows ────────────────────────────────────────────────
+function buildRows() {
+  const rows = [];
+  const nc   = st.classes;
+  const isITU     = st.filingBasis === 'itu';
+  const isTEASPlus = isITU && st.descType === 'teas-plus';
+  const filingGovtKey = isTEASPlus ? 'filingTEASPlus' : 'filingTEASStd';
+
+  // ── Step 1: Search ──────────────────────────────────────────────
+  if (st.opts[1]==='yes') {
+    rows.push({hdr:true, step:1, label:'Step 1 – Trademark Search'});
+    const sk = st.markType==='wordmark' ? 'searchWordmark' : 'searchDevice';
+    rows.push({label: fees.prof[sk].label, prof: profFee(sk), govt:0, govtUSD:0});
+  }
+
+  // ── Step 2: Filing ──────────────────────────────────────────────
+  if (st.opts[2]==='yes') {
+    const basisLbl = isITU
+      ? (isTEASPlus ? 'ITU · TEAS Plus ($350/class)' : 'ITU · TEAS Standard ($550/class)')
+      : 'In Use · TEAS Standard ($550/class)';
+    rows.push({hdr:true, step:2, label:`Step 2 – Filing (${basisLbl})`});
+
+    const firstKey = isITU ? 'filingFirst' : 'filingFirstIU';
+    const gUSD1 = govtFeeUsd(filingGovtKey);
+    rows.push({
+      label: `Filing – First Class`,
+      prof:  profFee(firstKey),
+      govt:  govtFeeInr(filingGovtKey),
+      govtUSD: gUSD1
+    });
+
+    if (nc > 1) {
+      const subKey  = isITU ? 'filingSub' : 'filingSubIU';
+      const extra   = nc - 1;
+      rows.push({
+        label:   `Filing – Additional Classes (×${extra})`,
+        prof:    profFee(subKey) * extra,
+        govt:    govtFeeInr(filingGovtKey) * extra,
+        govtUSD: gUSD1 * extra
+      });
+    }
+  }
+
+  // ── Step 3: Prosecution ─────────────────────────────────────────
+  if (st.opts[3]==='yes') {
+    rows.push({hdr:true, step:3, label:'Step 3 – Prosecution'});
+
+    const nOA = Math.max(0, parseInt(document.getElementById('numOA')?.value)||0);
+    if (nOA > 0) {
+      const oaKey = st.oaComplexity==='simple' ? 'oaSimple' : st.oaComplexity==='complex' ? 'oaComplex' : 'oaStandard';
+      const cplxLbl = st.oaComplexity.charAt(0).toUpperCase() + st.oaComplexity.slice(1);
+      rows.push({
+        label: `Office Action Response × ${nOA} (${cplxLbl})`,
+        prof:  profFee(oaKey) * nOA,
+        govt:  0,
+        govtUSD: 0
+      });
+    }
+
+    if (isITU) {
+      // Statement of Use: flat prof fee, per-class govt
+      rows.push({
+        label:   `Statement of Use (×${nc} class${nc>1?'es':''})`,
+        prof:    profFee('sou'),
+        govt:    govtFeeInr('sou') * nc,
+        govtUSD: govtFeeUsd('sou') * nc,
+        mandatory: true
+      });
+
+      const nExt = Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
+      if (nExt > 0) {
+        rows.push({
+          label:   `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nc} class${nc>1?'es':''})`,
+          prof:    profFee('extResponse') * nExt,
+          govt:    govtFeeInr('extResponse') * nExt * nc,
+          govtUSD: govtFeeUsd('extResponse') * nExt * nc
+        });
+      }
+    }
+  }
+
+  // ── Step 4: Maintenance ─────────────────────────────────────────
+  if (st.opts[4]==='yes') {
+    const mt = st.maintType;
+    const mtLabels = {'8':'§8 Declaration (5–6 yr)','15':'§15 Declaration (5–6 yr)','8+15':'§8 + §15 Declaration','8+9':'§8 + §9 Renewal'};
+    const mtProfKeys = {'8':'section8','15':'section15','8+15':'section8and15','8+9':'section8and9'};
+    const mtGovtKeys = {'8':'section8','15':'section15','8+15':'section8and15','8+9':'section8and9'};
+    const mtLbl  = mtLabels[mt];
+    const pKey   = mtProfKeys[mt];
+    const gKey   = mtGovtKeys[mt];
+
+    rows.push({hdr:true, step:4, label:`Step 4 – Maintenance (${mtLbl})`});
+    rows.push({
+      label:   `${mtLbl} (×${nc} class${nc>1?'es':''})`,
+      prof:    profFee(pKey),
+      govt:    govtFeeInr(gKey) * nc,
+      govtUSD: govtFeeUsd(gKey) * nc
+    });
+  }
+
+  return rows;
+}
+
+// ── Recalculate & render ──────────────────────────────────────────
+function recalc() {
+  st.classes      = Math.max(1, parseInt(document.getElementById('numClasses').value)||1);
+  st.numOA        = Math.max(0, parseInt(document.getElementById('numOA')?.value)||0);
+  st.numExtensions= Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
+
+  const anyOn = Object.values(st.opts).some(v=>v==='yes');
+  const area  = document.getElementById('results-area');
+  if (!anyOn) {
+    area.innerHTML='<div class="cfg-card"><div class="empty-state"><div class="es-icon">™</div><div class="es-text">Toggle at least one step above to generate the fee estimate.</div></div></div>';
+    return;
+  }
+
+  const rows = buildRows();
+  let totProf=0, totGovt=0;
+  rows.forEach(r=>{ if(!r.hdr){ totProf+=r.prof; totGovt+=r.govt; } });
+
+  // Add-ons by step
+  const profDisc = userProfile?.prof_discount || 0;
+  const addonsByStep = {1:[], 2:[], 3:[], 4:[], additional:[]};
+  userAddons.forEach((item, i) => {
+    if (st.extras[i] !== 'yes') return;
+    const ds = item.display_step || 'additional';
+    let key;
+    if (ds==='additional') { key='additional'; }
+    else {
+      const sn = parseInt(ds.replace('step',''));
+      key = (sn<=4 && st.opts[sn]==='yes') ? sn : 'additional';
+    }
+    addonsByStep[key].push({
+      label: item.label,
+      prof: Math.round(item.amount*(1-profDisc/100)),
+      govt: Math.round((item.govt_fee_usd||0)*USD_RATE),
+      govtUSD: item.govt_fee_usd||0
+    });
+  });
+  [1,2,3,4,'additional'].forEach(k=>addonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
+
+  const gGst   = st.showGst ? Math.round(totProf*0.18) : 0;
+  const gTotal = totProf + totGovt + gGst;
+  const discNote = profDisc>0 ? `<span class="disc-tag">Prof. fee discount: ${profDisc}% applied</span>` : '';
+
+  const al=[];
+  if(st.opts[1]==='yes') al.push('Search');
+  if(st.opts[2]==='yes') al.push(`Filing (${st.filingBasis==='itu'?(st.descType==='teas-plus'?'ITU·TEAS+':'ITU·TEAS Std'):'In Use'})`);
+  if(st.opts[3]==='yes') al.push('Prosecution');
+  if(st.opts[4]==='yes') al.push('Maintenance');
+
+  const nc = st.classes;
+  const sumClass = st.showGst ? 'sum-grid' : 'sum-grid no-gst';
+  const gstCard  = st.showGst
+    ? `<div class="s-card"><div class="s-lbl">GST (18% on Prof.)</div><div class="s-amt">${inr(gGst)}</div><div class="s-note">Applicable on professional fees</div></div>`
+    : '';
+
+  const sumHTML=`<div class="${sumClass}">
+    <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(totProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
+    <div class="s-card"><div class="s-lbl">Govt. Fees (INR equiv.)</div><div class="s-amt">${totGovt?inr(totGovt):'–'}</div><div class="s-note">1 USD = ₹100 · ${nc} class${nc>1?'es':''}</div></div>
+    ${gstCard}
+    <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">${nc} class${nc>1?'es':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
+  </div>`;
+
+  const addonRowHtml = e => {
+    const u=e.prof+e.govt;
+    const gc=e.govt>0?`${inr(e.govt)}<span class="usd-note">(${e.govtUSD} USD)</span>`:'';
+    return `<tr><td>${e.label} <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span></td><td>${e.prof>0?inr(e.prof):''}</td><td>${gc}</td><td>${inr(u)}</td></tr>`;
+  };
+
+  let tbody='', curStep=null;
+  rows.forEach(r=>{
+    if(r.hdr){
+      if(curStep!==null) addonsByStep[curStep].forEach(e=>{tbody+=addonRowHtml(e);});
+      curStep=r.step||null;
+      tbody+=`<tr class="opt-hdr"><td colspan="4">${r.label}</td></tr>`;
+      return;
+    }
+    const total=r.prof+r.govt;
+    const gc=r.govt>0?`${inr(r.govt)}<span class="usd-note">(${r.govtUSD} USD)</span>`:'';
+    const tag=r.mandatory?`<span class="mandatory-tag">Required for ITU</span>`:'';
+    tbody+=`<tr><td>${r.label}${tag}</td><td>${r.prof>0?inr(r.prof):''}</td><td>${gc}</td><td>${inr(total)}</td></tr>`;
+  });
+  if(curStep!==null) addonsByStep[curStep].forEach(e=>{tbody+=addonRowHtml(e);});
+  if(addonsByStep.additional.length){
+    tbody+=`<tr class="opt-hdr"><td colspan="4">Additional Items</td></tr>`;
+    addonsByStep.additional.forEach(e=>{tbody+=addonRowHtml(e);});
+  }
+  if(st.showGst){
+    tbody+=`<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf*0.18)}</td><td></td><td>${inr(gGst)}</td></tr>`;
+  }
+  tbody+=`<tr class="subtotal-row"><td>Sub-total ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td></tr>
+  <tr class="grand-row"><td>GRAND TOTAL · ${nc} Class${nc>1?'es':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(gTotal)}</td></tr>`;
+
+  area.innerHTML=sumHTML+`<div class="cfg-card">
+    <div class="cfg-head">
+      <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${al.join(' + ')}</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">${nc} class${nc>1?'es':''}</span>
+        <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="text-align:left;min-width:280px">Description</th>
+        <th>Prof. Fee (INR)</th>
+        <th>Govt. Fee (INR)</th>
+        <th>Total (INR)</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table></div></div>`;
+}
+
+// ── PDF download ──────────────────────────────────────────────────
+function downloadPdf() {
+  const client  = userProfile?.client_name     || '';
+  const contact = userProfile?.contact_person  || '';
+  const notes   = userProfile?.quote_notes     || '';
+  const date    = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+
+  const headerRows=[
+    client  ?`<tr><td style="color:#666;width:160px;padding:4px 0">Company</td><td style="font-weight:600;padding:4px 0">${client}</td></tr>`:'',
+    contact ?`<tr><td style="color:#666;padding:4px 0">Contact</td><td style="font-weight:600;padding:4px 0">${contact}</td></tr>`:'',
+    date    ?`<tr><td style="color:#666;padding:4px 0">Date</td><td style="font-weight:600;padding:4px 0">${date}</td></tr>`:'',
+  ].filter(Boolean).join('');
+
+  const rows = buildRows();
+  let totProf=0, totGovt=0;
+  rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
+
+  const profDisc = userProfile?.prof_discount||0;
+  const pdfAddonsByStep={1:[],2:[],3:[],4:[],additional:[]};
+  userAddons.forEach((item,i)=>{
+    if(st.extras[i]!=='yes') return;
+    const ds=item.display_step||'additional';
+    let key;
+    if(ds==='additional'){key='additional';}
+    else{const sn=parseInt(ds.replace('step',''));key=(sn<=4&&st.opts[sn]==='yes')?sn:'additional';}
+    pdfAddonsByStep[key].push({label:item.label,prof:Math.round(item.amount*(1-profDisc/100)),govt:Math.round((item.govt_fee_usd||0)*USD_RATE),govtUSD:item.govt_fee_usd||0});
+  });
+  [1,2,3,4,'additional'].forEach(k=>pdfAddonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
+
+  const gGst   = st.showGst ? Math.round(totProf*0.18) : 0;
+  const gTotal = totProf+totGovt+gGst;
+  const discNote = profDisc>0?` <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 5px">Prof. fee discount: ${profDisc}% applied</span>`:'';
+  const nc = st.classes;
+
+  const pdfAddonRow=e=>{
+    const u=e.prof+e.govt;
+    const gc=e.govt>0?`${inr(e.govt)} (${e.govtUSD} USD)`:'';
+    return `<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="padding:7px 10px;text-align:right;font-size:11px">${e.prof>0?inr(e.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(u)}</td></tr>`;
+  };
+
+  let pdfTbody='', pdfCurStep=null;
+  rows.forEach(r=>{
+    if(r.hdr){
+      if(pdfCurStep!==null) pdfAddonsByStep[pdfCurStep].forEach(e=>{pdfTbody+=pdfAddonRow(e);});
+      pdfCurStep=r.step||null;
+      pdfTbody+=`<tr style="background:#dce6f5"><td colspan="4" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1a2f5e">${r.label}</td></tr>`;
+      return;
+    }
+    const total=r.prof+r.govt;
+    const gc=r.govt>0?`${inr(r.govt)} (${r.govtUSD} USD)`:'';
+    const tag=r.mandatory?` <span style="font-size:9px;background:#f0f3f9;color:#888;border-radius:2px;padding:1px 4px">Required for ITU</span>`:'';
+    pdfTbody+=`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:11px">${r.label}${tag}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${r.prof>0?inr(r.prof):''}</td><td style="padding:7px 10px;text-align:right;font-size:11px">${gc}</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:600">${inr(total)}</td></tr>`;
+  });
+  if(pdfCurStep!==null) pdfAddonsByStep[pdfCurStep].forEach(e=>{pdfTbody+=pdfAddonRow(e);});
+  if(pdfAddonsByStep.additional.length){
+    pdfTbody+=`<tr style="background:#fef9ec"><td colspan="4" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
+    pdfAddonsByStep.additional.forEach(e=>{pdfTbody+=pdfAddonRow(e);});
+  }
+  if(st.showGst){
+    pdfTbody+=`<tr style="background:#f0fff4"><td colspan="2" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td colspan="2" style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
+  }
+  pdfTbody+=`<tr style="background:#e8f0fb"><td colspan="2" style="padding:8px 10px;font-size:11px;font-weight:600;color:#1a2f5e">Sub-total${discNote}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${totGovt?inr(totGovt):''}</td><td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e">${inr(totProf+totGovt)}</td></tr>
+  <tr style="background:#1a2f5e"><td style="padding:9px 10px;font-size:12px;font-weight:700;color:#fff">GRAND TOTAL · ${nc} Class${nc>1?'es':''} ${st.showGst?'(incl. GST)':''}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${inr(totProf)}</td><td style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff">${totGovt?inr(totGovt):''}</td><td style="padding:9px 10px;text-align:right;font-size:13px;font-weight:700;color:#f5c842">${inr(gTotal)}</td></tr>`;
+
+  const notesSection=notes?`
+    <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7c6208;margin-bottom:6px">Notes / Assumptions</div>
+      <div style="font-size:11px;color:#555;line-height:1.6;white-space:pre-wrap">${notes}</div>
+    </div>`:'';
+
+  const html=`
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:780px;margin:0 auto;color:#1a1a2e">
+      <div style="background:#1a2f5e;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;border-radius:8px 8px 0 0">
+        <img src="${window.location.origin}/img/logo-white.png" style="height:44px;display:block" alt="InvnTree">
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:700;color:#fff">US Trademark Fee Estimate</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:3px">Professional &amp; Government Fees · ${nc} Class${nc>1?'es':''}</div>
+        </div>
+      </div>
+      ${headerRows?`<div style="border:1px solid #dde4ef;border-top:none;padding:14px 22px;background:#f7f9fd"><table style="border-collapse:collapse;font-size:12px;width:100%">${headerRows}</table></div>`:''}
+      <div style="border:1px solid #dde4ef;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#edf2f9">
+              <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Description</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Prof. Fee</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Govt. Fee</th>
+              <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee">Total (INR)</th>
+            </tr>
+          </thead>
+          <tbody>${pdfTbody}</tbody>
+        </table>
+      </div>
+      ${notesSection}
+      <div style="margin-top:20px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px">
+        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'} · Govt. fees are USPTO statutory rates at 1 USD = ₹100 indicative<br>
+        Statement of Use required for ITU applications after Notice of Allowance · Extensions at $125/class/period (max 5 periods)<br>
+        © 2025 InvnTree IP Services. This estimate is indicative and subject to revision.
+      </div>
+    </div>`;
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>InvnTree US Trademark Fee Estimate</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff}
+  @page{size:A4;margin:12mm 10mm}
+  @media print{.print-bar{display:none!important}body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+  .print-bar{background:#1a2f5e;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px;position:sticky;top:0;z-index:10}
+  .print-bar span{opacity:.85}
+  .print-bar button{background:#f5c842;color:#1a2f5e;border:none;padding:7px 20px;border-radius:5px;font-weight:700;cursor:pointer;font-size:13px}
+  .content{padding:16px 20px}
+</style></head><body>
+<div class="print-bar">
+  <span>Your fee estimate is ready. Click "Save as PDF" or press Ctrl+P / Cmd+P.</span>
+  <button onclick="window.print()">Save as PDF</button>
+</div>
+<div class="content">${html}</div>
+</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),600);
+}
+
+// ── Fee Schedule UI ───────────────────────────────────────────────
+function buildFeeSchedule() {
+  const disc = userProfile ? (userProfile.prof_discount||0) : 0;
+
+  function mkProf(key) {
+    const item=fees.prof[key], base=item.amount;
+    const after=disc>0?Math.round(base*(1-disc/100)):base;
+    const div=document.createElement('div'); div.className='fs-item';
+    const lbl=document.createElement('label'); lbl.textContent=item.label;
+    const right=document.createElement('span');
+    right.style.cssText='display:flex;align-items:center;gap:6px;flex-shrink:0';
+    if(disc>0){
+      right.innerHTML=`<span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${base.toLocaleString('en-IN')}</span>`
+        +`<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${after.toLocaleString('en-IN')}</strong>`
+        +`<span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${disc}%</span>`;
+    } else {
+      right.innerHTML=`<span class="fs-cur">₹</span><strong style="font-size:14px;color:var(--navy)">${base.toLocaleString('en-IN')}</strong>`;
+    }
+    div.appendChild(lbl); div.appendChild(right); return div;
+  }
+
+  function mkGovt(key) {
+    const item=fees.govt[key];
+    const div=document.createElement('div'); div.className='fs-item';
+    const lbl=document.createElement('label'); lbl.textContent=item.label;
+    const right=document.createElement('span');
+    right.style.cssText='display:flex;align-items:center;gap:4px;flex-shrink:0';
+    right.innerHTML=`<span class="fs-cur" style="font-size:12px">USD</span><strong style="font-size:14px;color:var(--navy)">${item.amount.toLocaleString('en-US')}</strong>`;
+    div.appendChild(lbl); div.appendChild(right); return div;
+  }
+
+  function sec(t){const d=document.createElement('div');d.className='fs-section-label';d.textContent=t;return d;}
+  function dvd(){const d=document.createElement('div');d.className='fs-divider';return d;}
+
+  const p=document.getElementById('prof-fee-items');
+  const g=document.getElementById('govt-fee-items');
+
+  if(disc>0){
+    const note=document.createElement('div');
+    note.style.cssText='background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 12px;font-size:12px;color:#1a7a3a;margin-bottom:12px;font-weight:500';
+    note.textContent=`A ${disc}% discount is applied to all professional fees for your engagement.`;
+    p.appendChild(note);
+  }
+
+  p.appendChild(sec('Step 1 – Search'));
+  p.appendChild(mkProf('searchWordmark')); p.appendChild(mkProf('searchDevice'));
+  p.appendChild(dvd());
+
+  p.appendChild(sec('Step 2 – Filing (ITU)'));
+  p.appendChild(mkProf('filingFirst')); p.appendChild(mkProf('filingSub'));
+  p.appendChild(dvd());
+
+  p.appendChild(sec('Step 2 – Filing (In Use)'));
+  p.appendChild(mkProf('filingFirstIU')); p.appendChild(mkProf('filingSubIU'));
+  p.appendChild(dvd());
+
+  p.appendChild(sec('Step 3 – Prosecution'));
+  p.appendChild(mkProf('oaSimple')); p.appendChild(mkProf('oaStandard')); p.appendChild(mkProf('oaComplex'));
+  p.appendChild(mkProf('sou')); p.appendChild(mkProf('extResponse'));
+  p.appendChild(dvd());
+
+  p.appendChild(sec('Step 4 – Maintenance'));
+  p.appendChild(mkProf('section8')); p.appendChild(mkProf('section15'));
+  p.appendChild(mkProf('section8and15')); p.appendChild(mkProf('section8and9'));
+
+  // Govt fees
+  g.appendChild(sec('Step 2 – Filing'));
+  g.appendChild(mkGovt('filingTEASPlus')); g.appendChild(mkGovt('filingTEASStd'));
+  g.appendChild(dvd());
+
+  g.appendChild(sec('Step 3 – Prosecution (ITU)'));
+  g.appendChild(mkGovt('sou')); g.appendChild(mkGovt('extResponse'));
+  g.appendChild(dvd());
+
+  g.appendChild(sec('Step 4 – Maintenance'));
+  g.appendChild(mkGovt('section8')); g.appendChild(mkGovt('section15'));
+  g.appendChild(mkGovt('section8and15')); g.appendChild(mkGovt('section8and9'));
+
+  // Add-on items
+  if(userAddons.length){
+    p.appendChild(dvd()); p.appendChild(sec('Additional Items'));
+    userAddons.forEach(item=>{
+      const d=userProfile?(userProfile.prof_discount||0):0;
+      const prof=d>0?Math.round(item.amount*(1-d/100)):item.amount;
+      const govtUSD=item.govt_fee_usd||0;
+      const div=document.createElement('div'); div.className='fs-item';
+      const lbl=document.createElement('label'); lbl.textContent=item.label;
+      const right=document.createElement('span');
+      right.style.cssText='display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0';
+      let profHtml=d>0
+        ?`<span style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:var(--muted);text-decoration:line-through">₹${item.amount.toLocaleString('en-IN')}</span><strong style="color:var(--navy)">₹${prof.toLocaleString('en-IN')}</strong><span style="font-size:10px;background:#dcf5e4;color:#1a7a3a;border-radius:3px;padding:1px 5px;font-weight:700">-${d}%</span></span>`
+        :`<span><strong style="color:var(--navy)">₹${prof.toLocaleString('en-IN')}</strong> <span style="font-size:11px;color:var(--muted)">prof</span></span>`;
+      let govtHtml=govtUSD>0?`<span style="font-size:11px;color:var(--muted)">+ $${govtUSD} USPTO (≈ ₹${(govtUSD*USD_RATE).toLocaleString('en-IN')})</span>`:'';
+      right.innerHTML=profHtml+govtHtml;
+      div.appendChild(lbl); div.appendChild(right); p.appendChild(div);
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -119,6 +119,7 @@
             <th>Role</th>
             <th>US Patent</th>
             <th>India Patent</th>
+            <th>US Trademark</th>
             <th>Entity Type</th>
             <th>Status</th>
             <th>Last Login</th>
@@ -126,7 +127,7 @@
           </tr>
         </thead>
         <tbody id="users-tbody">
-          <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
+          <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
         </tbody>
       </table>
     </div>
@@ -241,6 +242,13 @@
               <span class="toggle-track"></span>
             </label>
           </div>
+          <div class="perm-row">
+            <span>™ US Trademark Filing</span>
+            <label class="toggle">
+              <input type="checkbox" id="add-trademark">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
         </div>
       </div>
       <div>
@@ -341,6 +349,13 @@
                 <span>🇮🇳 India Patent Filing</span>
                 <label class="toggle">
                   <input type="checkbox" id="edit-india">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+              <div class="perm-row">
+                <span>™ US Trademark Filing</span>
+                <label class="toggle">
+                  <input type="checkbox" id="edit-trademark">
                   <span class="toggle-track"></span>
                 </label>
               </div>
@@ -563,12 +578,14 @@
     const active   = allUsers.filter(u => u.is_active).length;
     const usCount  = allUsers.filter(u => u.us_patenting).length;
     const indCount = allUsers.filter(u => u.india_patenting).length;
+    const tmCount  = allUsers.filter(u => u.us_trademark).length;
 
     document.getElementById('stats-row').innerHTML = `
       <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Users</div></div>
       <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>
       <div class="stat-card"><div class="stat-num">${usCount}</div><div class="stat-lbl">US Patent Access</div></div>
-      <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>`;
+      <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>
+      <div class="stat-card"><div class="stat-num">${tmCount}</div><div class="stat-lbl">US Trademark Access</div></div>`;
   }
 
   // ── Format last login ─────────────────────────────────────────
@@ -587,7 +604,7 @@
   function renderTable(users) {
     const tbody = document.getElementById('users-tbody');
     if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
       return;
     }
     tbody.innerHTML = users.map(u => {
@@ -610,6 +627,12 @@
         <td>
           <label class="toggle" title="Toggle India Patent access">
             <input type="checkbox" ${u.india_patenting ? 'checked' : ''} onchange="quickToggle('${u.id}','india_patenting',this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </td>
+        <td>
+          <label class="toggle" title="Toggle US Trademark access">
+            <input type="checkbox" ${u.us_trademark ? 'checked' : ''} onchange="quickToggle('${u.id}','us_trademark',this.checked)">
             <span class="toggle-track"></span>
           </label>
         </td>
@@ -665,8 +688,9 @@
     document.getElementById('edit-role').value      = u.role;
     document.getElementById('edit-entity').value    = u.entity_type    || 'other';
     document.getElementById('edit-us-entity').value = u.us_entity_type || 'small';
-    document.getElementById('edit-us').checked      = u.us_patenting;
-    document.getElementById('edit-india').checked   = u.india_patenting;
+    document.getElementById('edit-us').checked        = u.us_patenting;
+    document.getElementById('edit-india').checked     = u.india_patenting;
+    document.getElementById('edit-trademark').checked = u.us_trademark || false;
     document.getElementById('edit-prof-disc').value       = u.prof_discount || 0;
     document.getElementById('edit-show-fee-schedule').checked = u.show_fee_schedule || false;
     populateScheduleDropdowns(u.india_fee_schedule_id || '', u.us_fee_schedule_id || '');
@@ -702,6 +726,7 @@
       us_entity_type:  document.getElementById('edit-us-entity').value,
       us_patenting:    document.getElementById('edit-us').checked,
       india_patenting: document.getElementById('edit-india').checked,
+      us_trademark:    document.getElementById('edit-trademark').checked,
       prof_discount:          parseInt(document.getElementById('edit-prof-disc').value) || 0,
       show_fee_schedule:      document.getElementById('edit-show-fee-schedule').checked,
       india_fee_schedule_id:  document.getElementById('edit-india-schedule').value || null,
@@ -802,6 +827,7 @@
     await db.from('profiles').update({
       us_patenting:    document.getElementById('add-us').checked,
       india_patenting: document.getElementById('add-india').checked,
+      us_trademark:    document.getElementById('add-trademark').checked,
       entity_type:     document.getElementById('add-entity').value,
       us_entity_type:  document.getElementById('add-us-entity').value,
       prof_discount:   parseInt(document.getElementById('add-prof-disc').value) || 0,
