@@ -222,16 +222,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
                   <button id="fb-itu"    class="dt-on" onclick="setFilingBasis('itu')">ITU (Intent to Use)</button>
                   <button id="fb-in-use"               onclick="setFilingBasis('in-use')">In Use</button>
                 </div>
-                <span class="step-sub-note" id="basis-note">Application based on intent to use the mark in commerce</span>
-              </div>
-              <!-- Description Type sub-row (ITU only) -->
-              <div class="step-sub" id="desc-type-row" style="background:#e8f4fe">
-                <span class="step-sub-label">Fee Type:</span>
-                <div class="draft-btns">
-                  <button id="dt-teas-plus" class="dt-on" onclick="setDescType('teas-plus')">TEAS Plus ($350/class)</button>
-                  <button id="dt-teas-std"               onclick="setDescType('teas-standard')">TEAS Standard ($550/class)</button>
-                </div>
-                <span class="itu-note">&#9432; TEAS Plus requires pre-approved ID of goods/services</span>
+                <span class="step-sub-note" id="basis-note">Application based on intent to use the mark in commerce · $350/class USPTO</span>
               </div>
             </div>
 
@@ -305,9 +296,8 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 
       <div class="notes-bar">
         <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include.</span>
-        <span class="note-item"><strong>Govt. Fees</strong> are shown as INR equivalent at an indicative rate of <strong>1 USD = ₹100</strong>.</span>
+        <span class="note-item"><strong>Govt. Fees</strong> are shown as INR equivalent at an indicative rate of <strong>1 USD = ₹100</strong>. Fees per USPTO schedule effective Jan 18, 2025.</span>
         <span class="note-item"><strong>ITU basis</strong> requires filing a Statement of Use (or extension) after Notice of Allowance.</span>
-        <span class="note-item"><strong>§8 + §9</strong> Renewal filing is due between years 9–10 and every 10 years thereafter.</span>
       </div>
 
       <div id="results-area">
@@ -415,14 +405,13 @@ const fees = {
     section8and9:    { label: 'Section 8 + 9 Renewal',                         amount: 20000 },
   },
   govt: {
-    filingTEASPlus:  { label: 'Filing – TEAS Plus (per class)',                amount: 350   },
-    filingTEASStd:   { label: 'Filing – TEAS Standard (per class)',            amount: 550   },
+    filing:          { label: 'Filing Fee (per class)',                        amount: 350   },
     sou:             { label: 'Statement of Use (per class)',                   amount: 150   },
     extResponse:     { label: 'Extension of Time – SOU (per class)',           amount: 125   },
     section8:        { label: 'Section 8 (per class)',                         amount: 325   },
     section15:       { label: 'Section 15 (per class)',                        amount: 250   },
-    section8and15:   { label: 'Section 8 + 15 (per class)',                    amount: 425   },
-    section8and9:    { label: 'Section 8 + 9 Renewal (per class)',             amount: 575   },
+    section8and15:   { label: 'Section 8 + 15 (per class)',                    amount: 575   },
+    section8and9:    { label: 'Section 8 + 9 Renewal (per class)',             amount: 650   },
   }
 };
 const USD_RATE = 100;
@@ -434,7 +423,6 @@ let st = {
   opts: {1:'yes', 2:'yes', 3:'yes', 4:'no'},
   extras: {},
   filingBasis: 'itu',
-  descType: 'teas-plus',
   oaComplexity: 'standard',
   numExtensions: 0,
   maintType: '8+15',
@@ -461,7 +449,6 @@ function setOpt(num, val) {
 
   if (num===2) {
     document.getElementById('filing-basis-row').classList.toggle('hidden', val!=='yes');
-    updateDescTypeVisibility();
   }
   if (num===3) {
     document.getElementById('oa-row').classList.toggle('hidden', val!=='yes');
@@ -479,28 +466,15 @@ function setFilingBasis(basis) {
   document.getElementById('fb-in-use').className = basis==='in-use' ? 'dt-on' : '';
   document.getElementById('basis-note').textContent =
     basis === 'itu'
-      ? 'Application based on intent to use the mark in commerce'
-      : 'Mark already in use in interstate commerce at time of filing';
-  updateDescTypeVisibility();
+      ? 'Application based on intent to use the mark in commerce · $350/class USPTO'
+      : 'Mark already in use in interstate commerce at time of filing · $350/class USPTO';
   updateExtRowVisibility();
   recalc();
-}
-
-function updateDescTypeVisibility() {
-  const show = st.opts[2]==='yes' && st.filingBasis==='itu';
-  document.getElementById('desc-type-row').classList.toggle('hidden', !show);
 }
 
 function updateExtRowVisibility() {
   const show = st.opts[3]==='yes' && st.filingBasis==='itu';
   document.getElementById('ext-row').classList.toggle('hidden', !show);
-}
-
-function setDescType(type) {
-  st.descType = type;
-  document.getElementById('dt-teas-plus').className = type==='teas-plus'     ? 'dt-on' : '';
-  document.getElementById('dt-teas-std').className  = type==='teas-standard' ? 'dt-on' : '';
-  recalc();
 }
 
 function setOAComplexity(c) {
@@ -538,12 +512,11 @@ function resetAll() {
   st = {
     numWordmarks:1, numDeviceMarks:0, classes:1,
     opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
-    filingBasis:'itu', descType:'teas-plus',
+    filingBasis:'itu',
     oaComplexity:'standard', numExtensions:0, maintType:'8+15', showGst:false
   };
   [1,2,3,4].forEach(i => setOpt(i, i===4?'no':'yes'));
   setFilingBasis('itu');
-  setDescType('teas-plus');
   setOAComplexity('standard');
   setMaintType('8+15');
   setGst('no');
@@ -634,9 +607,7 @@ function buildRows() {
   const nWM = st.numWordmarks;
   const nDM = st.numDeviceMarks;
   const nm  = nWM + nDM;  // total marks
-  const isITU      = st.filingBasis === 'itu';
-  const isTEASPlus = isITU && st.descType === 'teas-plus';
-  const filingGovtKey = isTEASPlus ? 'filingTEASPlus' : 'filingTEASStd';
+  const isITU = st.filingBasis === 'itu';
 
   // ── Step 1: Search ──────────────────────────────────────────────
   if (st.opts[1]==='yes') {
@@ -657,17 +628,15 @@ function buildRows() {
 
   // ── Step 2: Filing ──────────────────────────────────────────────
   if (st.opts[2]==='yes' && nm > 0) {
-    const basisLbl = isITU
-      ? (isTEASPlus ? 'ITU · TEAS Plus ($350/class)' : 'ITU · TEAS Standard ($550/class)')
-      : 'In Use · TEAS Standard ($550/class)';
+    const basisLbl = isITU ? 'ITU · $350/class' : 'In Use · $350/class';
     rows.push({hdr:true, step:2, label:`Step 2 – Filing (${basisLbl})`});
 
     const firstKey = isITU ? 'filingFirst' : 'filingFirstIU';
-    const gUSD1 = govtFeeUsd(filingGovtKey);
+    const gUSD1 = govtFeeUsd('filing');
     rows.push({
       label:   nm>1 ? `Filing – First Class (×${nm} marks)` : 'Filing – First Class',
       prof:    profFee(firstKey) * nm,
-      govt:    govtFeeInr(filingGovtKey) * nm,
+      govt:    govtFeeInr('filing') * nm,
       govtUSD: gUSD1 * nm
     });
 
@@ -680,7 +649,7 @@ function buildRows() {
       rows.push({
         label:   acLbl,
         prof:    profFee(subKey) * extra * nm,
-        govt:    govtFeeInr(filingGovtKey) * extra * nm,
+        govt:    govtFeeInr('filing') * extra * nm,
         govtUSD: gUSD1 * extra * nm
       });
     }
@@ -793,7 +762,7 @@ function recalc() {
 
   const al=[];
   if(st.opts[1]==='yes') al.push('Search');
-  if(st.opts[2]==='yes') al.push(`Filing (${st.filingBasis==='itu'?(st.descType==='teas-plus'?'ITU·TEAS+':'ITU·TEAS Std'):'In Use'})`);
+  if(st.opts[2]==='yes') al.push(`Filing (${st.filingBasis==='itu'?'ITU':'In Use'})`);
   if(st.opts[3]==='yes') al.push('Prosecution');
   if(st.opts[4]==='yes') al.push('Maintenance');
 
@@ -1051,7 +1020,7 @@ function buildFeeSchedule() {
   p.appendChild(mkProf('sou')); p.appendChild(mkProf('extResponse'));
   // Govt fees
   g.appendChild(sec('Step 2 – Filing'));
-  g.appendChild(mkGovt('filingTEASPlus')); g.appendChild(mkGovt('filingTEASStd'));
+  g.appendChild(mkGovt('filing'));
   g.appendChild(dvd());
 
   g.appendChild(sec('Step 3 – Prosecution (ITU)'));
