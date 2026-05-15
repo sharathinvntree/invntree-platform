@@ -224,6 +224,15 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
                 </div>
                 <span class="step-sub-note" id="basis-note">Application based on intent to use the mark in commerce · $350/class USPTO</span>
               </div>
+              <!-- Custom description surcharge sub-row -->
+              <div class="step-sub hidden" id="custom-desc-row" style="background:#fff8ed">
+                <span class="step-sub-label">Custom Description:</span>
+                <div class="step-yn">
+                  <button id="cd-yes"               onclick="setCustomDesc(true)">Yes  (+$200/class)</button>
+                  <button id="cd-no"  class="no-on" onclick="setCustomDesc(false)">No</button>
+                </div>
+                <span class="step-sub-note">Non-standard goods/services description — adds $200/class USPTO surcharge</span>
+              </div>
             </div>
 
             <!-- Step 3: Prosecution -->
@@ -248,27 +257,6 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
               </div>
             </div>
 
-            <!-- Step 4: Maintenance -->
-            <div class="step-item" id="pill-4">
-              <div class="step-main-row">
-                <span class="step-badge">Step 4</span>
-                <span class="step-title">Maintenance</span>
-                <div class="step-yn">
-                  <button id="o4-yes"               onclick="setOpt(4,'yes')">Yes</button>
-                  <button id="o4-no"  class="no-on" onclick="setOpt(4,'no')">No</button>
-                </div>
-              </div>
-              <!-- Maintenance type sub-row -->
-              <div class="step-sub hidden" id="maint-type-row">
-                <span class="step-sub-label">Type:</span>
-                <div class="draft-btns">
-                  <button id="mt-s8"    onclick="setMaintType('8')">§8 Only</button>
-                  <button id="mt-s15"   onclick="setMaintType('15')">§15 Only</button>
-                  <button id="mt-s8s15" class="dt-on" onclick="setMaintType('8+15')">§8 + §15</button>
-                  <button id="mt-s8s9"  onclick="setMaintType('8+9')">§8 + §9 Renewal</button>
-                </div>
-              </div>
-            </div>
 
           </div>
 
@@ -400,6 +388,7 @@ const fees = {
   },
   govt: {
     filing:          { label: 'Filing Fee (per class)',                        amount: 350   },
+    customDesc:      { label: 'Custom Description Surcharge (per class)',      amount: 200   },
     sou:             { label: 'Statement of Use (per class)',                   amount: 150   },
     extResponse:     { label: 'Extension of Time – SOU (per class)',           amount: 125   },
     section8:        { label: 'Section 8 (per class)',                         amount: 325   },
@@ -417,8 +406,8 @@ let st = {
   opts: {1:'yes', 2:'yes', 3:'yes', 4:'no'},
   extras: {},
   filingBasis: 'itu',
+  customDesc: false,
   oaComplexity: 'standard',
-  maintType: '8+15',
   showGst: false
 };
 
@@ -442,12 +431,10 @@ function setOpt(num, val) {
 
   if (num===2) {
     document.getElementById('filing-basis-row').classList.toggle('hidden', val!=='yes');
+    document.getElementById('custom-desc-row').classList.toggle('hidden', val!=='yes');
   }
   if (num===3) {
     document.getElementById('oa-row').classList.toggle('hidden', val!=='yes');
-  }
-  if (num===4) {
-    document.getElementById('maint-type-row').classList.toggle('hidden', val!=='yes');
   }
   recalc();
 }
@@ -471,13 +458,10 @@ function setOAComplexity(c) {
   recalc();
 }
 
-function setMaintType(t) {
-  st.maintType = t;
-  ['s8','s15','s8s15','s8s9'].forEach(id => {
-    document.getElementById('mt-'+id).className = '';
-  });
-  const map = {'8':'mt-s8','15':'mt-s15','8+15':'mt-s8s15','8+9':'mt-s8s9'};
-  document.getElementById(map[t]).className = 'dt-on';
+function setCustomDesc(val) {
+  st.customDesc = val;
+  document.getElementById('cd-yes').className = val ? 'yes-on' : '';
+  document.getElementById('cd-no').className  = val ? '' : 'no-on';
   recalc();
 }
 
@@ -496,14 +480,14 @@ function resetAll() {
   userAddons.forEach((_, i) => { initExtras[i] = 'yes'; });
   st = {
     numWordmarks:1, numDeviceMarks:0, classes:1,
-    opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
-    filingBasis:'itu',
-    oaComplexity:'standard', maintType:'8+15', showGst:false
+    opts:{1:'yes',2:'yes',3:'yes'}, extras:initExtras,
+    filingBasis:'itu', customDesc:false,
+    oaComplexity:'standard', showGst:false
   };
-  [1,2,3,4].forEach(i => setOpt(i, i===4?'no':'yes'));
+  [1,2,3].forEach(i => setOpt(i,'yes'));
   setFilingBasis('itu');
+  setCustomDesc(false);
   setOAComplexity('standard');
-  setMaintType('8+15');
   setGst('no');
   userAddons.forEach((_, i) => setExtra(i, 'yes'));
   recalc();
@@ -638,6 +622,17 @@ function buildRows() {
         govtUSD: gUSD1 * extra * nm
       });
     }
+    if (st.customDesc) {
+      const cdUSD = govtFeeUsd('customDesc') * nm * nc;
+      rows.push({
+        label:   nm>1
+          ? `Custom Description Surcharge (×${nm} marks × ${nc} class${nc>1?'es':''})`
+          : `Custom Description Surcharge (×${nc} class${nc>1?'es':''})`,
+        prof:    0,
+        govt:    govtFeeInr('customDesc') * nm * nc,
+        govtUSD: cdUSD
+      });
+    }
   }
 
   // ── Step 3: Prosecution ─────────────────────────────────────────
@@ -666,24 +661,6 @@ function buildRows() {
     }
   }
 
-  // ── Step 4: Maintenance ─────────────────────────────────────────
-  if (st.opts[4]==='yes' && nm > 0) {
-    const mt = st.maintType;
-    const mtLabels   = {'8':'§8 Declaration (5–6 yr)','15':'§15 Declaration (5–6 yr)','8+15':'§8 + §15 Declaration','8+9':'§8 + §9 Renewal'};
-    const mtProfKeys = {'8':'section8','15':'section15','8+15':'section8and15','8+9':'section8and9'};
-    const mtLbl = mtLabels[mt];
-    const pKey  = mtProfKeys[mt];
-    rows.push({hdr:true, step:4, label:`Step 4 – Maintenance (${mtLbl})`});
-    rows.push({
-      label:   nm>1
-        ? `${mtLbl} (×${nm} marks × ${nc} class${nc>1?'es':''})`
-        : `${mtLbl} (×${nc} class${nc>1?'es':''})`,
-      prof:    profFee(pKey) * nm,
-      govt:    govtFeeInr(pKey) * nm * nc,
-      govtUSD: govtFeeUsd(pKey) * nm * nc
-    });
-  }
-
   return rows;
 }
 
@@ -710,7 +687,7 @@ function recalc() {
 
   // Add-ons by step
   const profDisc = userProfile?.prof_discount || 0;
-  const addonsByStep = {1:[], 2:[], 3:[], 4:[], additional:[]};
+  const addonsByStep = {1:[], 2:[], 3:[], additional:[]};
   userAddons.forEach((item, i) => {
     if (st.extras[i] !== 'yes') return;
     const ds = item.display_step || 'additional';
@@ -718,7 +695,7 @@ function recalc() {
     if (ds==='additional') { key='additional'; }
     else {
       const sn = parseInt(ds.replace('step',''));
-      key = (sn<=4 && st.opts[sn]==='yes') ? sn : 'additional';
+      key = (sn<=3 && st.opts[sn]==='yes') ? sn : 'additional';
     }
     addonsByStep[key].push({
       label: item.label,
@@ -727,7 +704,7 @@ function recalc() {
       govtUSD: item.govt_fee_usd||0
     });
   });
-  [1,2,3,4,'additional'].forEach(k=>addonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
+  [1,2,3,'additional'].forEach(k=>addonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
 
   const gGst   = st.showGst ? Math.round(totProf*0.18) : 0;
   const gTotal = totProf + totGovt + gGst;
@@ -737,8 +714,6 @@ function recalc() {
   if(st.opts[1]==='yes') al.push('Search');
   if(st.opts[2]==='yes') al.push(`Filing (${st.filingBasis==='itu'?'ITU':'In Use'})`);
   if(st.opts[3]==='yes') al.push('Prosecution');
-  if(st.opts[4]==='yes') al.push('Maintenance');
-
   const nc = st.classes;
   const nWM = st.numWordmarks, nDM = st.numDeviceMarks;
   const marksNote = [nWM>0?`${nWM} Wordmark${nWM>1?'s':''}`:null, nDM>0?`${nDM} Device Mark${nDM>1?'s':''}`:null].filter(Boolean).join(' + ')
@@ -823,16 +798,16 @@ function downloadPdf() {
   rows.forEach(r=>{if(!r.hdr){totProf+=r.prof;totGovt+=r.govt;}});
 
   const profDisc = userProfile?.prof_discount||0;
-  const pdfAddonsByStep={1:[],2:[],3:[],4:[],additional:[]};
+  const pdfAddonsByStep={1:[],2:[],3:[],additional:[]};
   userAddons.forEach((item,i)=>{
     if(st.extras[i]!=='yes') return;
     const ds=item.display_step||'additional';
     let key;
     if(ds==='additional'){key='additional';}
-    else{const sn=parseInt(ds.replace('step',''));key=(sn<=4&&st.opts[sn]==='yes')?sn:'additional';}
+    else{const sn=parseInt(ds.replace('step',''));key=(sn<=3&&st.opts[sn]==='yes')?sn:'additional';}
     pdfAddonsByStep[key].push({label:item.label,prof:Math.round(item.amount*(1-profDisc/100)),govt:Math.round((item.govt_fee_usd||0)*USD_RATE),govtUSD:item.govt_fee_usd||0});
   });
-  [1,2,3,4,'additional'].forEach(k=>pdfAddonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
+  [1,2,3,'additional'].forEach(k=>pdfAddonsByStep[k].forEach(e=>{totProf+=e.prof;totGovt+=e.govt;}));
 
   const gGst   = st.showGst ? Math.round(totProf*0.18) : 0;
   const gTotal = totProf+totGovt+gGst;
@@ -994,6 +969,7 @@ function buildFeeSchedule() {
   // Govt fees
   g.appendChild(sec('Step 2 – Filing'));
   g.appendChild(mkGovt('filing'));
+  g.appendChild(mkGovt('customDesc'));
   g.appendChild(dvd());
 
   g.appendChild(sec('Step 3 – Prosecution (ITU)'));
