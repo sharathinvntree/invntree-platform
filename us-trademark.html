@@ -244,13 +244,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
                   <button id="oa-standard" class="dt-on" onclick="setOAComplexity('standard')">Standard</button>
                   <button id="oa-complex"  onclick="setOAComplexity('complex')">Complex</button>
                 </div>
-                <span class="step-sub-note">1 Office Action Response per mark included</span>
-              </div>
-              <!-- Extensions sub-row (ITU only) -->
-              <div class="step-sub hidden" id="ext-row" style="background:#fff8ed">
-                <span class="step-sub-label">SOU Extensions:</span>
-                <input type="number" class="inline-num" id="numExtensions" value="0" min="0" max="5" step="1" oninput="recalc()">
-                <span class="step-sub-note">Extension periods to file Statement of Use ($125/class each)</span>
+                <span class="itu-note" style="background:#fde8e8;color:#b91c1c;border-color:#fca5a5">&#9888; 1 OA per mark shown — additional OAs may apply and will add to the total</span>
               </div>
             </div>
 
@@ -424,7 +418,6 @@ let st = {
   extras: {},
   filingBasis: 'itu',
   oaComplexity: 'standard',
-  numExtensions: 0,
   maintType: '8+15',
   showGst: false
 };
@@ -452,7 +445,6 @@ function setOpt(num, val) {
   }
   if (num===3) {
     document.getElementById('oa-row').classList.toggle('hidden', val!=='yes');
-    updateExtRowVisibility();
   }
   if (num===4) {
     document.getElementById('maint-type-row').classList.toggle('hidden', val!=='yes');
@@ -468,13 +460,7 @@ function setFilingBasis(basis) {
     basis === 'itu'
       ? 'Application based on intent to use the mark in commerce · $350/class USPTO'
       : 'Mark already in use in interstate commerce at time of filing · $350/class USPTO';
-  updateExtRowVisibility();
   recalc();
-}
-
-function updateExtRowVisibility() {
-  const show = st.opts[3]==='yes' && st.filingBasis==='itu';
-  document.getElementById('ext-row').classList.toggle('hidden', !show);
 }
 
 function setOAComplexity(c) {
@@ -506,14 +492,13 @@ function resetAll() {
   document.getElementById('numWordmarks').value  = 1;
   document.getElementById('numDeviceMarks').value= 0;
   document.getElementById('numClasses').value    = 1;
-  document.getElementById('numExtensions').value = 0;
   const initExtras = {};
   userAddons.forEach((_, i) => { initExtras[i] = 'yes'; });
   st = {
     numWordmarks:1, numDeviceMarks:0, classes:1,
     opts:{1:'yes',2:'yes',3:'yes',4:'no'}, extras:initExtras,
     filingBasis:'itu',
-    oaComplexity:'standard', numExtensions:0, maintType:'8+15', showGst:false
+    oaComplexity:'standard', maintType:'8+15', showGst:false
   };
   [1,2,3,4].forEach(i => setOpt(i, i===4?'no':'yes'));
   setFilingBasis('itu');
@@ -678,17 +663,6 @@ function buildRows() {
         mandatory: true
       });
 
-      const nExt = st.numExtensions;
-      if (nExt > 0) {
-        rows.push({
-          label:   nm>1
-            ? `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nm} marks × ${nc} class${nc>1?'es':''})`
-            : `Extension of Time – SOU (${nExt} period${nExt>1?'s':''} × ${nc} class${nc>1?'es':''})`,
-          prof:    profFee('extResponse') * nExt * nm,
-          govt:    govtFeeInr('extResponse') * nExt * nm * nc,
-          govtUSD: govtFeeUsd('extResponse') * nExt * nm * nc
-        });
-      }
     }
   }
 
@@ -718,7 +692,6 @@ function recalc() {
   st.numWordmarks   = Math.max(0, parseInt(document.getElementById('numWordmarks').value)||0);
   st.numDeviceMarks = Math.max(0, parseInt(document.getElementById('numDeviceMarks').value)||0);
   st.classes        = Math.max(1, parseInt(document.getElementById('numClasses').value)||1);
-  st.numExtensions  = Math.max(0, parseInt(document.getElementById('numExtensions')?.value)||0);
 
   const nm    = st.numWordmarks + st.numDeviceMarks;
   const warnEl= document.getElementById('marks-warning');
@@ -1017,14 +990,14 @@ function buildFeeSchedule() {
 
   p.appendChild(sec('Step 3 – Prosecution'));
   p.appendChild(mkProf('oaSimple')); p.appendChild(mkProf('oaStandard')); p.appendChild(mkProf('oaComplex'));
-  p.appendChild(mkProf('sou')); p.appendChild(mkProf('extResponse'));
+  p.appendChild(mkProf('sou'));
   // Govt fees
   g.appendChild(sec('Step 2 – Filing'));
   g.appendChild(mkGovt('filing'));
   g.appendChild(dvd());
 
   g.appendChild(sec('Step 3 – Prosecution (ITU)'));
-  g.appendChild(mkGovt('sou')); g.appendChild(mkGovt('extResponse'));
+  g.appendChild(mkGovt('sou'));
 
   // Add-on items
   if(userAddons.length){
