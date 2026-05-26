@@ -320,6 +320,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):hover td{background:#f
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/track.js"></script>
 <script>
 let userProfile = null;
 let userAddons  = [];
@@ -359,6 +360,7 @@ let userAddons  = [];
   }
 
   renderNavbar(auth.profile, 'US Trademark Fee Calculator');
+  trackPageVisit(auth.profile.id, 'us-trademark');
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
 
@@ -708,6 +710,14 @@ function recalc() {
 
   const gGst   = st.showGst ? Math.round(totProf*0.18) : 0;
   const gTotal = totProf + totGovt + gGst;
+
+  trackCalcRun(userProfile?.id, 'us-trademark', {
+    steps: Object.entries(st.opts).filter(([,v])=>v==='yes').map(([k])=>+k),
+    filing_basis: st.filingBasis,
+    marks: st.numWordmarks + st.numDeviceMarks,
+    classes: st.classes, grand_total: gTotal
+  });
+
   const discNote = profDisc>0 ? `<span class="disc-tag">Prof. fee discount: ${profDisc}% applied</span>` : '';
 
   const al=[];

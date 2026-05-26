@@ -87,10 +87,13 @@
 <div class="container" id="main" style="display:none">
 
   <!-- Admin Tab Bar -->
-  <div class="admin-tabbar">
-    <button class="admin-tab active" id="atab-users"     onclick="switchAdminTab('users')">👥 Users</button>
-    <button class="admin-tab"        id="atab-schedules" onclick="switchAdminTab('schedules')">📋 Fee Schedules</button>
-    <button class="admin-tab"        id="atab-addons"    onclick="switchAdminTab('addons')">✦ Add-ons</button>
+  <div class="admin-tabbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div style="display:flex">
+      <button class="admin-tab active" id="atab-users"     onclick="switchAdminTab('users')">👥 Users</button>
+      <button class="admin-tab"        id="atab-schedules" onclick="switchAdminTab('schedules')">📋 Fee Schedules</button>
+      <button class="admin-tab"        id="atab-addons"    onclick="switchAdminTab('addons')">✦ Add-ons</button>
+    </div>
+    <a id="activity-link" href="activity.html" class="btn btn-ghost btn-sm" style="display:none;margin-right:4px">📊 Activity Log</a>
   </div>
 
   <!-- ── Users Panel ── -->
@@ -566,6 +569,7 @@
 
     currentAdminId = auth.profile.id;
     renderNavbar(auth.profile, 'Admin Panel');
+    document.getElementById('activity-link').style.display = 'inline-flex';
 
     await Promise.all([loadUsers(), loadSchedules(), loadAddons()]);
 

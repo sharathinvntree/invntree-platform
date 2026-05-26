@@ -115,6 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/track.js"></script>
 <script>
   const MODULES = [
     {
@@ -162,6 +163,7 @@
     const { profile } = auth;
 
     renderNavbar(profile, 'Dashboard');
+    trackPageVisit(profile.id, 'dashboard');
     document.getElementById('welcome-name').textContent =
       profile.full_name || profile.email.split('@')[0];
 

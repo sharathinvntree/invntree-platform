@@ -273,6 +273,7 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/track.js"></script>
 <script>
 let userProfile = null;
 let userAddons  = [];
@@ -300,6 +301,7 @@ let userAddons  = [];
   }
 
   renderNavbar(auth.profile, 'Patent Fee Calculator');
+  trackPageVisit(auth.profile.id, 'patent-combined');
 
   // Entity badge removed per configuration
 
@@ -695,6 +697,12 @@ function recalc() {
   const gGovt   = totGovt * n;
   const gGst    = st.showGst ? Math.round(gProf * 0.18) : 0;
   const gTotal  = gProf + gGovt + gGst;
+
+  trackCalcRun(userProfile?.id, 'patent-combined', {
+    jurisdiction: st.juri,
+    steps: Object.entries(st.opts).filter(([,v])=>v==='yes').map(([k])=>+k),
+    draft_type: st.draftType, n: st.n, grand_total: gTotal
+  });
 
   const discNote = profDisc > 0
     ? `<span class="disc-tag">Prof. fee discount: ${profDisc}% applied</span>` : '';

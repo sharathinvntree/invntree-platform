@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Log — InvnTree Admin</title>
+<link rel="icon" href="/img/favicon.png">
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.page-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
+.page-loader p{font-size:13px;color:var(--muted)}
+
+.act-container{max-width:1200px;margin:0 auto;padding:28px 24px 56px}
+
+/* Stats row */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.stat-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+.stat-val{font-size:26px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* Filters */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.filter-bar label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);white-space:nowrap}
+.filter-bar select,.filter-bar input{border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;background:#fff;outline:none;transition:border-color .15s}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--blue)}
+.filter-group{display:flex;align-items:center;gap:8px}
+.filter-sep{width:1px;height:28px;background:var(--border);flex-shrink:0}
+
+/* Table card */
+.tbl-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.tbl-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tbl-head h2{font-size:14px;font-weight:600;color:var(--navy)}
+.tbl-count{font-size:12px;color:var(--muted)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8fafd;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid #f0f3f9;vertical-align:middle;color:var(--text)}
+tbody tr:hover td{background:#f7faff}
+tbody tr:last-child td{border-bottom:none}
+
+.badge-visit{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#e8f0fb;color:#1a3a6e}
+.badge-calc{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#dcf5e4;color:#1a7a3a}
+
+.page-pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#f1f5f9;color:var(--muted)}
+
+.detail-chip{font-size:11px;color:var(--muted);background:#f8fafd;border:1px solid var(--border);border-radius:4px;padding:2px 7px;display:inline-block;margin:1px 2px}
+
+.empty-state{text-align:center;padding:56px 20px;color:var(--muted);font-size:14px}
+
+@media(max-width:900px){
+  .stat-row{grid-template-columns:1fr 1fr}
+  .filter-bar{flex-direction:column;align-items:flex-start}
+  .filter-sep{display:none}
+}
+@media(max-width:600px){
+  .stat-row{grid-template-columns:1fr 1fr}
+  .act-container{padding:14px 10px 40px}
+}
+</style>
+</head>
+<body>
+
+<div class="page-loader" id="loader">
+  <span class="spinner spinner-blue" style="width:28px;height:28px;border-width:3px"></span>
+  <p>Loading activity log…</p>
+</div>
+
+<div id="navbar-slot"></div>
+
+<div class="act-container" id="main" style="display:none">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap">
+    <div>
+      <h1 style="font-size:20px;font-weight:700;color:var(--navy);margin-bottom:2px">Activity Log</h1>
+      <p style="font-size:13px;color:var(--muted)">Page visits and calculator runs across all users.</p>
+    </div>
+    <a href="admin.html" class="btn btn-ghost btn-sm">← Back to Admin</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row" id="stat-row">
+    <div class="stat-card"><div class="stat-lbl">Total Events</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
+    <div class="stat-card"><div class="stat-lbl">Events Today</div><div class="stat-val" id="s-today">—</div><div class="stat-sub" id="s-today-date"></div></div>
+    <div class="stat-card"><div class="stat-lbl">Calc Runs Today</div><div class="stat-val" id="s-calcs">—</div><div class="stat-sub">calculator_run events</div></div>
+    <div class="stat-card"><div class="stat-lbl">Active Users Today</div><div class="stat-val" id="s-users">—</div><div class="stat-sub">unique users</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Event</label>
+      <select id="f-event" onchange="applyFilters()">
+        <option value="">All events</option>
+        <option value="page_visit">Page visit</option>
+        <option value="calculator_run">Calculator run</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <label>Page</label>
+      <select id="f-page" onchange="applyFilters()">
+        <option value="">All pages</option>
+        <option value="dashboard">Dashboard</option>
+        <option value="us-patent">US Patent</option>
+        <option value="india-patent">India Patent</option>
+        <option value="us-trademark">US Trademark</option>
+        <option value="patent-combined">India + US (Combined)</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <label>User</label>
+      <select id="f-user" onchange="applyFilters()">
+        <option value="">All users</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <label>From</label>
+      <input type="date" id="f-from" onchange="applyFilters()">
+    </div>
+    <div class="filter-group">
+      <label>To</label>
+      <input type="date" id="f-to" onchange="applyFilters()">
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-card">
+    <div class="tbl-head">
+      <h2>Events</h2>
+      <span class="tbl-count" id="tbl-count"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="activity-table">
+        <thead>
+          <tr>
+            <th style="width:160px">Timestamp</th>
+            <th>User</th>
+            <th style="width:130px">Event</th>
+            <th style="width:150px">Page</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="activity-tbody">
+          <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+let allEvents   = [];
+let profilesMap = {}; // user_id → { full_name, email }
+
+const PAGE_LABELS = {
+  'dashboard':       '🏠 Dashboard',
+  'us-patent':       '🇺🇸 US Patent',
+  'india-patent':    '🇮🇳 India Patent',
+  'us-trademark':    '™ US Trademark',
+  'patent-combined': '🌐 India + US',
+};
+
+(async () => {
+  const auth = await requireAdmin();
+  if (!auth) return;
+
+  renderNavbar(auth.profile, 'Activity Log');
+
+  // Load all profiles for name lookup
+  const { data: profiles } = await db.from('profiles').select('id, full_name, email');
+  (profiles || []).forEach(p => { profilesMap[p.id] = p; });
+
+  // Populate user filter
+  const sel = document.getElementById('f-user');
+  (profiles || []).sort((a,b) => (a.full_name||a.email).localeCompare(b.full_name||b.email)).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.full_name || p.email;
+    sel.appendChild(opt);
+  });
+
+  // Load last 500 events (newest first)
+  const { data: events, error } = await db
+    .from('user_activity')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if (error) {
+    document.getElementById('activity-tbody').innerHTML =
+      `<tr><td colspan="5" class="empty-state">Error loading activity: ${error.message}</td></tr>`;
+  } else {
+    allEvents = events || [];
+    computeStats();
+    applyFilters();
+  }
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('main').style.display   = 'block';
+})();
+
+function computeStats() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todayEvents   = allEvents.filter(e => e.created_at.startsWith(todayStr));
+  const todayCalcs    = todayEvents.filter(e => e.event_type === 'calculator_run');
+  const todayUsers    = new Set(todayEvents.map(e => e.user_id)).size;
+
+  document.getElementById('s-total').textContent  = allEvents.length;
+  document.getElementById('s-today').textContent  = todayEvents.length;
+  document.getElementById('s-calcs').textContent  = todayCalcs.length;
+  document.getElementById('s-users').textContent  = todayUsers;
+  document.getElementById('s-today-date').textContent =
+    new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function applyFilters() {
+  const fEvent = document.getElementById('f-event').value;
+  const fPage  = document.getElementById('f-page').value;
+  const fUser  = document.getElementById('f-user').value;
+  const fFrom  = document.getElementById('f-from').value;
+  const fTo    = document.getElementById('f-to').value;
+
+  let filtered = allEvents.filter(e => {
+    if (fEvent && e.event_type !== fEvent) return false;
+    if (fPage  && e.page      !== fPage)  return false;
+    if (fUser  && e.user_id   !== fUser)  return false;
+    if (fFrom  && e.created_at < fFrom)   return false;
+    if (fTo    && e.created_at > fTo + 'T23:59:59') return false;
+    return true;
+  });
+
+  renderTable(filtered);
+}
+
+function clearFilters() {
+  ['f-event','f-page','f-user','f-from','f-to'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+  });
+  applyFilters();
+}
+
+function renderTable(events) {
+  document.getElementById('tbl-count').textContent =
+    events.length + ' event' + (events.length !== 1 ? 's' : '');
+
+  if (!events.length) {
+    document.getElementById('activity-tbody').innerHTML =
+      '<tr><td colspan="5" class="empty-state">No events match the current filters.</td></tr>';
+    return;
+  }
+
+  const rows = events.map(e => {
+    const profile  = profilesMap[e.user_id] || {};
+    const name     = profile.full_name || profile.email || e.user_id;
+    const email    = profile.email || '';
+    const ts       = new Date(e.created_at);
+    const tsStr    = ts.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})
+                   + ' ' + ts.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    const evBadge  = e.event_type === 'calculator_run'
+      ? '<span class="badge-calc">Calc Run</span>'
+      : '<span class="badge-visit">Page Visit</span>';
+    const pageLbl  = PAGE_LABELS[e.page] || e.page || '—';
+    const details  = renderDetails(e);
+
+    return `<tr>
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap">${tsStr}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${escHtml(name)}</div>
+        ${name !== email ? `<div style="font-size:11px;color:var(--muted)">${escHtml(email)}</div>` : ''}
+      </td>
+      <td>${evBadge}</td>
+      <td><span class="page-pill">${pageLbl}</span></td>
+      <td>${details}</td>
+    </tr>`;
+  });
+
+  document.getElementById('activity-tbody').innerHTML = rows.join('');
+}
+
+function renderDetails(e) {
+  const d = e.details || {};
+  if (e.event_type === 'page_visit') return '<span style="font-size:12px;color:var(--muted)">—</span>';
+
+  const chips = [];
+
+  if (d.jurisdiction) {
+    const jLabel = {india:'🇮🇳 India', us:'🇺🇸 US', both:'🇮🇳🇺🇸 Both'};
+    chips.push(chip(jLabel[d.jurisdiction] || d.jurisdiction));
+  }
+  if (d.draft_type)   chips.push(chip(d.draft_type === 'complete' ? 'Complete/NP' : 'Provisional→Complete'));
+  if (Array.isArray(d.steps) && d.steps.length) {
+    const sLabels = {1:'Search', 2:'Drafting', 3:'Prosecution'};
+    chips.push(chip('Steps: ' + d.steps.map(s => sLabels[s]||s).join(', ')));
+  }
+  if (d.filing_basis) chips.push(chip(d.filing_basis === 'itu' ? 'ITU' : 'In Use'));
+  if (d.marks)        chips.push(chip(d.marks + ' mark' + (d.marks>1?'s':'')));
+  if (d.classes)      chips.push(chip(d.classes + ' class' + (d.classes>1?'es':'')));
+  if (d.n && d.n > 1) chips.push(chip('×' + d.n + ' patents'));
+  if (d.grand_total)  chips.push(`<span class="detail-chip" style="color:var(--navy);font-weight:700">₹${d.grand_total.toLocaleString('en-IN')}</span>`);
+
+  return chips.length ? chips.join('') : '<span style="font-size:12px;color:var(--muted)">—</span>';
+}
+
+function chip(text) {
+  return `<span class="detail-chip">${escHtml(String(text))}</span>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
