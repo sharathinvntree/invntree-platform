@@ -120,6 +120,7 @@
             <th>US Patent</th>
             <th>India Patent</th>
             <th>US Trademark</th>
+            <th>Combined Patent</th>
             <th>Entity Type</th>
             <th>Status</th>
             <th>Last Login</th>
@@ -249,6 +250,13 @@
               <span class="toggle-track"></span>
             </label>
           </div>
+          <div class="perm-row">
+            <span>🌐 Patent Filing (India + US Combined)</span>
+            <label class="toggle">
+              <input type="checkbox" id="add-combined-patent">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
         </div>
       </div>
       <div>
@@ -356,6 +364,13 @@
                 <span>™ US Trademark Filing</span>
                 <label class="toggle">
                   <input type="checkbox" id="edit-trademark">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+              <div class="perm-row">
+                <span>🌐 Patent Filing (India + US Combined)</span>
+                <label class="toggle">
+                  <input type="checkbox" id="edit-combined-patent">
                   <span class="toggle-track"></span>
                 </label>
               </div>
@@ -579,13 +594,15 @@
     const usCount  = allUsers.filter(u => u.us_patenting).length;
     const indCount = allUsers.filter(u => u.india_patenting).length;
     const tmCount  = allUsers.filter(u => u.us_trademark).length;
+    const cpCount  = allUsers.filter(u => u.combined_patent).length;
 
     document.getElementById('stats-row').innerHTML = `
       <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Users</div></div>
       <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>
       <div class="stat-card"><div class="stat-num">${usCount}</div><div class="stat-lbl">US Patent Access</div></div>
       <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>
-      <div class="stat-card"><div class="stat-num">${tmCount}</div><div class="stat-lbl">US Trademark Access</div></div>`;
+      <div class="stat-card"><div class="stat-num">${tmCount}</div><div class="stat-lbl">US Trademark Access</div></div>
+      <div class="stat-card"><div class="stat-num">${cpCount}</div><div class="stat-lbl">Combined Patent Access</div></div>`;
   }
 
   // ── Format last login ─────────────────────────────────────────
@@ -633,6 +650,12 @@
         <td>
           <label class="toggle" title="Toggle US Trademark access">
             <input type="checkbox" ${u.us_trademark ? 'checked' : ''} onchange="quickToggle('${u.id}','us_trademark',this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </td>
+        <td>
+          <label class="toggle" title="Toggle Combined Patent access">
+            <input type="checkbox" ${u.combined_patent ? 'checked' : ''} onchange="quickToggle('${u.id}','combined_patent',this.checked)">
             <span class="toggle-track"></span>
           </label>
         </td>
@@ -690,7 +713,8 @@
     document.getElementById('edit-us-entity').value = u.us_entity_type || 'small';
     document.getElementById('edit-us').checked        = u.us_patenting;
     document.getElementById('edit-india').checked     = u.india_patenting;
-    document.getElementById('edit-trademark').checked = u.us_trademark || false;
+    document.getElementById('edit-trademark').checked       = u.us_trademark      || false;
+    document.getElementById('edit-combined-patent').checked = u.combined_patent    || false;
     document.getElementById('edit-prof-disc').value       = u.prof_discount || 0;
     document.getElementById('edit-show-fee-schedule').checked = u.show_fee_schedule || false;
     populateScheduleDropdowns(u.india_fee_schedule_id || '', u.us_fee_schedule_id || '');
@@ -727,6 +751,7 @@
       us_patenting:    document.getElementById('edit-us').checked,
       india_patenting: document.getElementById('edit-india').checked,
       us_trademark:    document.getElementById('edit-trademark').checked,
+      combined_patent: document.getElementById('edit-combined-patent').checked,
       prof_discount:          parseInt(document.getElementById('edit-prof-disc').value) || 0,
       show_fee_schedule:      document.getElementById('edit-show-fee-schedule').checked,
       india_fee_schedule_id:  document.getElementById('edit-india-schedule').value || null,
@@ -828,6 +853,7 @@
       us_patenting:    document.getElementById('add-us').checked,
       india_patenting: document.getElementById('add-india').checked,
       us_trademark:    document.getElementById('add-trademark').checked,
+      combined_patent: document.getElementById('add-combined-patent').checked,
       entity_type:     document.getElementById('add-entity').value,
       us_entity_type:  document.getElementById('add-us-entity').value,
       prof_discount:   parseInt(document.getElementById('add-prof-disc').value) || 0,
