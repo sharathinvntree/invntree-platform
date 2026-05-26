@@ -354,6 +354,13 @@ let userAddons  = [];
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
 
+  // Apply admin-configured default jurisdiction (falls back to 'both')
+  const defaultJuri = userProfile.combined_default_jurisdiction || 'both';
+  st.juri = defaultJuri;
+  ['india','us','both'].forEach(j => {
+    document.getElementById('juri-' + j).className = j === defaultJuri ? 'juri-on' : '';
+  });
+
   buildExtraSteps();
   buildFeeSchedule();
   updateNotesBar();
