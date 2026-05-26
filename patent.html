@@ -289,6 +289,52 @@ let userAddons  = [];
 
   userProfile = auth.profile;
 
+  // Load India fee schedule and override prof amounts (key mapping: india-patent keys → combined keys)
+  if (userProfile.india_fee_schedule_id) {
+    const { data: sched } = await db
+      .from('fee_schedules').select('fees').eq('id', userProfile.india_fee_schedule_id).single();
+    if (sched?.fees) {
+      const indiaMap = {
+        draftingCompleteSpec:     'indiaDraftingComplete',
+        draftingProvSpec:         'indiaDraftingProv',
+        draftingCompleteFromProv: 'indiaDraftingFromProv',
+        filingComplete:           'indiaFilingComplete',
+        filingProv:               'indiaFilingProv',
+        filingCompleteFromProv:   'indiaFilingCompleteFromProv',
+        examinationReqComplete:   'indiaExamReqComplete',
+        examinationReqProv:       'indiaExamReqProv',
+        earlyPublicationComplete: 'indiaEarlyPubComplete',
+        earlyPublicationProv:     'indiaEarlyPubProv',
+        ferResponse:              'indiaFerResponse',
+        hearing:                  'indiaHearing',
+      };
+      Object.keys(sched.fees).forEach(k => {
+        const target = indiaMap[k] || k;
+        if (fees.prof[target] !== undefined) fees.prof[target].amount = sched.fees[k];
+      });
+    }
+  }
+
+  // Load US fee schedule and override prof amounts (key mapping: us-patent keys → combined keys)
+  if (userProfile.us_fee_schedule_id) {
+    const { data: sched } = await db
+      .from('fee_schedules').select('fees').eq('id', userProfile.us_fee_schedule_id).single();
+    if (sched?.fees) {
+      const usMap = {
+        draftingCompleteSpec:     'usDraftingComplete',
+        draftingCompleteFromProv: 'usDraftingFromProv',
+        filingNonProv:            'usFilingNonProv',
+        filingProv:               'usFilingProv',
+        filingNonProvFromProv:    'usFilingNonProvFromProv',
+        officeAction:             'usOfficeAction',
+      };
+      Object.keys(sched.fees).forEach(k => {
+        const target = usMap[k] || k;
+        if (fees.prof[target] !== undefined) fees.prof[target].amount = sched.fees[k];
+      });
+    }
+  }
+
   // Load add-on items (all types)
   if (userProfile.addon_ids && userProfile.addon_ids.length > 0) {
     const { data: addons } = await db.from('addon_items').select('*')
