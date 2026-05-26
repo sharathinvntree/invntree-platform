@@ -860,8 +860,8 @@ function downloadPdf() {
 
   // Uniform 5-column PDF table
   const thS  = 'padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee;background:#edf2f9;';
-  const stS  = 'padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e;background:#e8f0fb';
-  const grS  = 'padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff;background:#1a2f5e';
+  const stS  = 'padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e;background:#e8f0fb;';
+  const grS  = 'padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff;background:#1a2f5e;';
   const thCells    = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">Govt. Fee (INR)</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
   const stCells    = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totGovt?inr(totGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
   const grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gGovt?inr(gGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
@@ -903,7 +903,7 @@ function downloadPdf() {
   if (st.showGst) {
     pdfTbody += `<tr style="background:#f0fff4"><td colspan="4" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
-  pdfTbody += `<tr style="background:#e8f0fb"><td colspan="2" style="${stS};text-align:left">Sub-total (per patent)${discNote}</td>${stCells}</tr>
+  pdfTbody += `<tr style="background:#e8f0fb"><td style="${stS}text-align:left">Sub-total (per patent)${discNote}</td>${stCells}</tr>
   <tr><td style="${grS};text-align:left">GRAND TOTAL: ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td>${grandCells}</tr>`;
 
   const notesSection = notes ? `
