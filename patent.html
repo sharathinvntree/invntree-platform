@@ -738,106 +738,63 @@ function recalc() {
     </div>`;
   }
 
-  // Table header
-  const isBoth = j === 'both';
-  let thHtml;
-  if (isBoth) {
-    thHtml = `<tr>
-      <th style="text-align:left;min-width:280px">Description</th>
-      <th>Prof. Fee (INR)</th>
-      <th>🇮🇳 India Govt.</th>
-      <th>🇺🇸 US Govt. (INR)</th>
-      <th>Unit Total</th>
-      <th>Total (×${n})</th>
-    </tr>`;
-  } else if (j === 'india') {
-    thHtml = `<tr>
-      <th style="text-align:left;min-width:280px">Description</th>
-      <th>Prof. Fee (INR)</th>
-      <th>Govt. Fee (INR)</th>
-      <th>Unit Total</th>
-      <th>Total (×${n})</th>
-    </tr>`;
-  } else {
-    thHtml = `<tr>
-      <th style="text-align:left;min-width:280px">Description</th>
-      <th>Prof. Fee (INR)</th>
-      <th>Govt. Fee (INR)</th>
-      <th>Unit Total</th>
-      <th>Total (×${n})</th>
-    </tr>`;
-  }
-  const colCount = isBoth ? 6 : 5;
+  // Table — uniform 5-column layout for all jurisdictions
+  const colCount = 5;
+  const govtColLabel = j === 'us' ? 'Govt. Fee (INR)' : 'Govt. Fee (INR)';
+  const thHtml = `<tr>
+    <th style="text-align:left;min-width:280px">Description</th>
+    <th>Prof. Fee (INR)</th>
+    <th>${govtColLabel}</th>
+    <th>Unit Total</th>
+    <th>Total (×${n})</th>
+  </tr>`;
 
   function rowHtml(r) {
+    const g   = (r.indiaGovt||0) + (r.usGovt||0);
+    const usd = r.usGovtUSD ? `<span class="usd-note">(${r.usGovtUSD} USD)</span>` : '';
     if (r.earlyPub) {
-      const on = st.earlyPub === 'yes';
+      const on   = st.earlyPub === 'yes';
       const toggle = `<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:5px;overflow:hidden;margin-left:8px;vertical-align:middle">
         <button style="padding:2px 10px;border:none;border-right:1px solid var(--border);background:${on?'#dcf5e4':'#fff'};color:${on?'#1a7a3a':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('yes')">Yes</button>
         <button style="padding:2px 10px;border:none;background:${!on?'#fde8e8':'#fff'};color:${!on?'#b91c1c':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setEarlyPub('no')">No</button>
       </span>`;
-      const iG = on ? r.indiaGovt : 0, uG = on ? r.usGovt : 0;
-      const unit = on ? (r.prof + iG + uG) : 0;
-      if (isBoth) {
-        const usd = on && r.usGovtUSD ? `<span class="usd-note">(${r.usGovtUSD} USD)</span>` : '';
-        return `<tr><td>${r.label}${toggle}</td><td>${on&&r.prof?inr(r.prof):''}</td><td>${on&&iG?inr(iG):''}</td><td>${on&&uG?inr(uG)+usd:''}</td><td>${on?inr(unit):''}</td><td>${on?'<strong>'+inr(unit*n)+'</strong>':''}</td></tr>`;
-      } else {
-        const g = on ? (r.indiaGovt + r.usGovt) : 0;
-        const usd = on && r.usGovtUSD ? `<span class="usd-note">(${r.usGovtUSD} USD)</span>` : '';
-        return `<tr><td>${r.label}${toggle}</td><td>${on&&r.prof?inr(r.prof):''}</td><td>${on&&g?inr(g)+usd:''}</td><td>${on?inr(unit):''}</td><td>${on?'<strong>'+inr(unit*n)+'</strong>':''}</td></tr>`;
-      }
+      const unit = on ? (r.prof + g) : 0;
+      return `<tr><td>${r.label}${toggle}</td><td>${on&&r.prof?inr(r.prof):''}</td><td>${on&&g?inr(g)+usd:''}</td><td>${on?inr(unit):''}</td><td>${on?'<strong>'+inr(unit*n)+'</strong>':''}</td></tr>`;
     }
-    const unit = r.prof + (r.indiaGovt||0) + (r.usGovt||0);
-    if (isBoth) {
-      const usd = r.usGovtUSD ? `<span class="usd-note">(${r.usGovtUSD} USD)</span>` : '';
-      return `<tr><td>${r.label}</td><td>${r.prof?inr(r.prof):''}</td><td>${r.indiaGovt?inr(r.indiaGovt):''}</td><td>${r.usGovt?inr(r.usGovt)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
-    } else {
-      const g = (r.indiaGovt||0) + (r.usGovt||0);
-      const usd = r.usGovtUSD ? `<span class="usd-note">(${r.usGovtUSD} USD)</span>` : '';
-      return `<tr><td>${r.label}</td><td>${r.prof?inr(r.prof):''}</td><td>${g?inr(g)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
-    }
+    const unit = r.prof + g;
+    return `<tr><td>${r.label}</td><td>${r.prof?inr(r.prof):''}</td><td>${g?inr(g)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
   }
 
   function addonRowHtml(e) {
-    const unit = e.prof + e.indiaGovt + e.usGovt;
-    const tag = `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span>`;
-    if (isBoth) {
-      const usd = e.usGovtUSD ? `<span class="usd-note">(${e.usGovtUSD} USD)</span>` : '';
-      return `<tr><td>${e.label} ${tag}</td><td>${e.prof?inr(e.prof):''}</td><td>${e.indiaGovt?inr(e.indiaGovt):''}</td><td>${e.usGovt?inr(e.usGovt)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
-    } else {
-      const g = e.indiaGovt + e.usGovt;
-      const usd = e.usGovtUSD ? `<span class="usd-note">(${e.usGovtUSD} USD)</span>` : '';
-      return `<tr><td>${e.label} ${tag}</td><td>${e.prof?inr(e.prof):''}</td><td>${g?inr(g)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
-    }
+    const g   = e.indiaGovt + e.usGovt;
+    const usd = e.usGovtUSD ? `<span class="usd-note">(${e.usGovtUSD} USD)</span>` : '';
+    const unit = e.prof + g;
+    const tag  = `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-weight:600">Add-on</span>`;
+    return `<tr><td>${e.label} ${tag}</td><td>${e.prof?inr(e.prof):''}</td><td>${g?inr(g)+usd:''}</td><td>${inr(unit)}</td><td><strong>${inr(unit*n)}</strong></td></tr>`;
   }
 
   let tbody = '', curStep = null;
   rows.forEach(r => {
-    if (r.subhdr) { tbody += `<tr class="sub-hdr"><td colspan="${colCount}">${r.label}</td></tr>`; return; }
+    if (r.subhdr) { tbody += `<tr class="sub-hdr"><td colspan="5">${r.label}</td></tr>`; return; }
     if (r.hdr) {
       if (curStep !== null) addonsByStep[curStep].forEach(e => { tbody += addonRowHtml(e); });
       curStep = r.step || null;
-      tbody += `<tr class="opt-hdr"><td colspan="${colCount}">${r.label}</td></tr>`; return;
+      tbody += `<tr class="opt-hdr"><td colspan="5">${r.label}</td></tr>`; return;
     }
     tbody += rowHtml(r);
   });
   if (curStep !== null) addonsByStep[curStep].forEach(e => { tbody += addonRowHtml(e); });
   if (addonsByStep.additional.length) {
-    tbody += `<tr class="opt-hdr"><td colspan="${colCount}">Additional Items</td></tr>`;
+    tbody += `<tr class="opt-hdr"><td colspan="5">Additional Items</td></tr>`;
     addonsByStep.additional.forEach(e => { tbody += addonRowHtml(e); });
   }
 
   if (st.showGst) {
-    tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf*n*0.18)}</td><td colspan="${colCount-2}"></td><td>${inr(gGst)}</td></tr>`;
+    tbody += `<tr class="gst-row"><td>GST @ 18% on Professional Fees</td><td>${inr(totProf*n*0.18)}</td><td></td><td colspan="2">${inr(gGst)}</td></tr>`;
   }
 
-  if (isBoth) {
-    tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totIndiaGovt?inr(totIndiaGovt):''}</td><td>${totUsGovt?inr(totUsGovt):''}</td><td>${inr(totProf+totGovt)}</td><td></td></tr>
-    <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gIndiaGovt?inr(gIndiaGovt):''}</td><td>${gUsGovt?inr(gUsGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
-  } else {
-    tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td><td></td></tr>
-    <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
-  }
+  tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td><td></td></tr>
+  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
 
   const al = [];
   if (st.opts[1]==='yes') al.push('Novelty Search');
@@ -906,16 +863,10 @@ function downloadPdf() {
 
   const juriLabel = {india:'🇮🇳 India Patent Fee Estimate', us:'🇺🇸 USA Patent Fee Estimate', both:'🇮🇳🇺🇸 India + USA Patent Fee Estimate'};
 
-  let thCells, stCells, grandCells;
-  if (isBoth) {
-    thCells = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">🇮🇳 India Govt.</th><th style="${thS}">🇺🇸 US Govt. (INR)</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
-    stCells = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totIndiaGovt?inr(totIndiaGovt):''}</td><td style="${stS}">${totUsGovt?inr(totUsGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
-    grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gIndiaGovt?inr(gIndiaGovt):''}</td><td style="${grS}">${gUsGovt?inr(gUsGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
-  } else {
-    thCells = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">Govt. Fee</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
-    stCells = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totGovt?inr(totGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
-    grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gGovt?inr(gGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
-  }
+  // Uniform 5-column PDF table
+  const thCells    = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">Govt. Fee (INR)</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
+  const stCells    = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totGovt?inr(totGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
+  const grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gGovt?inr(gGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
 
   const thS  = 'padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee;background:#edf2f9;';
   const stS  = 'padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e;background:#e8f0fb';
@@ -925,48 +876,38 @@ function downloadPdf() {
 
   function pdfRowHtml(r) {
     if (r.earlyPub && st.earlyPub === 'no') return '';
-    const iG = r.indiaGovt||0, uG = r.usGovt||0, unit = r.prof + iG + uG;
+    const g = (r.indiaGovt||0) + (r.usGovt||0), unit = r.prof + g;
     const usd = r.usGovtUSD ? ` (${r.usGovtUSD} USD)` : '';
     const base = `padding:7px 10px;font-size:11px;border-bottom:1px solid #eee`;
-    if (isBoth) {
-      return `<tr><td style="${base}">${r.label}</td><td style="${base};text-align:right">${r.prof?inr(r.prof):''}</td><td style="${base};text-align:right">${iG?inr(iG):''}</td><td style="${base};text-align:right">${uG?inr(uG)+usd:''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
-    } else {
-      const g = iG + uG;
-      return `<tr><td style="${base}">${r.label}</td><td style="${base};text-align:right">${r.prof?inr(r.prof):''}</td><td style="${base};text-align:right">${g?inr(g)+usd:''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
-    }
+    return `<tr><td style="${base}">${r.label}</td><td style="${base};text-align:right">${r.prof?inr(r.prof):''}</td><td style="${base};text-align:right">${g?inr(g)+usd:''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
   }
 
   function pdfAddonRowHtml(e) {
-    const unit = e.prof + e.indiaGovt + e.usGovt;
+    const g = e.indiaGovt + e.usGovt, unit = e.prof + g;
     const base = `padding:7px 10px;font-size:11px;border-bottom:1px solid #eee`;
-    if (isBoth) {
-      return `<tr><td style="${base}">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="${base};text-align:right">${e.prof?inr(e.prof):''}</td><td style="${base};text-align:right">${e.indiaGovt?inr(e.indiaGovt):''}</td><td style="${base};text-align:right">${e.usGovt?inr(e.usGovt):''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
-    } else {
-      const g = e.indiaGovt + e.usGovt;
-      return `<tr><td style="${base}">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="${base};text-align:right">${e.prof?inr(e.prof):''}</td><td style="${base};text-align:right">${g?inr(g):''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
-    }
+    return `<tr><td style="${base}">${e.label} <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:2px;padding:1px 4px">Add-on</span></td><td style="${base};text-align:right">${e.prof?inr(e.prof):''}</td><td style="${base};text-align:right">${g?inr(g):''}</td><td style="${base};text-align:right">${inr(unit)}</td><td style="${base};text-align:right;font-weight:600">${inr(unit*n)}</td></tr>`;
   }
 
   rows.forEach(r => {
     if (r.subhdr) {
-      pdfTbody += `<tr style="background:#f5f8fd"><td colspan="${colCount}" style="padding:5px 10px 5px 20px;font-size:10px;font-weight:700;color:#3a5a8c;letter-spacing:.4px">${r.label}</td></tr>`;
+      pdfTbody += `<tr style="background:#f5f8fd"><td colspan="5" style="padding:5px 10px 5px 20px;font-size:10px;font-weight:700;color:#3a5a8c;letter-spacing:.4px">${r.label}</td></tr>`;
       return;
     }
     if (r.hdr) {
       if (pdfCurStep !== null) pdfAddonsByStep[pdfCurStep].forEach(e => { pdfTbody += pdfAddonRowHtml(e); });
       pdfCurStep = r.step || null;
-      pdfTbody += `<tr style="background:#dce6f5"><td colspan="${colCount}" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1a2f5e">${r.label}</td></tr>`;
+      pdfTbody += `<tr style="background:#dce6f5"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1a2f5e">${r.label}</td></tr>`;
       return;
     }
     pdfTbody += pdfRowHtml(r);
   });
   if (pdfCurStep !== null) pdfAddonsByStep[pdfCurStep].forEach(e => { pdfTbody += pdfAddonRowHtml(e); });
   if (pdfAddonsByStep.additional.length) {
-    pdfTbody += `<tr style="background:#fef9ec"><td colspan="${colCount}" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
+    pdfTbody += `<tr style="background:#fef9ec"><td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#92400e">Additional Items</td></tr>`;
     pdfAddonsByStep.additional.forEach(e => { pdfTbody += pdfAddonRowHtml(e); });
   }
   if (st.showGst) {
-    pdfTbody += `<tr style="background:#f0fff4"><td colspan="${colCount-1}" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
+    pdfTbody += `<tr style="background:#f0fff4"><td colspan="4" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
   pdfTbody += `<tr style="background:#e8f0fb"><td colspan="2" style="${stS};text-align:left">Sub-total (per patent)${discNote}</td>${stCells}</tr>
   <tr><td style="${grS};text-align:left">GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td>${grandCells}</tr>`;
