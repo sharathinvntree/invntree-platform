@@ -533,8 +533,9 @@ function buildRows() {
       }
 
     } else {
-      // Provisional path — one provisional draft
-      rows.push({label:'Drafting Provisional Specification', prof:profFee('indiaDraftingProv'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+      // Provisional path — both drafting rows grouped together first
+      rows.push({label:'Drafting Provisional Specification',        prof:profFee('indiaDraftingProv'),    govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+      rows.push({label:'Drafting Complete Spec (from Provisional)', prof:profFee('indiaDraftingFromProv'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
 
       if (j === 'india' || j === 'both') {
         if (j === 'both') rows.push({subhdr:true, label:'🇮🇳 India Provisional Filing'});
@@ -545,9 +546,6 @@ function buildRows() {
         if (j === 'us') rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Filing Provisional Application (USPTO)', prof:profFee('usFilingProv'), govt:0, indiaGovt:0, usGovt:usGovtFeeInr('filingProv'), usGovtUSD:usGovtFeeUsd('filingProv')});
       }
-
-      // One complete-from-provisional draft
-      rows.push({label:'Drafting Complete Spec (from Provisional)', prof:profFee('indiaDraftingFromProv'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
 
       // India complete filing — Form 3, Assignment, FFP appear here
       if (j === 'india' || j === 'both') {
