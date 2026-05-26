@@ -213,7 +213,7 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
                   <button id="dt-complete" class="dt-on" onclick="setDraftType('complete')">Complete / Non-Provisional</button>
                   <button id="dt-prov" onclick="setDraftType('provisional')">Provisional → Complete / Non-Provisional</button>
                 </div>
-                <span class="step-sub-note" id="draft-note">Form 3, Assignment Deed &amp; Foreign Filing Permission included where applicable.</span>
+                <span id="draft-note" style="display:inline-flex;align-items:center;gap:6px;background:#e8f0fb;border:1px solid #b8cfe8;border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;color:#1a3a6e">ⓘ Form 3, Assignment Deed &amp; Foreign Filing Permission included where applicable.</span>
               </div>
             </div>
 
@@ -238,7 +238,6 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
                 <button id="gst-no" class="no-on" onclick="setGst('no')">No</button>
               </div>
             </div>
-            <div id="entity-display"></div>
           </div>
 
           <div class="cfg-footer">
@@ -264,7 +263,7 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
 
     <!-- ══ FEE SCHEDULE TAB ══ -->
     <div id="tab-fee-schedule" class="calc-panel">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule — professional and government fees applicable to your engagement.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule: professional and government fees applicable to your engagement.</p>
       <div id="fs-grid-wrap"></div>
     </div>
 
@@ -302,11 +301,7 @@ let userAddons  = [];
 
   renderNavbar(auth.profile, 'Patent Fee Calculator');
 
-  // Entity badge
-  const isSM    = userProfile.entity_type === 'startup_msme';
-  const isLarge = userProfile.us_entity_type === 'large';
-  document.getElementById('entity-display').innerHTML =
-    `<span class="entity-badge">🇮🇳 ${isSM ? 'MSME/Startup' : 'Other Entity (Std)'} &nbsp;·&nbsp; 🇺🇸 ${isLarge ? 'Large Entity' : 'Small Entity'}</span>`;
+  // Entity badge removed per configuration
 
   document.getElementById('loader').style.display = 'none';
   document.getElementById('app').style.display    = 'block';
@@ -457,10 +452,10 @@ function resetAll() {
 function updateNotesBar() {
   const j = st.juri;
   const notes = [
-    '<span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include in totals.</span>',
+    '<span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees. Toggle above to include in totals.</span>',
   ];
   if (j === 'india' || j === 'both') {
-    notes.push('<span class="note-item"><strong>India Govt. Fees</strong> are official IPO rates — shown at entity type configured for your account.</span>');
+    notes.push('<span class="note-item"><strong>India Govt. Fees</strong> are official IPO rates, shown at the entity type configured for your account.</span>');
     notes.push('<span class="note-item"><strong>India Prosecution</strong> assumes 1 FER Response + 1 Hearing.</span>');
   }
   if (j === 'us' || j === 'both') {
@@ -468,7 +463,7 @@ function updateNotesBar() {
     notes.push('<span class="note-item"><strong>US Prosecution</strong> assumes 2 Office Action Responses.</span>');
   }
   if (j === 'both') {
-    notes.push('<span class="note-item"><strong>Search &amp; Drafting</strong> are charged once — one specification serves both jurisdictions.</span>');
+    notes.push('<span class="note-item"><strong>Search &amp; Drafting</strong> are charged once. One specification serves both jurisdictions.</span>');
   }
   document.getElementById('notes-bar').innerHTML = notes.join('');
 }
@@ -505,32 +500,26 @@ function buildRows() {
 
   // ── Step 1: Search ──
   if (st.opts[1] === 'yes') {
-    rows.push({hdr:true, step:1, label:'Step 1 · Novelty Search'});
+    rows.push({hdr:true, step:1, label:'Step 1: Novelty Search'});
     rows.push({label:'Novelty Search', prof:profFee('noveltySearch'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
   }
 
   // ── Step 2: Drafting & Filing ──
   if (st.opts[2] === 'yes') {
     const dl = isC ? 'Complete / Non-Provisional' : 'Provisional → Complete / Non-Provisional';
-    rows.push({hdr:true, step:2, label:`Step 2 · Drafting & Filing (${dl})`});
-
-    // Common docs
-    if (j === 'india' || j === 'both') {
-      rows.push({label:'Form 3 Statements & Undertakings', prof:profFee('form3'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
-      rows.push({label:'Assignment Deed',                  prof:profFee('assignmentDeed'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
-    }
-    if (j === 'us' || j === 'both') {
-      rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
-    }
+    rows.push({hdr:true, step:2, label:`Step 2: Drafting & Filing (${dl})`});
 
     if (isC) {
-      // One drafting fee
+      // One drafting fee (common to both jurisdictions)
       const draftKey = j === 'us' ? 'usDraftingComplete' : 'indiaDraftingComplete';
       rows.push({label:'Drafting Complete Specification', prof:profFee(draftKey), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
 
-      // India filing
+      // India filing — Form 3, Assignment, FFP appear here under India Filing
       if (j === 'india' || j === 'both') {
         if (j === 'both') rows.push({subhdr:true, label:'🇮🇳 India Filing'});
+        rows.push({label:'Form 3 Statements & Undertakings',  prof:profFee('form3'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+        rows.push({label:'Assignment Deed',                   prof:profFee('assignmentDeed'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+        if (j === 'both') rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Filing Complete Patent Application', prof:profFee('indiaFilingComplete'), govt:0, indiaGovt:indiaGovtFee('filingComplete'), usGovt:0, usGovtUSD:0});
         rows.push({label:'Examination Request (Normal)',       prof:profFee('indiaExamReqComplete'), govt:0, indiaGovt:indiaGovtFee('examinationReqComplete'), usGovt:0, usGovtUSD:0});
         rows.push({label:'Request for Early Publication',      prof:profFee('indiaEarlyPubComplete'), govt:0, indiaGovt:indiaGovtFee('earlyPublicationComplete'), usGovt:0, usGovtUSD:0, earlyPub:true});
@@ -539,6 +528,7 @@ function buildRows() {
       // US filing
       if (j === 'us' || j === 'both') {
         if (j === 'both') rows.push({subhdr:true, label:'🇺🇸 US Filing'});
+        if (j === 'us') rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Filing Non-Provisional Application (USPTO)', prof:profFee('usFilingNonProv'), govt:0, indiaGovt:0, usGovt:usGovtFeeInr('filingNonProv'), usGovtUSD:usGovtFeeUsd('filingNonProv')});
       }
 
@@ -552,14 +542,19 @@ function buildRows() {
       }
       if (j === 'us' || j === 'both') {
         if (j === 'both') rows.push({subhdr:true, label:'🇺🇸 US Provisional Filing'});
+        if (j === 'us') rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Filing Provisional Application (USPTO)', prof:profFee('usFilingProv'), govt:0, indiaGovt:0, usGovt:usGovtFeeInr('filingProv'), usGovtUSD:usGovtFeeUsd('filingProv')});
       }
 
       // One complete-from-provisional draft
       rows.push({label:'Drafting Complete Spec (from Provisional)', prof:profFee('indiaDraftingFromProv'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
 
+      // India complete filing — Form 3, Assignment, FFP appear here
       if (j === 'india' || j === 'both') {
         if (j === 'both') rows.push({subhdr:true, label:'🇮🇳 India Complete Filing'});
+        rows.push({label:'Form 3 Statements & Undertakings',  prof:profFee('form3'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+        rows.push({label:'Assignment Deed',                   prof:profFee('assignmentDeed'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
+        if (j === 'both') rows.push({label:'Foreign Filing Permission', prof:profFee('foreignFilingPerm'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Filing Complete Patent Application', prof:profFee('indiaFilingCompleteFromProv'), govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
         rows.push({label:'Examination Request (Normal)',       prof:profFee('indiaExamReqProv'), govt:0, indiaGovt:indiaGovtFee('examinationReqProv'), usGovt:0, usGovtUSD:0});
         rows.push({label:'Request for Early Publication',      prof:profFee('indiaEarlyPubProv'), govt:0, indiaGovt:indiaGovtFee('earlyPublicationProv'), usGovt:0, usGovtUSD:0, earlyPub:true});
@@ -574,14 +569,14 @@ function buildRows() {
   // ── Step 3: Prosecution ──
   if (st.opts[3] === 'yes') {
     if (j === 'india') {
-      rows.push({hdr:true, step:3, label:'Step 3 · Prosecution (1 FER Response + 1 Hearing)'});
+      rows.push({hdr:true, step:3, label:'Step 3: Prosecution (1 FER Response + 1 Hearing)'});
       rows.push({label:'Response to First Examination Report (FER)', prof:profFee('indiaFerResponse'), govt:0, indiaGovt:indiaGovtFee('ferAmendments'), usGovt:0, usGovtUSD:0});
       rows.push({label:'Hearing & Written Submissions',              prof:profFee('indiaHearing'),     govt:0, indiaGovt:indiaGovtFee('hearingAmendments'), usGovt:0, usGovtUSD:0});
     } else if (j === 'us') {
-      rows.push({hdr:true, step:3, label:`Step 3 · Prosecution (${NUM_OA} Office Action Responses)`});
+      rows.push({hdr:true, step:3, label:`Step 3: Prosecution (${NUM_OA} Office Action Responses)`});
       rows.push({label:`Office Action Response × ${NUM_OA}`, prof:profFee('usOfficeAction')*NUM_OA, govt:0, indiaGovt:0, usGovt:0, usGovtUSD:0});
     } else {
-      rows.push({hdr:true, step:3, label:'Step 3 · Prosecution'});
+      rows.push({hdr:true, step:3, label:'Step 3: Prosecution'});
       rows.push({subhdr:true, label:'🇮🇳 India Prosecution (1 FER Response + 1 Hearing)'});
       rows.push({label:'Response to First Examination Report (FER)', prof:profFee('indiaFerResponse'), govt:0, indiaGovt:indiaGovtFee('ferAmendments'), usGovt:0, usGovtUSD:0});
       rows.push({label:'Hearing & Written Submissions',              prof:profFee('indiaHearing'),     govt:0, indiaGovt:indiaGovtFee('hearingAmendments'), usGovt:0, usGovtUSD:0});
@@ -716,9 +711,9 @@ function recalc() {
     sumHTML = `<div class="sum-grid ${cols}">
       <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
       <div class="s-card"><div class="s-lbl">🇮🇳 India Govt. (IPO)</div><div class="s-amt">${gIndiaGovt?inr(gIndiaGovt):'—'}</div><div class="s-note">${userProfile?.entity_type==='startup_msme'?'MSME/Startup rates':'Other entity rates'}</div></div>
-      <div class="s-card"><div class="s-lbl">🇺🇸 US Govt. (USPTO)</div><div class="s-amt">${gUsGovt?inr(gUsGovt):'—'}</div><div class="s-note">${userProfile?.us_entity_type==='large'?'Large entity':'Small entity'} · 1 USD = ₹100</div></div>
+      <div class="s-card"><div class="s-lbl">🇺🇸 US Govt. (USPTO)</div><div class="s-amt">${gUsGovt?inr(gUsGovt):'—'}</div><div class="s-note">${userProfile?.us_entity_type==='large'?'Large entity':'Small entity'}, 1 USD = ₹100</div></div>
       ${gstCard}
-      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
+      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} (${st.showGst?'incl. GST':'excl. GST'})</div></div>
     </div>`;
   } else if (j === 'india') {
     const cols = st.showGst ? 'sum-grid-4' : 'sum-grid-3';
@@ -726,15 +721,15 @@ function recalc() {
       <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
       <div class="s-card"><div class="s-lbl">Govt. Fees (IPO)</div><div class="s-amt">${gIndiaGovt?inr(gIndiaGovt):'—'}</div><div class="s-note">${userProfile?.entity_type==='startup_msme'?'MSME/Startup rates':'Other entity rates'}</div></div>
       ${gstCard}
-      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
+      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} (${st.showGst?'incl. GST':'excl. GST'})</div></div>
     </div>`;
   } else {
     const cols = st.showGst ? 'sum-grid-4' : 'sum-grid-3';
     sumHTML = `<div class="sum-grid ${cols}">
       <div class="s-card"><div class="s-lbl">Professional Fees</div><div class="s-amt">${inr(gProf)}</div><div class="s-note">${st.showGst?'Excl. GST':'+ GST @ 18% applicable'}</div></div>
-      <div class="s-card"><div class="s-lbl">Govt. Fees (USPTO)</div><div class="s-amt">${gUsGovt?inr(gUsGovt):'—'}</div><div class="s-note">${userProfile?.us_entity_type==='large'?'Large entity':'Small entity'} · 1 USD = ₹100</div></div>
+      <div class="s-card"><div class="s-lbl">Govt. Fees (USPTO)</div><div class="s-amt">${gUsGovt?inr(gUsGovt):'—'}</div><div class="s-note">${userProfile?.us_entity_type==='large'?'Large entity':'Small entity'}, 1 USD = ₹100</div></div>
       ${gstCard}
-      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} · ${st.showGst?'incl. GST':'excl. GST'}</div></div>
+      <div class="s-card grand"><div class="s-lbl">Grand Total</div><div class="s-amt">${inr(gTotal)}</div><div class="s-note">for ${n} patent${n!==1?'s':''} (${st.showGst?'incl. GST':'excl. GST'})</div></div>
     </div>`;
   }
 
@@ -794,7 +789,7 @@ function recalc() {
   }
 
   tbody += `<tr class="subtotal-row"><td>Sub-total (per patent) ${discNote}</td><td>${inr(totProf)}</td><td>${totGovt?inr(totGovt):''}</td><td>${inr(totProf+totGovt)}</td><td></td></tr>
-  <tr class="grand-row"><td>GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
+  <tr class="grand-row"><td>GRAND TOTAL: ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td><td>${inr(gProf)}</td><td>${gGovt?inr(gGovt):''}</td><td></td><td>${inr(gTotal)}</td></tr>`;
 
   const al = [];
   if (st.opts[1]==='yes') al.push('Novelty Search');
@@ -805,7 +800,7 @@ function recalc() {
 
   area.innerHTML = sumHTML + `<div class="cfg-card">
     <div class="cfg-head">
-      <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${juriLabel[j]} · ${al.join(' + ')}</div></div>
+      <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${juriLabel[j]}: ${al.join(' + ')}</div></div>
       <div style="display:flex;gap:8px;align-items:center">
         <span style="font-size:12px;color:var(--muted)">${n} patent${n!==1?'s':''}</span>
         <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
@@ -864,13 +859,12 @@ function downloadPdf() {
   const juriLabel = {india:'🇮🇳 India Patent Fee Estimate', us:'🇺🇸 USA Patent Fee Estimate', both:'🇮🇳🇺🇸 India + USA Patent Fee Estimate'};
 
   // Uniform 5-column PDF table
-  const thCells    = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">Govt. Fee (INR)</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
-  const stCells    = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totGovt?inr(totGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
-  const grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gGovt?inr(gGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
-
   const thS  = 'padding:8px 10px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a2f5e;border-bottom:2px solid #c8d8ee;background:#edf2f9;';
   const stS  = 'padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#1a2f5e;background:#e8f0fb';
   const grS  = 'padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#fff;background:#1a2f5e';
+  const thCells    = `<th style="${thS}text-align:left">Description</th><th style="${thS}">Prof. Fee</th><th style="${thS}">Govt. Fee (INR)</th><th style="${thS}">Unit Total</th><th style="${thS}">Total (×${n})</th>`;
+  const stCells    = `<td style="${stS}">${inr(totProf)}</td><td style="${stS}">${totGovt?inr(totGovt):''}</td><td style="${stS}">${inr(totProf+totGovt)}</td><td style="${stS}"></td>`;
+  const grandCells = `<td style="${grS}">${inr(gProf)}</td><td style="${grS}">${gGovt?inr(gGovt):''}</td><td style="${grS}"></td><td style="${grS}color:#f5c842">${inr(gTotal)}</td>`;
 
   let pdfTbody = '', pdfCurStep = null;
 
@@ -910,7 +904,7 @@ function downloadPdf() {
     pdfTbody += `<tr style="background:#f0fff4"><td colspan="4" style="padding:7px 10px;font-size:11px;font-style:italic;color:#1a7a3a">GST @ 18% on Professional Fees</td><td style="padding:7px 10px;text-align:right;font-size:11px;font-style:italic;color:#1a7a3a">${inr(gGst)}</td></tr>`;
   }
   pdfTbody += `<tr style="background:#e8f0fb"><td colspan="2" style="${stS};text-align:left">Sub-total (per patent)${discNote}</td>${stCells}</tr>
-  <tr><td style="${grS};text-align:left">GRAND TOTAL · ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td>${grandCells}</tr>`;
+  <tr><td style="${grS};text-align:left">GRAND TOTAL: ${n} Patent${n!==1?'s':''} ${st.showGst?'(incl. GST)':''}</td>${grandCells}</tr>`;
 
   const notesSection = notes ? `
     <div style="margin-top:20px;padding:12px 16px;background:#fefbec;border:1px solid #f0d97a;border-radius:6px">
@@ -936,7 +930,7 @@ function downloadPdf() {
       </div>
       ${notesSection}
       <div style="margin-top:20px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px">
-        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'} · US Govt. fees shown at 1 USD = ₹100 indicative rate<br>
+        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'}. US Govt. fees shown at 1 USD = ₹100 indicative rate.<br>
         © 2025 InvnTree IP Services. This estimate is indicative and subject to revision.
       </div>
     </div>`;
@@ -1002,7 +996,7 @@ function buildFeeSchedule() {
 
   // Prof fees card
   const pCard = document.createElement('div'); pCard.className = 'fs-card';
-  pCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">Professional Fees</div><div class="fs-head-sub">Amounts in INR · GST @ 18% applicable${disc>0?' · '+disc+'% discount applied':''}</div></div>`;
+  pCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">Professional Fees</div><div class="fs-head-sub">Amounts in INR, GST @ 18% applicable${disc>0?', '+disc+'% discount applied':''}</div></div>`;
   const pItems = document.createElement('div'); pItems.className = 'fs-items';
 
   if (disc > 0) {
@@ -1012,21 +1006,21 @@ function buildFeeSchedule() {
     pItems.appendChild(note);
   }
 
-  pItems.appendChild(sec('Step 1 · Novelty Search'));
+  pItems.appendChild(sec('Step 1: Novelty Search'));
   pItems.appendChild(mkProf('noveltySearch'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 2 · Common'));
+  pItems.appendChild(sec('Step 2: Common'));
   pItems.appendChild(mkProf('form3'));
   pItems.appendChild(mkProf('assignmentDeed'));
   pItems.appendChild(mkProf('foreignFilingPerm'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 2 · India Complete Spec'));
+  pItems.appendChild(sec('Step 2: India Complete Spec'));
   pItems.appendChild(mkProf('indiaDraftingComplete'));
   pItems.appendChild(mkProf('indiaFilingComplete'));
   pItems.appendChild(mkProf('indiaExamReqComplete'));
   pItems.appendChild(mkProf('indiaEarlyPubComplete'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 2 · India Provisional'));
+  pItems.appendChild(sec('Step 2: India Provisional'));
   pItems.appendChild(mkProf('indiaDraftingProv'));
   pItems.appendChild(mkProf('indiaFilingProv'));
   pItems.appendChild(mkProf('indiaDraftingFromProv'));
@@ -1034,55 +1028,55 @@ function buildFeeSchedule() {
   pItems.appendChild(mkProf('indiaExamReqProv'));
   pItems.appendChild(mkProf('indiaEarlyPubProv'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 2 · US Non-Provisional'));
+  pItems.appendChild(sec('Step 2: US Non-Provisional'));
   pItems.appendChild(mkProf('usDraftingComplete'));
   pItems.appendChild(mkProf('usFilingNonProv'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 2 · US Provisional'));
+  pItems.appendChild(sec('Step 2: US Provisional'));
   pItems.appendChild(mkProf('usFilingProv'));
   pItems.appendChild(mkProf('usDraftingFromProv'));
   pItems.appendChild(mkProf('usFilingNonProvFromProv'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 3 · India Prosecution'));
+  pItems.appendChild(sec('Step 3: India Prosecution'));
   pItems.appendChild(mkProf('indiaFerResponse'));
   pItems.appendChild(mkProf('indiaHearing'));
   pItems.appendChild(dvd());
-  pItems.appendChild(sec('Step 3 · US Prosecution'));
+  pItems.appendChild(sec('Step 3: US Prosecution'));
   pItems.appendChild(mkProf('usOfficeAction'));
 
   pCard.appendChild(pItems);
 
   // India Govt fees card
   const iCard = document.createElement('div'); iCard.className = 'fs-card';
-  iCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">🇮🇳 India Govt. Fees (IPO)</div><div class="fs-head-sub">Statutory fees payable to the Indian Patent Office · INR</div></div>`;
+  iCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">🇮🇳 India Govt. Fees (IPO)</div><div class="fs-head-sub">Statutory fees payable to the Indian Patent Office (INR)</div></div>`;
   const iItems = document.createElement('div'); iItems.className = 'fs-items';
   const legend = document.createElement('div');
   legend.style.cssText = 'display:flex;gap:4px;align-items:center;justify-content:flex-end;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px';
   legend.innerHTML = '<span style="flex:1"></span><span style="width:80px;text-align:right">Other</span><span style="width:80px;text-align:right">MSME/SM</span>';
   iItems.appendChild(legend);
-  iItems.appendChild(sec('Step 2 · Complete Specification'));
+  iItems.appendChild(sec('Step 2: Complete Specification'));
   iItems.appendChild(mkIndiaGovt('filingComplete'));
   iItems.appendChild(mkIndiaGovt('examinationReqComplete'));
   iItems.appendChild(mkIndiaGovt('earlyPublicationComplete'));
   iItems.appendChild(dvd());
-  iItems.appendChild(sec('Step 2 · Provisional'));
+  iItems.appendChild(sec('Step 2: Provisional'));
   iItems.appendChild(mkIndiaGovt('filingProv'));
   iItems.appendChild(mkIndiaGovt('examinationReqProv'));
   iItems.appendChild(mkIndiaGovt('earlyPublicationProv'));
   iItems.appendChild(dvd());
-  iItems.appendChild(sec('Step 3 · Prosecution'));
+  iItems.appendChild(sec('Step 3: Prosecution'));
   iItems.appendChild(mkIndiaGovt('ferAmendments'));
   iItems.appendChild(mkIndiaGovt('hearingAmendments'));
   iCard.appendChild(iItems);
 
   // US Govt fees card
   const uCard = document.createElement('div'); uCard.className = 'fs-card';
-  uCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">🇺🇸 US Govt. Fees (USPTO)</div><div class="fs-head-sub">Statutory fees payable to the USPTO · ${isLargeUS?'Large entity':'Small entity'} rates</div></div>`;
+  uCard.innerHTML = `<div class="fs-head"><div class="fs-head-title">🇺🇸 US Govt. Fees (USPTO)</div><div class="fs-head-sub">Statutory fees payable to the USPTO, ${isLargeUS?'Large entity':'Small entity'} rates</div></div>`;
   const uItems = document.createElement('div'); uItems.className = 'fs-items';
-  uItems.appendChild(sec('Step 2 · Non-Provisional'));
+  uItems.appendChild(sec('Step 2: Non-Provisional'));
   uItems.appendChild(mkUsGovt('filingNonProv'));
   uItems.appendChild(dvd());
-  uItems.appendChild(sec('Step 2 · Provisional Path'));
+  uItems.appendChild(sec('Step 2: Provisional Path'));
   uItems.appendChild(mkUsGovt('filingProv'));
   uItems.appendChild(mkUsGovt('filingNonProvFromProv'));
   uCard.appendChild(uItems);
