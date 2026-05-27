@@ -47,20 +47,10 @@ function renderNavbar(profile, pageTitle = '') {
   const adminBtn = profile.role === 'admin'
     ? `<a href="admin.html" class="btn btn-nav-outline btn-sm">⚙ Admin</a>` : '';
 
-  // Client logo — shown in a white pill so any logo colour works on dark navbar
-  const clientLogo = profile.logo_url
-    ? `<div style="border-left:1px solid rgba(255,255,255,.2);padding-left:14px;margin-left:4px;display:flex;align-items:center">
-         <div style="background:#fff;border-radius:5px;padding:4px 10px;line-height:0">
-           <img src="${profile.logo_url}" alt="" style="height:28px;max-width:110px;object-fit:contain;display:block">
-         </div>
-       </div>`
-    : '';
-
   document.getElementById('navbar-slot').innerHTML = `
     <nav class="navbar">
-      <div class="nav-brand" style="display:flex;align-items:center;gap:0">
+      <div class="nav-brand">
         <img src="/img/logo-white.png" alt="InvnTree" style="height:44px;display:block;">
-        ${clientLogo}
       </div>
       <div class="nav-sep"></div>
       ${pageTitle ? `<div class="nav-title">${pageTitle}</div>` : ''}

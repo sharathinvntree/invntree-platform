@@ -103,6 +103,7 @@
       <h1>Welcome back, <span class="welcome-gold" id="welcome-name"></span></h1>
       <p>Select a module below to access the fee calculator.</p>
     </div>
+    <div id="welcome-logo"></div>
   </div>
 
   <div class="modules-label">Available Modules</div>
@@ -166,6 +167,14 @@
     trackPageVisit(profile.id, 'dashboard');
     document.getElementById('welcome-name').textContent =
       profile.full_name || profile.email.split('@')[0];
+
+    // Client logo on the right of the welcome box
+    if (profile.logo_url) {
+      document.getElementById('welcome-logo').innerHTML =
+        `<div style="background:#fff;border-radius:10px;padding:10px 18px;line-height:0;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+           <img src="${profile.logo_url}" style="height:44px;max-width:160px;object-fit:contain;display:block" alt="">
+         </div>`;
+    }
 
     // Render module cards
     const grid = document.getElementById('modules-grid');

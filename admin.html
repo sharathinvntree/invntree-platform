@@ -536,23 +536,25 @@
           <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px"> — shown in the navbar and all PDF downloads for this user</span>
         </div>
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <div id="logo-preview-wrap" style="width:140px;height:64px;border:1.5px solid var(--border);border-radius:8px;background:#f8fafd;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
-            <span id="logo-placeholder" style="font-size:11px;color:var(--muted)">No logo</span>
-            <img id="logo-preview" style="max-width:130px;max-height:56px;object-fit:contain;display:none" src="" alt="">
+          <div id="logo-drop-zone"
+            style="width:180px;min-height:80px;border:2px dashed var(--border);border-radius:8px;background:#f8fafd;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer;transition:border-color .15s,background .15s;padding:8px"
+            onclick="document.getElementById('logo-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='#eef5ff'"
+            ondragleave="this.style.borderColor='var(--border)';this.style.background='#f8fafd'"
+            ondrop="handleLogoDrop(event)">
+            <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none" onchange="previewLogo(event)">
+            <span id="logo-placeholder" style="font-size:11px;color:var(--muted);text-align:center;line-height:1.5">Drop logo here<br><span style="color:var(--blue);font-weight:600">or click to upload</span></span>
+            <img id="logo-preview" style="max-width:160px;max-height:64px;object-fit:contain;display:none" src="" alt="">
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
-              <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none" onchange="previewLogo(event)">
-              📷 Upload Logo
-            </label>
             <button class="btn btn-ghost btn-sm" id="logo-remove-btn"
               style="display:none;color:#dc2626;border-color:#fca5a5"
               onclick="removeLogo()">✕ Remove Logo</button>
           </div>
           <div style="font-size:11px;color:var(--muted);line-height:1.7">
             PNG, JPG or SVG · any colour works<br>
-            Displayed on white background in navbar<br>
-            and in the PDF document header
+            Shown on the client's Dashboard<br>
+            and in PDF document headers
           </div>
         </div>
       </div>
@@ -692,16 +694,25 @@
   let logoFileToUpload     = null;   // File object staged for upload on save
   let logoMarkedForRemoval = false;  // True when admin clicked Remove
 
-  function previewLogo(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  function _applyLogoFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
     logoFileToUpload     = file;
     logoMarkedForRemoval = false;
     const url = URL.createObjectURL(file);
-    document.getElementById('logo-preview').src          = url;
+    document.getElementById('logo-preview').src           = url;
     document.getElementById('logo-preview').style.display = 'block';
     document.getElementById('logo-placeholder').style.display = 'none';
     document.getElementById('logo-remove-btn').style.display  = 'inline-flex';
+    // Reset drop-zone border
+    document.getElementById('logo-drop-zone').style.borderColor = 'var(--border)';
+    document.getElementById('logo-drop-zone').style.background  = '#f8fafd';
+  }
+
+  function previewLogo(e) { _applyLogoFile(e.target.files[0]); }
+
+  function handleLogoDrop(e) {
+    e.preventDefault();
+    _applyLogoFile(e.dataTransfer.files[0]);
   }
 
   function removeLogo() {
