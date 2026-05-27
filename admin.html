@@ -234,6 +234,41 @@
           </div>
         </div>
 
+        <!-- Company Brochure -->
+        <div style="border-top:1px solid var(--border);margin-top:24px;padding-top:24px">
+          <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px">Company Brochure (PDF)</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.6">Uploaded PDF is automatically appended to every emailed quote. Keeps your firm's profile in front of every client.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;min-width:220px">
+              <div id="brochure-drop-zone"
+                style="width:220px;min-height:72px;border:2px dashed var(--border);border-radius:8px;background:#f8fafd;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s;padding:12px;gap:4px"
+                onclick="document.getElementById('brochure-file-input').click()"
+                ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='#eef5ff'"
+                ondragleave="this.style.borderColor='var(--border)';this.style.background='#f8fafd'"
+                ondrop="handleBrochureDrop(event)">
+                <input type="file" id="brochure-file-input" accept="application/pdf" style="display:none" onchange="uploadBrochure(event.target.files[0])">
+                <span id="brochure-placeholder" style="font-size:11px;color:var(--muted);text-align:center;line-height:1.6">📄 Drop PDF here<br><span style="color:var(--blue);font-weight:600">or click to upload</span></span>
+                <span id="brochure-filename"   style="font-size:12px;font-weight:600;color:var(--navy);display:none;word-break:break-all;text-align:center"></span>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="brochure-remove-btn"
+                style="display:none;color:#dc2626;border-color:#fca5a5;width:220px"
+                onclick="removeBrochure()">✕ Remove Brochure</button>
+              <div id="brochure-upload-msg" style="font-size:11px;display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Template Preview -->
+        <div style="border-top:1px solid var(--border);margin-top:24px;padding-top:24px">
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Email Template</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Introductory message sent with every emailed quote. The fee estimate PDF is always attached.</div>
+          <textarea id="setting-email-intro"
+            placeholder="Dear [Client Name],&#10;&#10;Please find your fee estimate from InvnTree IP Services attached to this email. The estimate is prepared based on the details provided and is indicative in nature.&#10;&#10;Please feel free to reach out to us for any clarifications.&#10;&#10;Warm regards,&#10;InvnTree IP Services"
+            style="border:1.5px solid var(--border);border-radius:7px;padding:10px 14px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;min-height:130px;outline:none;line-height:1.7;color:var(--text)"></textarea>
+        </div>
+
         <div style="margin-top:20px;display:flex;align-items:center;gap:12px">
           <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
           <span id="settings-saved-msg" style="font-size:12px;color:#16a34a;display:none;font-weight:600">✓ Settings saved</span>
@@ -1443,27 +1478,86 @@
     const { data } = await db.from('settings').select('key,value');
     if (data) {
       cachedSettings = Object.fromEntries(data.map(r => [r.key, r.value]));
-      const el = document.getElementById('setting-usd-rate');
-      if (el) el.value = cachedSettings['usd_rate'] || 100;
+      const rateEl = document.getElementById('setting-usd-rate');
+      if (rateEl) rateEl.value = cachedSettings['usd_rate'] || 100;
+      const introEl = document.getElementById('setting-email-intro');
+      if (introEl && cachedSettings['email_intro']) introEl.value = cachedSettings['email_intro'];
+      // Show existing brochure
+      const brochureUrl = cachedSettings['brochure_url'] || '';
+      if (brochureUrl) _showBrochureUploaded(brochureUrl.split('/').pop().split('?')[0]);
     }
   }
 
   async function saveSettings() {
-    const rate = parseInt(document.getElementById('setting-usd-rate').value) || 100;
+    const rate  = parseInt(document.getElementById('setting-usd-rate').value) || 100;
+    const intro = document.getElementById('setting-email-intro').value.trim();
     const savedEl = document.getElementById('settings-saved-msg');
     const errEl   = document.getElementById('settings-err-msg');
     savedEl.style.display = 'none'; errEl.style.display = 'none';
 
-    const { error } = await db.from('settings')
-      .upsert({ key: 'usd_rate', value: String(rate), updated_at: new Date().toISOString() },
-              { onConflict: 'key' });
+    const upserts = [
+      { key: 'usd_rate',    value: String(rate),  updated_at: new Date().toISOString() },
+      { key: 'email_intro', value: intro || '',    updated_at: new Date().toISOString() },
+    ];
+    const { error } = await db.from('settings').upsert(upserts, { onConflict: 'key' });
     if (error) {
       errEl.textContent = error.message; errEl.style.display = '';
     } else {
-      cachedSettings['usd_rate'] = String(rate);
+      cachedSettings['usd_rate']    = String(rate);
+      cachedSettings['email_intro'] = intro;
       savedEl.style.display = '';
       setTimeout(() => { savedEl.style.display = 'none'; }, 3000);
     }
+  }
+
+  // ── Brochure upload ───────────────────────────────────────────
+  function handleBrochureDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') uploadBrochure(file);
+    document.getElementById('brochure-drop-zone').style.borderColor = 'var(--border)';
+    document.getElementById('brochure-drop-zone').style.background  = '#f8fafd';
+  }
+
+  function _showBrochureUploaded(name) {
+    document.getElementById('brochure-placeholder').style.display  = 'none';
+    document.getElementById('brochure-filename').style.display     = '';
+    document.getElementById('brochure-filename').textContent       = '📄 ' + name;
+    document.getElementById('brochure-remove-btn').style.display   = '';
+  }
+
+  async function uploadBrochure(file) {
+    if (!file || file.type !== 'application/pdf') return;
+    const msgEl = document.getElementById('brochure-upload-msg');
+    msgEl.style.color = 'var(--muted)'; msgEl.textContent = 'Uploading…'; msgEl.style.display = '';
+
+    const path = 'brochure.pdf';
+    const { error: upErr } = await db.storage.from('company-assets')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    if (upErr) { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Upload failed: ' + upErr.message; return; }
+
+    const { data: urlData } = db.storage.from('company-assets').getPublicUrl(path);
+    const brochureUrl = urlData.publicUrl + '?v=' + Date.now();
+
+    const { error: dbErr } = await db.from('settings')
+      .upsert({ key: 'brochure_url', value: brochureUrl, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (dbErr) { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Saved failed: ' + dbErr.message; return; }
+
+    cachedSettings['brochure_url'] = brochureUrl;
+    _showBrochureUploaded(file.name);
+    msgEl.style.color = '#16a34a'; msgEl.textContent = '✓ Brochure uploaded';
+    setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+    document.getElementById('brochure-file-input').value = '';
+  }
+
+  async function removeBrochure() {
+    await db.storage.from('company-assets').remove(['brochure.pdf']).catch(() => {});
+    await db.from('settings')
+      .upsert({ key: 'brochure_url', value: '', updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    cachedSettings['brochure_url'] = '';
+    document.getElementById('brochure-placeholder').style.display = '';
+    document.getElementById('brochure-filename').style.display    = 'none';
+    document.getElementById('brochure-remove-btn').style.display  = 'none';
   }
 
   // ── Load all schedules ────────────────────────────────────────

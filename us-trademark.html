@@ -782,9 +782,7 @@ function recalc() {
       <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${al.join(' + ')}</div></div>
       <div style="display:flex;gap:8px;align-items:center">
         <span style="font-size:12px;color:var(--muted)">${marksNote}</span>
-        <button class="btn btn-ghost btn-sm" onclick="saveQuote()">🔖 Save Quote</button>
-        <button class="btn btn-ghost btn-sm" onclick="openEmailModal()">📧 Email Quote</button>
-        <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="openEmailModal()">📧 Email Quote</button>
       </div>
     </div>
     <div class="tbl-wrap"><table>
@@ -1098,8 +1096,29 @@ async function sendEmail() {
   errEl.textContent = '';
   if (!toVal) { errEl.textContent = 'Recipient email is required.'; return; }
   btn.disabled = true; btn.textContent = 'Sending…';
+
+  const rows = buildRows();
+  let totProf=0, totGovt=0;
+  rows.forEach(r=>{ if(!r.hdr){ totProf+=r.prof; totGovt+=r.govt; } });
+  const profDisc = userProfile.prof_discount || 0;
+  userAddons.forEach((item, i) => {
+    if (st.extras[i] !== 'yes') return;
+    totProf += Math.round(item.amount * (1 - profDisc/100));
+    totGovt += Math.round((item.govt_fee_usd || 0) * USD_RATE);
+  });
+  const grandTotal = totProf + totGovt;
+
   const { error } = await db.functions.invoke('send-quote-email', {
-    body: { to: toVal, subject: subj, html: buildPdfHtml(), user_id: userProfile.id, calculator_type: 'us-trademark' }
+    body: {
+      to: toVal, subject: subj,
+      quote_html: buildPdfHtml(),
+      user_id: userProfile.id,
+      calculator_type: 'us-trademark',
+      title: userProfile.client_name ? (userProfile.client_name + ' – US Trademark') : ('US Trademark – ' + new Date().toLocaleDateString('en-IN')),
+      grand_total: grandTotal,
+      client_name: userProfile.client_name || userProfile.full_name || userProfile.email,
+      state: { numWordmarks: st.numWordmarks, numDeviceMarks: st.numDeviceMarks, classes: st.classes, opts: st.opts, filingBasis: st.filingBasis, showGst: st.showGst },
+    }
   });
   btn.disabled = false; btn.textContent = 'Send Email';
   if (error) { errEl.textContent = 'Error: ' + error.message; return; }
