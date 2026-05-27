@@ -1,104 +1,248 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree Sign In</title>
+<title>InvnTree · Sign In</title>
 <link rel="icon" href="/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
 <style>
   body {
-    display: flex; align-items: center; justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(145deg, #0f1d3d 0%, #1A2F5E 50%, #1e3d7a 100%);
+    background: linear-gradient(140deg, #0A1330 0%, #0F1B3D 45%, #1A2E66 100%);
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    overflow: hidden;
   }
 
-  .login-wrap {
-    width: 100%; max-width: 420px; padding: 20px;
+  /* LEFT - editorial hero side */
+  .login-hero {
+    position: relative;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #fff;
   }
-
-  /* Brand header above card */
+  .login-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: var(--halftone);
+    opacity: .6;
+    pointer-events: none;
+  }
+  .login-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -120px; left: -120px;
+    width: 380px; height: 380px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(31,160,224,.25) 0%, transparent 65%);
+    pointer-events: none;
+  }
   .login-brand {
-    text-align: center; margin-bottom: 28px;
+    display: flex; align-items: center; gap: 14px;
+    position: relative;
   }
-  .login-brand-name {
-    font-size: 36px; font-weight: 800; color: var(--gold);
-    letter-spacing: -1px; line-height: 1;
-  }
-  .login-brand-tag {
-    font-size: 12px; color: rgba(255,255,255,.5);
-    letter-spacing: 1.5px; text-transform: uppercase; margin-top: 6px;
-  }
-  .login-brand-divider {
-    width: 40px; height: 2px; background: var(--gold);
-    margin: 14px auto 0; border-radius: 2px; opacity: .6;
+  .login-brand-text {
+    font-size: 24px; font-weight: 700; letter-spacing: -.5px; color: #fff;
   }
 
-  /* Card */
-  .login-card {
-    background: #fff; border-radius: 16px;
-    box-shadow: 0 24px 64px rgba(0,0,0,.35);
-    padding: 36px 32px;
+  .login-hero-content {
+    margin: auto 0;
+    position: relative;
+    max-width: 540px;
   }
-  .login-card h2 {
-    font-size: 20px; font-weight: 700; color: var(--navy);
-    margin-bottom: 4px;
+  .login-hero-eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
   }
-  .login-card p {
-    font-size: 13px; color: var(--muted); margin-bottom: 28px;
+  .login-hero h1 {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.02;
+    margin-bottom: 8px;
+  }
+  .login-hero h1 .accent { color: var(--blue); }
+  .login-hero p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255,255,255,.65);
+    margin-top: 18px;
+    max-width: 480px;
   }
 
-  .form-stack { display: flex; flex-direction: column; gap: 18px; }
-
-  .login-submit {
+  /* Stat row at bottom */
+  .login-stats {
+    position: relative;
+    display: flex;
+    gap: 40px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    margin-top: 36px;
+  }
+  .login-stat-num {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .login-stat-lbl {
+    font-size: 11px;
+    color: rgba(255,255,255,.55);
     margin-top: 6px;
-    padding: 12px;
-    font-size: 15px;
+    font-weight: 500;
   }
 
-  .login-footer {
-    text-align: center; margin-top: 20px;
-    font-size: 12px; color: rgba(255,255,255,.35);
+  .login-footnote {
+    position: relative;
+    font-size: 12px;
+    color: rgba(255,255,255,.4);
+    margin-top: 28px;
   }
 
-  /* Error */
+  /* RIGHT - form panel */
+  .login-panel {
+    background: #fff;
+    padding: 60px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .login-form {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .login-form h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -.8px;
+    margin-bottom: 6px;
+  }
+  .login-form > p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .form-stack { display: flex; flex-direction: column; gap: 18px; }
+  .login-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+  .login-checkbox {
+    display: flex; align-items: center; gap: 7px;
+    color: var(--muted); cursor: pointer;
+  }
+  .login-checkbox input { width: 14px; height: 14px; accent-color: var(--blue); }
+  .login-forgot { color: var(--blue-deep); font-weight: 600; }
+  .login-submit { margin-top: 4px; padding: 13px; font-size: 14px; }
+
+  .login-footer-text {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
   #error-box {
-    background: #fee2e2; border: 1px solid #fca5a5;
-    border-radius: 8px; padding: 10px 14px;
-    font-size: 13px; color: #991b1b;
-    margin-bottom: 16px;
+    background: var(--red-tint);
+    border: 1px solid #FCA5A5;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: #991B1B;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 980px) {
+    body { grid-template-columns: 1fr; }
+    .login-hero { padding: 36px 28px 28px; }
+    .login-hero h1 { font-size: 36px; letter-spacing: -1.2px; }
+    .login-hero-content { margin: 24px 0; }
+    .login-stats { gap: 24px; }
+    .login-panel { padding: 36px 28px; }
   }
 </style>
 </head>
 <body>
 
-<div class="login-wrap">
+<!-- LEFT panel -->
+<div class="login-hero">
   <div class="login-brand">
-    <img src="/img/logo-white.png" alt="InvnTree" style="height:64px;display:block;margin:0 auto 20px;">
+    <img src="/img/logo-white.png" alt="invntree" style="height:36px;display:block;width:auto"/>
   </div>
 
-  <div class="login-card">
-    <h2>Sign in</h2>
-    <p>Patent Fee Platform enter your credentials to continue.</p>
+  <div class="login-hero-content">
+    <div class="login-hero-eyebrow">Patent Fee Platform</div>
+    <h1>Patent estimates,</h1>
+    <h1><span class="accent">in under a minute.</span></h1>
+    <p>Calculate transparent professional and government fees for US patents, Indian patents and US trademarks.</p>
+
+    <div class="login-stats">
+      <div>
+        <div class="login-stat-num">15+</div>
+        <div class="login-stat-lbl">Years experience</div>
+      </div>
+      <div>
+        <div class="login-stat-num">35+</div>
+        <div class="login-stat-lbl">Countries</div>
+      </div>
+      <div>
+        <div class="login-stat-num">7,000+</div>
+        <div class="login-stat-lbl">IPs managed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-footnote">© 2025 InvnTree IP Services. All rights reserved.</div>
+</div>
+
+<!-- RIGHT panel -->
+<div class="login-panel">
+  <div class="login-form">
+    <h2>Welcome back</h2>
+    <p>Sign in to access your fee calculators and quote history.</p>
 
     <div id="error-box" class="hidden"></div>
 
     <div class="form-stack">
       <div class="field">
         <label class="field-label">Email</label>
-        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <input type="email" id="email" placeholder="you@invntree.com" autocomplete="email">
       </div>
       <div class="field">
         <label class="field-label">Password</label>
         <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
       </div>
+
+      <div class="login-row">
+        <label class="login-checkbox">
+          <input type="checkbox" id="remember">
+          Remember me
+        </label>
+        <a href="#" class="login-forgot">Forgot password?</a>
+      </div>
+
       <button class="btn btn-primary btn-full login-submit" id="login-btn" onclick="handleLogin()">
-        Sign In
+        Sign in
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </button>
     </div>
-  </div>
 
-  <div class="login-footer">© 2025 InvnTree IP Services. All rights reserved.</div>
+    <div class="login-footer-text">
+      Trouble signing in? Contact your administrator at
+      <a href="mailto:support@invntree.com" style="color:var(--blue-deep);font-weight:600">support@invntree.com</a>
+    </div>
+  </div>
 </div>
 
 <!-- Supabase -->
@@ -131,7 +275,7 @@
 
     if (error) {
       btn.disabled = false;
-      btn.innerHTML = 'Sign In';
+      btn.innerHTML = 'Sign in <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
       showError(error.message === 'Invalid login credentials'
         ? 'Incorrect email or password.'
         : error.message);
@@ -145,7 +289,7 @@
     if (profile && !profile.is_active) {
       await db.auth.signOut();
       btn.disabled = false;
-      btn.innerHTML = 'Sign In';
+      btn.innerHTML = 'Sign in <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
       showError('Your account has been deactivated. Contact your administrator.');
       return;
     }

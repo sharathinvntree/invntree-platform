@@ -44,24 +44,72 @@ async function signOut() {
 
 // ── Inject shared navbar ───────────────────────────────────────
 function renderNavbar(profile, pageTitle = '') {
-  const adminBtn = profile.role === 'admin'
-    ? `<a href="admin.html" class="btn btn-nav-outline btn-sm">⚙ Admin</a>` : '';
+  const isAdmin = profile.role === 'admin';
+  const userName = profile.full_name || profile.email.split('@')[0];
+  const initial = userName.charAt(0).toUpperCase();
 
-  document.getElementById('navbar-slot').innerHTML = `
+  const NAV_LINKS = [
+    { id: 'dashboard',    label: 'Home',         href: 'dashboard.html' },
+    { id: 'us-patent',    label: 'US Patent',    href: 'us-patent.html' },
+    { id: 'india-patent', label: 'India Patent', href: 'india-patent.html' },
+    { id: 'us-trademark', label: 'US Trademark', href: 'us-trademark.html' },
+    { id: 'combined',     label: 'India + US',   href: 'patent.html' },
+  ];
+
+  // Determine current page from URL
+  const currentPage = window.location.pathname.split('/').pop().replace('.html','');
+
+  const linksHtml = NAV_LINKS.map(l => {
+    const active = currentPage === l.id.replace('combined','patent') || currentPage === l.id;
+    return `<a class="nav-link ${active ? 'active' : ''}" href="${l.href}">${l.label}</a>`;
+  }).join('');
+
+  const adminLink = isAdmin
+    ? `<a class="nav-link ${currentPage === 'admin' ? 'active' : ''}" href="admin.html">⚙ Admin</a>`
+    : '';
+
+  const menuStyles = `
+    <style id="um-styles">
+      .user-menu { position:absolute;top:60px;right:40px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:180px;z-index:200; }
+      .um-item { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;font-size:13px;color:var(--ink);font-weight:500;transition:background .12s;cursor:pointer; }
+      .um-item:hover { background:var(--bg); }
+      .um-danger { color:var(--red); }
+      .um-danger:hover { background:var(--red-tint); }
+    </style>`;
+
+  document.getElementById('navbar-slot').innerHTML = menuStyles + `
     <nav class="navbar">
-      <div class="nav-brand">
-        <img src="/img/logo-white.png" alt="InvnTree" style="height:44px;display:block;">
-      </div>
-      <div class="nav-sep"></div>
-      ${pageTitle ? `<div class="nav-title">${pageTitle}</div>` : ''}
+      <a class="nav-brand" href="dashboard.html">
+        <img src="/img/logo-color.png" alt="InvnTree" style="height:30px;display:block;width:auto">
+      </a>
+      ${pageTitle ? `<div class="nav-sep"></div><div class="nav-context">${pageTitle}</div>` : ''}
       <div class="nav-right">
-        <a href="dashboard.html" class="btn btn-nav-outline btn-sm">&#8962; Home</a>
-${adminBtn}
-        <span class="nav-user">Hi, <strong>${profile.full_name || profile.email.split('@')[0]}</strong></span>
-        <button class="btn btn-nav-outline btn-sm" onclick="signOut()">Sign Out</button>
+        ${linksHtml}
+        ${adminLink}
+        <button class="nav-user-btn" onclick="toggleUserMenu(event)">
+          <span class="avatar">${initial}</span>
+          ${userName}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="user-menu" id="user-menu" style="display:none">
+          <a href="dashboard.html" class="um-item">🏠 Home</a>
+          <div class="um-item um-danger" onclick="signOut()">↩ Sign out</div>
+        </div>
       </div>
     </nav>`;
+
+  // Close menu on outside click
+  document.addEventListener('click', () => {
+    const m = document.getElementById('user-menu');
+    if (m) m.style.display = 'none';
+  });
 }
+
+window.toggleUserMenu = function(e) {
+  e.stopPropagation();
+  const m = document.getElementById('user-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+};
 
 // ── Helper: page-relative redirect ────────────────────────────
 function redirect(path) {

@@ -3,10 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree Admin Panel</title>
+<title>InvnTree · Admin Panel</title>
 <link rel="icon" href="/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
 <style>
+  :root {
+    --border: var(--line);
+    --text: var(--ink);
+  }
+
   .stats-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -14,8 +22,8 @@
   }
   .stat-card {
     background: #fff; border-radius: 10px;
-    border: 1px solid var(--border); padding: 18px 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    border: 1px solid var(--line); padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
   }
   .stat-card .stat-num  { font-size: 28px; font-weight: 800; color: var(--navy); }
   .stat-card .stat-lbl  { font-size: 12px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
@@ -40,59 +48,59 @@
   }
   .page-loader p { font-size: 13px; color: var(--muted); }
 
-  .btn-danger { background:#dc2626;color:#fff;border:none; }
-  .btn-danger:hover { background:#b91c1c; }
+  .btn-danger { background: #dc2626; color: #fff; border: none; }
+  .btn-danger:hover { background: #b91c1c; }
 
   .perm-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
-    background: #f8fafd;
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+    background: var(--bg);
   }
   .perm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .perm-row span { font-size: 13px; color: var(--text); font-weight: 500; }
+  .perm-row span { font-size: 13px; color: var(--ink); font-weight: 500; }
 
   .discount-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
-    background: #f8fafd;
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+    background: var(--bg);
   }
   .discount-item label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
-  .discount-item input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; font-family: inherit; }
+  .discount-item input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; font-family: inherit; }
   .discount-item input:focus { border-color: var(--blue); }
 
   .last-login { font-size: 12px; color: var(--muted); }
 
   /* Admin panel tab bar */
-  .admin-tabbar{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border)}
-  .admin-tab{background:transparent;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 22px 11px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s}
-  .admin-tab.active{color:var(--navy);border-bottom-color:var(--blue)}
-  .admin-tab:hover:not(.active){color:var(--text)}
+  .admin-tabbar { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--line); }
+  .admin-tab { background: transparent; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 9px 22px 11px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: inherit; transition: color .15s, border-color .15s; }
+  .admin-tab.active { color: var(--navy); border-bottom-color: var(--blue); }
+  .admin-tab:hover:not(.active) { color: var(--ink); }
 
   /* Schedule modal */
-  .sched-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
-  .badge-blue{background:#dbeafe;color:#1e40af}
-  select.sched-select{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit;background:#fff;color:var(--text)}
-  select.sched-select:focus{border-color:var(--blue)}
+  .sched-sec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  select.sched-select { width: 100%; box-sizing: border-box; border: 1.5px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; font-family: inherit; background: #fff; color: var(--ink); }
+  select.sched-select:focus { border-color: var(--blue); }
 
   /* Bulk import modal */
-  .csv-dropzone{border:2px dashed var(--border);border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#fafcff}
-  .csv-dropzone:hover,.csv-dropzone.drag-over{border-color:var(--blue);background:#eef5ff}
-  .csv-dropzone input[type=file]{display:none}
-  .csv-dropzone .dz-icon{font-size:32px;margin-bottom:8px}
-  .csv-dropzone .dz-text{font-size:13px;color:var(--muted)}
-  .csv-dropzone .dz-text strong{color:var(--blue);cursor:pointer}
-  .bulk-preview{max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-top:14px}
-  .bulk-preview table{width:100%;border-collapse:collapse;font-size:12px}
-  .bulk-preview thead th{background:#f8fafd;padding:7px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--navy);border-bottom:2px solid var(--border);position:sticky;top:0;white-space:nowrap}
-  .bulk-preview tbody td{padding:6px 10px;border-bottom:1px solid #f0f3f9;vertical-align:middle}
-  .bulk-preview tr.row-err td{background:#fff5f5}
-  .bulk-preview tr.row-ok td{background:#f0fff4}
-  .row-status-ok{color:#16a34a;font-weight:700;font-size:11px}
-  .row-status-err{color:#dc2626;font-size:11px}
-  .row-status-pending{color:var(--muted);font-size:11px}
-  .bulk-progress{background:#e8f0fb;border-radius:6px;height:8px;margin:12px 0 4px;overflow:hidden}
-  .bulk-progress-bar{height:100%;background:var(--blue);border-radius:6px;transition:width .3s}
-  .bulk-result-summary{font-size:13px;font-weight:600;margin-top:6px}
+  .csv-dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 32px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; background: var(--bg); }
+  .csv-dropzone:hover, .csv-dropzone.drag-over { border-color: var(--blue); background: var(--blue-tint); }
+  .csv-dropzone input[type=file] { display: none; }
+  .csv-dropzone .dz-icon { font-size: 32px; margin-bottom: 8px; }
+  .csv-dropzone .dz-text { font-size: 13px; color: var(--muted); }
+  .csv-dropzone .dz-text strong { color: var(--blue); cursor: pointer; }
+  .bulk-preview { max-height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; margin-top: 14px; }
+  .bulk-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .bulk-preview thead th { background: var(--bg); padding: 7px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--navy); border-bottom: 2px solid var(--line); position: sticky; top: 0; white-space: nowrap; }
+  .bulk-preview tbody td { padding: 6px 10px; border-bottom: 1px solid #f0f3f9; vertical-align: middle; }
+  .bulk-preview tr.row-err td { background: #fff5f5; }
+  .bulk-preview tr.row-ok td { background: #f0fff4; }
+  .row-status-ok { color: #16a34a; font-weight: 700; font-size: 11px; }
+  .row-status-err { color: #dc2626; font-size: 11px; }
+  .row-status-pending { color: var(--muted); font-size: 11px; }
+  .bulk-progress { background: var(--blue-tint); border-radius: 6px; height: 8px; margin: 12px 0 4px; overflow: hidden; }
+  .bulk-progress-bar { height: 100%; background: var(--blue); border-radius: 6px; transition: width .3s; }
+  .bulk-result-summary { font-size: 13px; font-weight: 600; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -104,7 +112,19 @@
 
 <div id="navbar-slot"></div>
 
-<div class="container" id="main" style="display:none">
+<div id="admin-hero" style="display:none">
+  <section class="hero-strip">
+    <div class="hero-strip-inner">
+      <div>
+        <div class="breadcrumb"><a href="dashboard.html">Home</a><span>Admin Panel</span></div>
+        <h1 class="hero-strip-title">Admin Panel</h1>
+        <p class="hero-strip-sub">Manage users, fee schedules, add-ons, and platform settings.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="container" id="main" style="display:none;padding-top:28px">
 
   <!-- Admin Tab Bar -->
   <div class="admin-tabbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -278,7 +298,9 @@
     </div>
   </div><!-- /apanel-settings -->
 
-</div>
+</div><!-- /#main -->
+
+<div id="footer-slot"></div>
 
 <!-- ── Bulk Import Modal ── -->
 <div class="modal-overlay hidden" id="bulk-modal">
@@ -832,8 +854,9 @@
 
     await Promise.all([loadUsers(), loadSchedules(), loadAddons()]);
 
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('main').style.display   = 'block';
+    document.getElementById('loader').style.display     = 'none';
+    document.getElementById('admin-hero').style.display = 'block';
+    document.getElementById('main').style.display       = 'block';
   })();
 
   // ── Load all users ────────────────────────────────────────────

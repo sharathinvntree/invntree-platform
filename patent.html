@@ -3,143 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree Patent Fee Calculator</title>
+<title>InvnTree · Patent Filing - India + US</title>
 <link rel="icon" href="/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
 <style>
-:root{--stage-bg:#edf2f9}
+:root {
+  --stage-bg: var(--bg);
+  --border: var(--line);
+  --text: var(--ink);
+}
 
-.calc-tabs-bar{background:var(--navy);padding:0 32px;display:flex;border-bottom:2px solid var(--gold)}
-.calc-tab{padding:10px 22px 12px;background:transparent;border:none;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;position:relative;top:2px;transition:color .15s;font-family:inherit}
-.calc-tab::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:transparent;transition:background .15s}
-.calc-tab.active{color:#fff;font-weight:600}
-.calc-tab.active::after{background:var(--gold)}
-.calc-tab:hover:not(.active){color:rgba(255,255,255,.8)}
-
-.calc-container{max-width:1160px;margin:0 auto;padding:28px 24px 56px}
-.calc-panel{display:none}
-.calc-panel.active{display:block}
-
-.cfg-card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
-.cfg-head{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.cfg-head h2{font-size:14px;font-weight:600;color:var(--navy)}
-.cfg-body{padding:22px}
-
-.field-label-sm{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
-input[type=number]{border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;background:#fff;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:160px}
-input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.calc-panel { display: none; }
+.calc-panel.active { display: block; }
 
 /* Jurisdiction selector */
-.juri-row{margin-bottom:22px}
-.juri-btns{display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;max-width:420px}
-.juri-btns button{flex:1;padding:10px 16px;border:none;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s}
-.juri-btns button:not(:last-child){border-right:1px solid var(--border)}
-.juri-btns button.juri-on{background:var(--navy);color:#fff}
-.juri-btns button:hover:not(.juri-on){background:#f0f4fb;color:var(--navy)}
+.juri-row { margin-bottom: 22px; }
+.juri-btns { display: flex; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; max-width: 420px; }
+.juri-btns button { flex: 1; padding: 10px 16px; border: none; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); font-family: inherit; transition: all .15s; }
+.juri-btns button:not(:last-child) { border-right: 1px solid var(--line); }
+.juri-btns button.juri-on { background: var(--navy); color: #fff; }
+.juri-btns button:hover:not(.juri-on) { background: var(--bg); color: var(--navy); }
 
-.steps-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-.steps-list{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
-.step-item{border-bottom:1px solid var(--border)}
-.step-item:last-child{border-bottom:none}
-.step-main-row{display:flex;align-items:center;gap:16px;padding:13px 18px}
-.step-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);white-space:nowrap;min-width:52px}
-.step-item.active .step-badge{color:var(--blue)}
-.step-title{flex:1;font-size:14px;font-weight:600;color:#8899b5}
-.step-item.active .step-title{color:var(--navy)}
-.step-yn{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
-.step-yn button{padding:6px 18px;border:none;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
-.step-yn button:first-child{border-right:1px solid var(--border)}
-.step-yn button.yes-on{background:#dcf5e4;color:#1a7a3a}
-.step-yn button.no-on{background:#fde8e8;color:#b91c1c}
+.field-label-sm { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+input[type=number] { border: 1.5px solid var(--line); border-radius: 7px; padding: 9px 12px; font-size: 14px; color: var(--ink); outline: none; background: #fff; font-family: inherit; transition: border-color .15s, box-shadow .15s; width: 160px; }
+input[type=number]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(31,160,224,.12); }
 
-.step-sub{background:#f0f6ff;border-top:1.5px dashed #b8cfe8;padding:10px 18px 10px 86px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.step-sub.hidden{display:none !important}
-.step-sub-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);white-space:nowrap}
-.draft-btns{display:flex;border:1.5px solid #aac4e4;border-radius:6px;overflow:hidden}
-.draft-btns button{padding:5px 16px;border:none;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
-.draft-btns button:first-child{border-right:1px solid #aac4e4}
-.draft-btns button.dt-on{background:var(--blue);color:#fff;font-weight:600}
-.step-sub-note{font-size:11px;color:var(--muted);font-style:italic}
+.steps-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+.steps-list { border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.step-item { border-bottom: 1px solid var(--line); }
+.step-item:last-child { border-bottom: none; }
+.step-main-row { display: flex; align-items: center; gap: 16px; padding: 13px 18px; }
+.step-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); white-space: nowrap; min-width: 52px; }
+.step-item.active .step-badge { color: var(--blue); }
+.step-title { flex: 1; font-size: 14px; font-weight: 600; color: #8899b5; }
+.step-item.active .step-title { color: var(--navy); }
+.step-yn { display: flex; border: 1.5px solid var(--line); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.step-yn button { padding: 6px 18px; border: none; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); font-family: inherit; transition: all .15s; white-space: nowrap; }
+.step-yn button:first-child { border-right: 1px solid var(--line); }
+.step-yn button.yes-on { background: #dcf5e4; color: #1a7a3a; }
+.step-yn button.no-on { background: #fde8e8; color: #b91c1c; }
 
-.cfg-opts-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
-.cfg-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500}
-.cfg-opt .step-yn{border-radius:5px}
-.cfg-opt .step-yn button{padding:4px 13px;font-size:11px}
-.entity-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#f0f6ff;color:var(--blue);border:1px solid #c3d9f5}
+.step-sub { background: var(--blue-tint); border-top: 1.5px dashed #b8cfe8; padding: 10px 18px 10px 86px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.step-sub.hidden { display: none !important; }
+.step-sub-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--blue); white-space: nowrap; }
+.draft-btns { display: flex; border: 1.5px solid #aac4e4; border-radius: 6px; overflow: hidden; }
+.draft-btns button { padding: 5px 16px; border: none; background: #fff; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--muted); font-family: inherit; transition: all .15s; white-space: nowrap; }
+.draft-btns button:first-child { border-right: 1px solid #aac4e4; }
+.draft-btns button.dt-on { background: var(--blue); color: #fff; font-weight: 600; }
+.step-sub-note { font-size: 11px; color: var(--muted); font-style: italic; }
 
-.cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.cfg-card { background: #fff; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 20px; }
+.cfg-head { padding: 13px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+.cfg-head h2 { font-size: 14px; font-weight: 600; color: var(--navy); }
+.cfg-body { padding: 22px; }
+
+.cfg-opts-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.cfg-opt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); font-weight: 500; }
+.cfg-opt .step-yn { border-radius: 5px; }
+.cfg-opt .step-yn button { padding: 4px 13px; font-size: 11px; }
+.entity-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; background: var(--blue-tint); color: var(--blue); border: 1px solid #c3d9f5; }
+
+.cfg-footer { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 
 /* Notes bar */
-.notes-bar{background:#fefbec;border:1px solid #f0d97a;border-radius:8px;padding:11px 16px;font-size:12.5px;color:#7c6208;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap}
-.note-item::before{content:'ⓘ  '}
-.note-item strong{font-weight:600}
+.notes-bar { background: #fefbec; border: 1px solid #f0d97a; border-radius: 8px; padding: 11px 16px; font-size: 12.5px; color: #7c6208; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+.note-item::before { content: 'ⓘ  '; }
+.note-item strong { font-weight: 600; }
 
 /* Summary cards */
-.sum-grid{display:grid;gap:14px;margin-bottom:20px}
-.sum-grid-3{grid-template-columns:repeat(3,1fr)}
-.sum-grid-4{grid-template-columns:repeat(4,1fr)}
-.sum-grid-5{grid-template-columns:repeat(5,1fr)}
-.s-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#234b8c 100%);border-color:var(--navy)}
-.s-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
-.s-card.grand .s-lbl{color:rgba(255,255,255,.55)}
-.s-amt{font-size:22px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
-.s-card.grand .s-amt{color:var(--gold);font-size:26px}
-.s-note{font-size:11px;color:var(--muted);margin-top:4px}
-.s-card.grand .s-note{color:rgba(255,255,255,.45)}
+.sum-grid { display: grid; gap: 14px; margin-bottom: 20px; }
+.sum-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.sum-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.sum-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.s-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.s-card.grand { background: linear-gradient(135deg, var(--navy) 0%, #234b8c 100%); border-color: var(--navy); }
+.s-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 6px; }
+.s-card.grand .s-lbl { color: rgba(255,255,255,.55); }
+.s-amt { font-size: 22px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+.s-card.grand .s-amt { color: #f5c842; font-size: 26px; }
+.s-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.s-card.grand .s-note { color: rgba(255,255,255,.45); }
 
 /* Table */
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-thead th{background:var(--stage-bg);padding:10px 15px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:right;white-space:nowrap;border-bottom:2px solid var(--border)}
-thead th:first-child{text-align:left}
-.opt-hdr td{background:linear-gradient(90deg,#d6e4f7,#edf2f9);color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:7px 15px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)}
-.sub-hdr td{background:#f5f8fd;color:#3a5a8c;font-size:11px;font-weight:700;padding:5px 15px 5px 28px;border-top:1px solid #dce6f5;border-bottom:1px solid #dce6f5;letter-spacing:.4px}
-tbody td{padding:10px 15px;text-align:right;border-bottom:1px solid #f0f3f9;color:var(--text);font-variant-numeric:tabular-nums}
-tbody td:first-child{text-align:left;padding-left:24px}
-.opt-hdr td:first-child,.sub-hdr td:first-child{padding-left:15px}
-tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td{background:#f7faff}
-.usd-note{font-size:11px;color:var(--muted);margin-left:4px}
-.gst-row td{background:#f9fef9;color:#1a7a3a;font-size:12.5px;font-style:italic;padding:8px 15px;border-bottom:1px solid #d4f0d4}
-.subtotal-row td{background:#f4f8ff;font-weight:600;color:var(--navy);padding:11px 15px;border-top:2px solid var(--border);font-size:13px}
-.grand-row td{background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:13px 15px}
-.disc-tag{font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead th { background: var(--bg); padding: 10px 15px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--navy); text-align: right; white-space: nowrap; border-bottom: 2px solid var(--line); }
+thead th:first-child { text-align: left; }
+.opt-hdr td { background: linear-gradient(90deg, #d6e4f7, #edf2f9); color: var(--blue); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding: 7px 15px; border-top: 2px solid var(--line); border-bottom: 1px solid var(--line); }
+.sub-hdr td { background: var(--bg); color: #3a5a8c; font-size: 11px; font-weight: 700; padding: 5px 15px 5px 28px; border-top: 1px solid #dce6f5; border-bottom: 1px solid #dce6f5; letter-spacing: .4px; }
+tbody td { padding: 10px 15px; text-align: right; border-bottom: 1px solid #f0f3f9; color: var(--ink); font-variant-numeric: tabular-nums; }
+tbody td:first-child { text-align: left; padding-left: 24px; }
+.opt-hdr td:first-child, .sub-hdr td:first-child { padding-left: 15px; }
+tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td { background: var(--blue-tint); }
+.usd-note { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.gst-row td { background: #f9fef9; color: #1a7a3a; font-size: 12.5px; font-style: italic; padding: 8px 15px; border-bottom: 1px solid #d4f0d4; }
+.subtotal-row td { background: var(--blue-tint); font-weight: 600; color: var(--navy); padding: 11px 15px; border-top: 2px solid var(--line); font-size: 13px; }
+.grand-row td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 13px 15px; }
+.disc-tag { font-size: 10px; font-weight: 600; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
 
 /* Empty state */
-.empty-state{text-align:center;padding:56px 20px}
-.es-icon{font-size:40px;margin-bottom:12px;opacity:.45}
-.es-text{font-size:15px;color:var(--muted)}
+.empty-state { text-align: center; padding: 56px 20px; }
+.es-icon { font-size: 40px; margin-bottom: 12px; opacity: .45; }
+.es-text { font-size: 15px; color: var(--muted); }
 
 /* Fee schedule */
-.fs-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.fs-grid-3{grid-template-columns:1fr 1fr 1fr}
-.fs-card{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.fs-head{padding:13px 18px;background:var(--navy);color:#fff}
-.fs-head-title{font-size:14px;font-weight:600}
-.fs-head-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
-.fs-items{padding:16px;display:flex;flex-direction:column;gap:10px}
-.fs-item{display:flex;align-items:center;gap:10px}
-.fs-item label{flex:1;font-size:13px;color:var(--text)}
-.fs-cur{font-size:12px;font-weight:600;color:var(--muted);width:28px;text-align:center}
-.fs-divider{height:1px;background:var(--border);margin:4px 0}
-.fs-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);padding:2px 0 4px}
+.fs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.fs-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.fs-card { background: #fff; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow-sm); }
+.fs-head { padding: 13px 18px; background: var(--navy); color: #fff; }
+.fs-head-title { font-size: 14px; font-weight: 600; }
+.fs-head-sub { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 2px; }
+.fs-items { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.fs-item { display: flex; align-items: center; gap: 10px; }
+.fs-item label { flex: 1; font-size: 13px; color: var(--ink); }
+.fs-cur { font-size: 12px; font-weight: 600; color: var(--muted); width: 28px; text-align: center; }
+.fs-divider { height: 1px; background: var(--line); margin: 4px 0; }
+.fs-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--blue); padding: 2px 0 4px; }
 
-.page-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
-.page-loader p{font-size:13px;color:var(--muted)}
+.page-loader { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
+.page-loader p { font-size: 13px; color: var(--muted); }
 
-@media(max-width:900px){
-  .fs-grid-3{grid-template-columns:1fr 1fr}
-  .sum-grid-5{grid-template-columns:repeat(3,1fr)}
+@media (max-width: 900px) {
+  .fs-grid-3 { grid-template-columns: 1fr 1fr; }
+  .sum-grid-5 { grid-template-columns: repeat(3, 1fr); }
 }
-@media(max-width:768px){
-  .calc-tabs-bar{padding:0 16px}
-  .calc-container{padding:16px 12px 40px}
-  .sum-grid-3,.sum-grid-4,.sum-grid-5{grid-template-columns:1fr 1fr}
-  .fs-grid,.fs-grid-3{grid-template-columns:1fr}
-  .step-sub{padding-left:18px}
-  .juri-btns{max-width:100%}
+@media (max-width: 768px) {
+  .sum-grid-3, .sum-grid-4, .sum-grid-5 { grid-template-columns: 1fr 1fr; }
+  .fs-grid, .fs-grid-3 { grid-template-columns: 1fr; }
+  .step-sub { padding-left: 18px; }
+  .juri-btns { max-width: 100%; }
 }
-@media(max-width:500px){.sum-grid-3,.sum-grid-4,.sum-grid-5{grid-template-columns:1fr}}
+@media (max-width: 500px) {
+  .sum-grid-3, .sum-grid-4, .sum-grid-5 { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -153,12 +152,38 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
 
 <div id="app" style="display:none">
 
-  <div class="calc-tabs-bar">
-    <button class="calc-tab active" onclick="switchTab('calculator',this)">Calculator</button>
-    <button class="calc-tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+  <section class="hero-strip">
+    <div class="hero-strip-inner">
+      <div>
+        <div class="breadcrumb"><a href="dashboard.html">Home</a><span>Patent Filing: India + US</span></div>
+        <h1 class="hero-strip-title">Patent Filing: India + US</h1>
+        <p class="hero-strip-sub">Combined patent fee calculator — India, US, or both jurisdictions in one quote.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="downloadPdf()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export PDF
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="saveQuote()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Quote
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="resetAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.72"/></svg>
+          Reset
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="container" style="padding-top:18px;padding-bottom:0">
+    <div class="tabs">
+      <button class="calc-tab tab active" onclick="switchTab('calculator',this)">Calculator</button>
+      <button class="calc-tab tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+    </div>
   </div>
 
-  <div class="calc-container">
+  <div class="container" style="padding-top:20px;padding-bottom:56px">
 
     <!-- ══ CALCULATOR TAB ══ -->
     <div id="tab-calculator" class="calc-panel active">
@@ -267,8 +292,10 @@ tbody tr:not(.opt-hdr):not(.sub-hdr):not(.subtotal-row):not(.grand-row):not(.gst
       <div id="fs-grid-wrap"></div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /.container -->
+</div><!-- /#app -->
+
+<div id="footer-slot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>

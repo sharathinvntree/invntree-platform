@@ -3,138 +3,119 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvnTree India Patent Fee Calculator</title>
+<title>InvnTree · India Patent Fee Calculator</title>
 <link rel="icon" href="/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
 <style>
-:root{--stage-bg:#edf2f9}
-
-.calc-tabs-bar{background:var(--navy);padding:0 32px;display:flex;border-bottom:2px solid var(--gold)}
-.calc-tab{padding:10px 22px 12px;background:transparent;border:none;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;position:relative;top:2px;transition:color .15s;font-family:inherit}
-.calc-tab::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:transparent;transition:background .15s}
-.calc-tab.active{color:#fff;font-weight:600}
-.calc-tab.active::after{background:var(--gold)}
-.calc-tab:hover:not(.active){color:rgba(255,255,255,.8)}
-
-.calc-container{max-width:1140px;margin:0 auto;padding:28px 24px 56px}
+/* ── Local overrides for this page ─────────────────────────── */
 .calc-panel{display:none}
 .calc-panel.active{display:block}
 
-.cfg-card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
-.cfg-head{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.cfg-head h2{font-size:14px;font-weight:600;color:var(--navy)}
+.cfg-card{background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:20px}
+.cfg-head{padding:13px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.cfg-head h2{font-size:14px;font-weight:700;color:var(--navy)}
 .cfg-body{padding:22px}
 
-.field-label-sm{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
-input[type=number]{border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;background:#fff;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:160px}
-input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.field-label-sm{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+input[type=number]{border:1.5px solid var(--line-strong);border-radius:9px;padding:9px 12px;font-size:14px;color:var(--ink);outline:none;background:#fff;font-family:inherit;transition:border-color .15s,box-shadow .15s;width:160px}
+input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,160,224,.12)}
 
-.steps-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-.steps-list{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
-.step-item{border-bottom:1px solid var(--border)}
+.steps-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.steps-list{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.step-item{border-bottom:1px solid var(--line)}
 .step-item:last-child{border-bottom:none}
 .step-main-row{display:flex;align-items:center;gap:16px;padding:13px 18px}
 .step-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);white-space:nowrap;min-width:52px}
 .step-item.active .step-badge{color:var(--blue)}
 .step-title{flex:1;font-size:14px;font-weight:600;color:#8899b5}
 .step-item.active .step-title{color:var(--navy)}
-.step-yn{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.step-yn{display:flex;border:1.5px solid var(--line-strong);border-radius:6px;overflow:hidden;flex-shrink:0}
 .step-yn button{padding:6px 18px;border:none;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
-.step-yn button:first-child{border-right:1px solid var(--border)}
-.step-yn button.yes-on{background:#dcf5e4;color:#1a7a3a}
-.step-yn button.no-on{background:#fde8e8;color:#b91c1c}
+.step-yn button:first-child{border-right:1px solid var(--line-strong)}
+.step-yn button.yes-on{background:#dcfce7;color:#16a34a}
+.step-yn button.no-on{background:var(--red-tint);color:var(--red)}
 
 .step-sub{background:#f0f6ff;border-top:1.5px dashed #b8cfe8;padding:10px 18px 10px 86px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .step-sub.hidden{display:none !important}
-.step-sub-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);white-space:nowrap}
+.step-sub-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue-deep);white-space:nowrap}
 .draft-btns{display:flex;border:1.5px solid #aac4e4;border-radius:6px;overflow:hidden}
 .draft-btns button{padding:5px 16px;border:none;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);font-family:inherit;transition:all .15s;white-space:nowrap}
 .draft-btns button:first-child{border-right:1px solid #aac4e4}
 .draft-btns button.dt-on{background:var(--blue);color:#fff;font-weight:600}
 .step-sub-note{font-size:11px;color:var(--muted);font-style:italic}
 
-.cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.cfg-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 
-/* Quote header card */
+.cfg-opts-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.cfg-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);font-weight:500}
+.cfg-opt .step-yn{border-radius:5px}
+.cfg-opt .step-yn button{padding:4px 13px;font-size:11px}
+.entity-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:var(--blue-tint);color:var(--blue-deep);border:1px solid #C8D9EC}
+
 .qh-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .qh-field{display:flex;flex-direction:column;gap:5px}
-.qh-field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.qh-field input,.qh-field textarea{border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;background:#fff;width:100%;box-sizing:border-box}
-.qh-field input:focus,.qh-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
+.qh-field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.qh-field input,.qh-field textarea{border:1.5px solid var(--line-strong);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--ink);outline:none;font-family:inherit;transition:border-color .15s;background:#fff;width:100%;box-sizing:border-box}
+.qh-field input:focus,.qh-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,160,224,.12)}
 .qh-field textarea{resize:vertical;min-height:72px}
 .qh-field.full{grid-column:1/-1}
 
-/* Config options row */
-.cfg-opts-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
-.cfg-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500}
-.cfg-opt .step-yn{border-radius:5px}
-.cfg-opt .step-yn button{padding:4px 13px;font-size:11px}
-.entity-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#f0f6ff;color:var(--blue);border:1px solid #c3d9f5}
+.disc-tag{font-size:10px;font-weight:600;background:var(--amber-tint);color:var(--amber);border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle}
 
-/* Notes bar */
-.notes-bar{background:#fefbec;border:1px solid #f0d97a;border-radius:8px;padding:11px 16px;font-size:12.5px;color:#7c6208;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap}
-.note-item::before{content:'ⓘ  '}
-.note-item strong{font-weight:600}
-
-/* Summary cards */
 .sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .sum-grid.no-gst{grid-template-columns:1fr 1fr 1.15fr}
-.s-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#234b8c 100%);border-color:var(--navy)}
-.s-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+.s-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm)}
+.s-card.grand{background:linear-gradient(135deg,var(--navy) 0%,#1A2A50 100%);border-color:var(--navy)}
+.s-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
 .s-card.grand .s-lbl{color:rgba(255,255,255,.55)}
-.s-amt{font-size:22px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
-.s-card.grand .s-amt{color:var(--gold);font-size:26px}
+.s-amt{font-size:24px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.s-card.grand .s-amt{color:#F5C842;font-size:26px}
 .s-note{font-size:11px;color:var(--muted);margin-top:4px}
 .s-card.grand .s-note{color:rgba(255,255,255,.45)}
 
-/* Results table */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
-thead th{background:var(--stage-bg);padding:10px 15px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:right;white-space:nowrap;border-bottom:2px solid var(--border)}
+thead th{background:#FAFBFD;padding:10px 15px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
 thead th:first-child{text-align:left}
-.opt-hdr td{background:linear-gradient(90deg,#d6e4f7,#edf2f9);color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:7px 15px;border-top:2px solid var(--border);border-bottom:1px solid var(--border)}
-.gst-row td{background:#f9fef9;color:#1a7a3a;font-size:12.5px;font-style:italic;padding:8px 15px;border-bottom:1px solid #d4f0d4}
-tbody td{padding:10px 15px;text-align:right;border-bottom:1px solid #f0f3f9;color:var(--text);font-variant-numeric:tabular-nums}
+.opt-hdr td{background:var(--blue-tint-2);color:var(--blue-deep);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:7px 15px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.gst-row td{background:#f9fef9;color:var(--green);font-size:12.5px;font-style:italic;padding:8px 15px;border-bottom:1px solid #D4F0D4}
+tbody td{padding:10px 15px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--ink);font-variant-numeric:tabular-nums}
 tbody td:first-child{text-align:left}
-tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td{background:#f7faff}
-.subtotal-row td{background:#f4f8ff;font-weight:600;color:var(--navy);padding:11px 15px;border-top:2px solid var(--border);font-size:13px}
+tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td{background:#FAFCFE}
+.subtotal-row td{background:#FAFBFD;font-weight:700;color:var(--navy);padding:11px 15px;border-top:1px solid var(--line);font-size:13px}
 .grand-row td{background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:13px 15px}
-.disc-tag{font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle}
 
-/* Empty state */
 .empty-state{text-align:center;padding:56px 20px}
 .es-icon{font-size:40px;margin-bottom:12px;opacity:.45}
 .es-text{font-size:15px;color:var(--muted)}
 
-/* Fee schedule */
 .fs-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.fs-card{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.fs-card{background:#fff;border-radius:12px;border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow-sm)}
 .fs-head{padding:13px 18px;background:var(--navy);color:#fff}
-.fs-head-title{font-size:14px;font-weight:600}
+.fs-head-title{font-size:14px;font-weight:700}
 .fs-head-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
 .fs-items{padding:16px;display:flex;flex-direction:column;gap:10px}
 .fs-item{display:flex;align-items:center;gap:10px}
-.fs-item label{flex:1;font-size:13px;color:var(--text)}
+.fs-item label{flex:1;font-size:13px;color:var(--ink)}
 .fs-cur{font-size:12px;font-weight:600;color:var(--muted);width:28px;text-align:center}
-.fs-item input{width:128px;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;text-align:right;outline:none;transition:border-color .15s;font-family:inherit;font-variant-numeric:tabular-nums}
-.fs-item input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,.1)}
-.fs-divider{height:1px;background:var(--border);margin:4px 0}
-.fs-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);padding:2px 0 4px}
+.fs-item input{width:128px;border:1.5px solid var(--line-strong);border-radius:6px;padding:6px 10px;font-size:13px;text-align:right;outline:none;transition:border-color .15s;font-family:inherit;font-variant-numeric:tabular-nums}
+.fs-item input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,160,224,.12)}
+.fs-divider{height:1px;background:var(--line);margin:4px 0}
+.fs-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-deep);padding:2px 0 4px}
 
 .page-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
 .page-loader p{font-size:13px;color:var(--muted)}
 
 @media(max-width:768px){
-  .calc-tabs-bar{padding:0 16px}
-  .calc-container{padding:16px 12px 40px}
   .sum-grid{grid-template-columns:1fr 1fr}
   .fs-grid{grid-template-columns:1fr}
   .step-sub{padding-left:18px}
   .qh-grid{grid-template-columns:1fr}
 }
 @media(max-width:500px){.sum-grid{grid-template-columns:1fr}}
-
 </style>
 </head>
 <body>
@@ -148,12 +129,44 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 
 <div id="app" style="display:none">
 
-  <div class="calc-tabs-bar">
-    <button class="calc-tab active" onclick="switchTab('calculator',this)">Calculator</button>
-    <button class="calc-tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">Fee Schedule</button>
+  <!-- HERO STRIP -->
+  <section class="hero-strip">
+    <div class="hero-strip-inner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+        <div>
+          <div class="hero-strip-eyebrow">
+            <a href="dashboard.html" style="color:var(--muted);font-weight:500;letter-spacing:.3px;text-transform:none">Calculators</a>
+            <span style="color:var(--subtle)">›</span>
+            <span>India Patent</span>
+          </div>
+          <div class="hero-strip-title">India Patent <span class="accent">Fee Calculator</span></div>
+          <div class="hero-strip-subtitle">Estimate professional and IPO fees for Indian patent applications under the Indian Patents Act.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="resetAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <div class="container" style="padding-top:18px;padding-bottom:0">
+    <div class="tabs">
+      <button class="calc-tab tab active" onclick="switchTab('calculator',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+        Calculator
+      </button>
+      <button class="calc-tab tab" id="fee-sched-tab-btn" onclick="switchTab('fee-schedule',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+        Fee Schedule
+      </button>
+    </div>
   </div>
 
-  <div class="calc-container">
+  <div class="container" style="padding-top:0">
 
     <!-- ══ CALCULATOR TAB ══ -->
     <div id="tab-calculator" class="calc-panel active">
@@ -232,9 +245,18 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
       </div>
 
       <div class="notes-bar">
-        <span class="note-item"><strong>GST @ 18%</strong> is applicable on Professional Fees toggle above to include in totals.</span>
-        <span class="note-item"><strong>Govt. Fees</strong> are official IPO fees. Rate shown reflects entity type.</span>
-        <span class="note-item"><strong>Step 3 Prosecution</strong> assumes 1 FER Response + 1 Hearing.</span>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span><strong>GST @ 18%</strong> is applicable on Professional Fees — toggle above to include in totals.</span>
+        </div>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span><strong>Govt. Fees</strong> are official IPO fees. Rate shown reflects entity type.</span>
+        </div>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span><strong>Step 3 Prosecution</strong> assumes 1 FER Response + 1 Hearing.</span>
+        </div>
       </div>
 
       <div id="results-area">
@@ -250,7 +272,7 @@ tbody tr:not(.opt-hdr):not(.subtotal-row):not(.grand-row):not(.gst-row):hover td
 
     <!-- ══ FEE SCHEDULE TAB ══ -->
     <div id="tab-fee-schedule" class="calc-panel">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule professional fees applicable to your engagement.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Reference fee schedule — professional fees applicable to your engagement.</p>
       <div class="fs-grid">
         <div class="fs-card">
           <div class="fs-head">
