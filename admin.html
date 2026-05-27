@@ -73,6 +73,26 @@
   .badge-blue{background:#dbeafe;color:#1e40af}
   select.sched-select{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit;background:#fff;color:var(--text)}
   select.sched-select:focus{border-color:var(--blue)}
+
+  /* Bulk import modal */
+  .csv-dropzone{border:2px dashed var(--border);border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#fafcff}
+  .csv-dropzone:hover,.csv-dropzone.drag-over{border-color:var(--blue);background:#eef5ff}
+  .csv-dropzone input[type=file]{display:none}
+  .csv-dropzone .dz-icon{font-size:32px;margin-bottom:8px}
+  .csv-dropzone .dz-text{font-size:13px;color:var(--muted)}
+  .csv-dropzone .dz-text strong{color:var(--blue);cursor:pointer}
+  .bulk-preview{max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-top:14px}
+  .bulk-preview table{width:100%;border-collapse:collapse;font-size:12px}
+  .bulk-preview thead th{background:#f8fafd;padding:7px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--navy);border-bottom:2px solid var(--border);position:sticky;top:0;white-space:nowrap}
+  .bulk-preview tbody td{padding:6px 10px;border-bottom:1px solid #f0f3f9;vertical-align:middle}
+  .bulk-preview tr.row-err td{background:#fff5f5}
+  .bulk-preview tr.row-ok td{background:#f0fff4}
+  .row-status-ok{color:#16a34a;font-weight:700;font-size:11px}
+  .row-status-err{color:#dc2626;font-size:11px}
+  .row-status-pending{color:var(--muted);font-size:11px}
+  .bulk-progress{background:#e8f0fb;border-radius:6px;height:8px;margin:12px 0 4px;overflow:hidden}
+  .bulk-progress-bar{height:100%;background:var(--blue);border-radius:6px;transition:width .3s}
+  .bulk-result-summary{font-size:13px;font-weight:600;margin-top:6px}
 </style>
 </head>
 <body>
@@ -110,6 +130,7 @@
         <input type="text" id="search" placeholder="Search by name or email…"
           style="border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;width:220px;outline:none;font-family:inherit"
           oninput="filterTable()">
+        <button class="btn btn-ghost btn-sm" onclick="openBulkImport()">⬆ Bulk Import</button>
         <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ Add User</button>
       </div>
     </div>
@@ -190,6 +211,90 @@
     </div>
   </div><!-- /apanel-addons -->
 
+</div>
+
+<!-- ── Bulk Import Modal ── -->
+<div class="modal-overlay hidden" id="bulk-modal">
+  <div class="modal" style="max-width:820px;width:95vw">
+    <div class="modal-head">
+      <h3>Bulk Import Users</h3>
+      <button class="modal-close" onclick="closeBulkModal()">×</button>
+    </div>
+    <div class="modal-body" style="max-height:82vh;overflow-y:auto">
+      <div id="bulk-modal-error" class="alert alert-error hidden" style="margin-bottom:12px"></div>
+
+      <!-- Step 1: Upload -->
+      <div id="bulk-step-upload">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+          Upload a CSV file to create multiple users at once. Each row becomes one user account.
+          <a id="bulk-template-link" href="#" onclick="downloadTemplate();return false"
+            style="color:var(--blue);font-weight:600;text-decoration:none;margin-left:6px">⬇ Download template</a>
+        </p>
+        <div class="csv-dropzone" id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          <input type="file" id="csv-file-input" accept=".csv,text/csv" onchange="handleFileSelect(event)">
+          <div class="dz-icon">📄</div>
+          <div class="dz-text"><strong>Click to choose</strong> or drag a CSV file here</div>
+          <div class="dz-text" style="margin-top:4px;font-size:11px" id="bulk-filename"></div>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:#f8fafd;border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted)">
+          <strong style="color:var(--navy);display:block;margin-bottom:6px">CSV columns (first row = header)</strong>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 16px">
+            <span><code style="color:var(--blue)">email</code> — required</span>
+            <span><code style="color:var(--blue)">password</code> — required</span>
+            <span><code>full_name</code></span>
+            <span><code>entity_type</code> — other / startup_msme</span>
+            <span><code>us_entity_type</code> — small / large</span>
+            <span><code>prof_discount</code> — 0–100</span>
+            <span><code>us_patenting</code> — yes / no</span>
+            <span><code>india_patenting</code> — yes / no</span>
+            <span><code>us_trademark</code> — yes / no</span>
+            <span><code>combined_patent</code> — yes / no</span>
+            <span><code>combined_default_jurisdiction</code> — both / india / us</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Preview -->
+      <div id="bulk-step-preview" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600;color:var(--navy)" id="bulk-preview-summary"></div>
+          <button class="btn btn-ghost btn-sm" onclick="resetBulk()">↺ Choose different file</button>
+        </div>
+        <div class="bulk-preview" id="bulk-preview-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Email</th><th>Name</th><th>Modules</th><th>Entity</th><th>Discount</th><th>Validation</th>
+              </tr>
+            </thead>
+            <tbody id="bulk-preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 3: Progress (shown during import) -->
+      <div id="bulk-step-progress" style="display:none">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px" id="bulk-progress-label">Importing…</div>
+        <div class="bulk-progress"><div class="bulk-progress-bar" id="bulk-progress-bar" style="width:0%"></div></div>
+        <div class="bulk-preview" id="bulk-results-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Email</th><th>Name</th><th>Status</th></tr>
+            </thead>
+            <tbody id="bulk-results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot" id="bulk-modal-foot">
+      <button class="btn btn-ghost" onclick="closeBulkModal()">Cancel</button>
+      <button class="btn btn-primary" id="bulk-import-btn" onclick="runBulkImport()" style="display:none">Import Users</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Add User Modal ── -->
@@ -893,6 +998,227 @@
     }
 
     await loadUsers();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // BULK IMPORT
+  // ════════════════════════════════════════════════════════════
+
+  let bulkRows = []; // parsed + validated rows
+
+  function openBulkImport() {
+    resetBulk();
+    document.getElementById('bulk-modal').classList.remove('hidden');
+  }
+
+  function closeBulkModal() {
+    document.getElementById('bulk-modal').classList.add('hidden');
+    resetBulk();
+  }
+
+  function resetBulk() {
+    bulkRows = [];
+    document.getElementById('bulk-step-upload').style.display  = 'block';
+    document.getElementById('bulk-step-preview').style.display = 'none';
+    document.getElementById('bulk-step-progress').style.display = 'none';
+    document.getElementById('bulk-import-btn').style.display   = 'none';
+    document.getElementById('bulk-filename').textContent       = '';
+    document.getElementById('bulk-modal-error').classList.add('hidden');
+    document.getElementById('csv-file-input').value = '';
+    const foot = document.getElementById('bulk-modal-foot');
+    foot.querySelector('.btn-ghost').textContent = 'Cancel';
+    foot.querySelector('.btn-ghost').onclick = closeBulkModal;
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('csv-dropzone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processCSVFile(file);
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) processCSVFile(file);
+  }
+
+  function downloadTemplate() {
+    const header = 'email,password,full_name,entity_type,us_entity_type,us_patenting,india_patenting,us_trademark,combined_patent,combined_default_jurisdiction,prof_discount';
+    const example = 'client@example.com,Password123,Client Name,other,small,yes,yes,no,no,both,0';
+    const blob = new Blob([header + '\n' + example], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'invntree_users_template.csv';
+    a.click();
+  }
+
+  // Minimal CSV parser — handles quoted fields
+  function parseCSV(text) {
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+    if (lines.length < 2) return { headers: [], rows: [] };
+    const parseRow = line => {
+      const fields = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; continue; }
+        if (c === ',' && !inQ) { fields.push(cur.trim()); cur = ''; continue; }
+        cur += c;
+      }
+      fields.push(cur.trim());
+      return fields;
+    };
+    const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
+    const rows = lines.slice(1).map(l => {
+      const vals = parseRow(l);
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = vals[i] !== undefined ? vals[i] : ''; });
+      return obj;
+    });
+    return { headers, rows };
+  }
+
+  function toBool(val) {
+    return ['yes','true','1','on'].includes((val||'').toLowerCase().trim());
+  }
+
+  function validateRow(row, idx) {
+    const errors = [];
+    if (!row.email || !row.email.includes('@')) errors.push('Invalid email');
+    if (!row.password || row.password.length < 6) errors.push('Password min 6 chars');
+    if (row.entity_type && !['other','startup_msme',''].includes(row.entity_type)) errors.push('entity_type must be other or startup_msme');
+    if (row.us_entity_type && !['small','large',''].includes(row.us_entity_type)) errors.push('us_entity_type must be small or large');
+    if (row.combined_default_jurisdiction && !['both','india','us',''].includes(row.combined_default_jurisdiction)) errors.push('combined_default_jurisdiction must be both/india/us');
+    const disc = parseInt(row.prof_discount);
+    if (row.prof_discount !== '' && row.prof_discount !== undefined && (isNaN(disc) || disc < 0 || disc > 100)) errors.push('prof_discount must be 0–100');
+    return errors;
+  }
+
+  function modulesLabel(row) {
+    const m = [];
+    if (toBool(row.us_patenting))    m.push('🇺🇸');
+    if (toBool(row.india_patenting)) m.push('🇮🇳');
+    if (toBool(row.us_trademark))    m.push('™');
+    if (toBool(row.combined_patent)) m.push('🌐');
+    return m.join(' ') || '<span style="color:var(--muted)">—</span>';
+  }
+
+  function processCSVFile(file) {
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv' && file.type !== 'application/vnd.ms-excel') {
+      document.getElementById('bulk-modal-error').textContent = 'Please upload a .csv file.';
+      document.getElementById('bulk-modal-error').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('bulk-modal-error').classList.add('hidden');
+    document.getElementById('bulk-filename').textContent = '📎 ' + file.name;
+    const reader = new FileReader();
+    reader.onload = e => showPreview(e.target.result);
+    reader.readAsText(file);
+  }
+
+  function showPreview(text) {
+    const { headers, rows } = parseCSV(text);
+    if (!headers.includes('email') || !headers.includes('password')) {
+      document.getElementById('bulk-modal-error').textContent = 'CSV must have "email" and "password" columns.';
+      document.getElementById('bulk-modal-error').classList.remove('hidden');
+      return;
+    }
+    bulkRows = rows.map((row, i) => ({ ...row, _idx: i + 1, _errors: validateRow(row, i) }));
+    const validCount   = bulkRows.filter(r => !r._errors.length).length;
+    const invalidCount = bulkRows.length - validCount;
+    document.getElementById('bulk-preview-summary').innerHTML =
+      `<span style="color:#16a34a">${validCount} valid</span>` +
+      (invalidCount ? ` &nbsp;·&nbsp; <span style="color:#dc2626">${invalidCount} with errors</span>` : '') +
+      ` &nbsp;·&nbsp; ${bulkRows.length} total rows`;
+
+    const tbody = document.getElementById('bulk-preview-tbody');
+    tbody.innerHTML = bulkRows.map(row => {
+      const ok = !row._errors.length;
+      const errText = row._errors.join('; ');
+      return `<tr class="${ok ? 'row-ok' : 'row-err'}">
+        <td style="color:var(--muted)">${row._idx}</td>
+        <td style="font-weight:500">${esc(row.email||'')}</td>
+        <td>${esc(row.full_name||'')}</td>
+        <td>${modulesLabel(row)}</td>
+        <td style="font-size:11px">${esc(row.entity_type||'other')} / ${esc(row.us_entity_type||'small')}</td>
+        <td style="font-size:11px">${row.prof_discount||0}%</td>
+        <td>${ok ? '<span class="row-status-ok">✓ OK</span>' : `<span class="row-status-err">✗ ${esc(errText)}</span>`}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('bulk-step-upload').style.display  = 'none';
+    document.getElementById('bulk-step-preview').style.display = 'block';
+    document.getElementById('bulk-import-btn').style.display   = validCount > 0 ? 'inline-flex' : 'none';
+    if (validCount > 0) {
+      document.getElementById('bulk-import-btn').textContent =
+        `Import ${validCount} User${validCount !== 1 ? 's' : ''}`;
+    }
+  }
+
+  async function runBulkImport() {
+    const validRows = bulkRows.filter(r => !r._errors.length);
+    if (!validRows.length) return;
+
+    // Switch to progress view
+    document.getElementById('bulk-step-preview').style.display  = 'none';
+    document.getElementById('bulk-step-progress').style.display = 'block';
+    document.getElementById('bulk-import-btn').style.display    = 'none';
+    const foot = document.getElementById('bulk-modal-foot');
+    foot.querySelector('.btn-ghost').textContent = 'Close';
+    foot.querySelector('.btn-ghost').onclick = async () => { closeBulkModal(); await loadUsers(); };
+
+    const bar      = document.getElementById('bulk-progress-bar');
+    const label    = document.getElementById('bulk-progress-label');
+    const tbody    = document.getElementById('bulk-results-tbody');
+
+    // Pre-fill result rows as pending
+    tbody.innerHTML = validRows.map((row, i) => `
+      <tr id="brow-${i}">
+        <td style="color:var(--muted)">${row._idx}</td>
+        <td style="font-weight:500">${esc(row.email)}</td>
+        <td>${esc(row.full_name||'')}</td>
+        <td id="brow-status-${i}"><span class="row-status-pending">Queued…</span></td>
+      </tr>`).join('');
+
+    let done = 0, succeeded = 0, failed = 0;
+
+    for (let i = 0; i < validRows.length; i++) {
+      const row = validRows[i];
+      document.getElementById('brow-status-' + i).innerHTML = '<span class="row-status-pending">Creating…</span>';
+
+      const { data, error } = await db.functions.invoke('create-user', {
+        body: { email: row.email, password: row.password, full_name: row.full_name || '' }
+      });
+
+      if (error || data?.error) {
+        const msg = data?.error || error.message;
+        document.getElementById('brow-status-' + i).innerHTML = `<span class="row-status-err">✗ ${esc(msg)}</span>`;
+        document.getElementById('brow-' + i).classList.add('row-err');
+        failed++;
+      } else {
+        const newId = data.user.id;
+        await db.from('profiles').update({
+          us_patenting:    toBool(row.us_patenting),
+          india_patenting: toBool(row.india_patenting),
+          us_trademark:    toBool(row.us_trademark),
+          combined_patent: toBool(row.combined_patent),
+          entity_type:     row.entity_type     || 'other',
+          us_entity_type:  row.us_entity_type  || 'small',
+          prof_discount:   parseInt(row.prof_discount) || 0,
+          combined_default_jurisdiction: row.combined_default_jurisdiction || 'both',
+        }).eq('id', newId);
+        document.getElementById('brow-status-' + i).innerHTML = '<span class="row-status-ok">✓ Created</span>';
+        document.getElementById('brow-' + i).classList.add('row-ok');
+        succeeded++;
+      }
+
+      done++;
+      bar.style.width = Math.round(done / validRows.length * 100) + '%';
+      label.innerHTML = `Importing… <strong>${done}/${validRows.length}</strong>`;
+    }
+
+    label.innerHTML = `Done — <strong style="color:#16a34a">${succeeded} created</strong>` +
+      (failed ? ` · <strong style="color:#dc2626">${failed} failed</strong>` : '');
   }
 
   // ── Escape HTML ───────────────────────────────────────────────
