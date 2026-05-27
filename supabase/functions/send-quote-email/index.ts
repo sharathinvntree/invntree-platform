@@ -28,23 +28,12 @@ function buildEmailHtml(recipientName: string, referenceNumber: string, recipien
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
 
     <!-- Header -->
-    <div style="background:#0f1f3d;padding:28px 36px">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-        <td width="50" valign="middle">
-          <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.15);display:inline-flex;align-items:center;justify-content:center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-          </div>
-        </td>
-        <td valign="middle">
-          <p style="margin:0;font-size:18px;font-weight:500;color:#ffffff;letter-spacing:0.01em">InvnTree IP Services</p>
-          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.55)">Fee Quotation</p>
-        </td>
-      </tr></table>
+    <div style="background:#0f1f3d;padding:26px 36px">
+      <img src="https://invntree.com/img/logo-white.png"
+           alt="InvnTree"
+           style="height:38px;width:auto;display:block;margin-bottom:6px"
+           width="152" height="38">
+      <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.55)">Fee Quotation</p>
     </div>
 
     <!-- Body -->
