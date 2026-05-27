@@ -12,6 +12,12 @@
 
 .act-container{max-width:1200px;margin:0 auto;padding:28px 24px 56px}
 
+/* Tab bar */
+.act-tabbar{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border)}
+.act-tab{background:transparent;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 22px 11px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s}
+.act-tab.active{color:var(--navy);border-bottom-color:var(--blue)}
+.act-tab:hover:not(.active){color:var(--text)}
+
 /* Stats row */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
 .stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -29,7 +35,7 @@
 
 /* Table card */
 .tbl-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
-.tbl-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tbl-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .tbl-head h2{font-size:14px;font-weight:600;color:var(--navy)}
 .tbl-count{font-size:12px;color:var(--muted)}
 
@@ -41,17 +47,36 @@ tbody tr:last-child td{border-bottom:none}
 
 .badge-visit{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#e8f0fb;color:#1a3a6e}
 .badge-calc{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#dcf5e4;color:#1a7a3a}
-
 .page-pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#f1f5f9;color:var(--muted)}
-
 .detail-chip{font-size:11px;color:var(--muted);background:#f8fafd;border:1px solid var(--border);border-radius:4px;padding:2px 7px;display:inline-block;margin:1px 2px}
-
 .empty-state{text-align:center;padding:56px 20px;color:var(--muted);font-size:14px}
+
+/* Delete btn in rows */
+.btn-del-row{background:none;border:none;cursor:pointer;color:#ccc;font-size:15px;padding:2px 6px;border-radius:4px;line-height:1;transition:color .15s,background .15s}
+.btn-del-row:hover{color:#dc2626;background:#fee2e2}
+
+/* Reports panel */
+.rpt-filter{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.rpt-filter label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);white-space:nowrap}
+.rpt-filter input{border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;background:#fff;outline:none;transition:border-color .15s}
+.rpt-filter input:focus{border-color:var(--blue)}
+.rpt-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.rpt-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.rpt-card-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.rpt-card-head h3{font-size:13px;font-weight:600;color:var(--navy);margin:0}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.rpt-tbl thead th{background:#f8fafd;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);text-align:right;border-bottom:2px solid var(--border)}
+.rpt-tbl thead th:first-child{text-align:left}
+.rpt-tbl tbody td{padding:9px 14px;border-bottom:1px solid #f0f3f9;text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.rpt-tbl tbody td:first-child{text-align:left;font-weight:500}
+.rpt-tbl tbody tr:last-child td{border-bottom:none}
+.rpt-tbl tbody tr:hover td{background:#f7faff}
 
 @media(max-width:900px){
   .stat-row{grid-template-columns:1fr 1fr}
   .filter-bar{flex-direction:column;align-items:flex-start}
   .filter-sep{display:none}
+  .rpt-grid{grid-template-columns:1fr}
 }
 @media(max-width:600px){
   .stat-row{grid-template-columns:1fr 1fr}
@@ -70,7 +95,7 @@ tbody tr:last-child td{border-bottom:none}
 
 <div class="act-container" id="main" style="display:none">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap">
     <div>
       <h1 style="font-size:20px;font-weight:700;color:var(--navy);margin-bottom:2px">Activity Log</h1>
       <p style="font-size:13px;color:var(--muted)">Page visits and calculator runs across all users.</p>
@@ -78,78 +103,180 @@ tbody tr:last-child td{border-bottom:none}
     <a href="admin.html" class="btn btn-ghost btn-sm">← Back to Admin</a>
   </div>
 
-  <!-- Stats -->
-  <div class="stat-row" id="stat-row">
-    <div class="stat-card"><div class="stat-lbl">Total Events</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time</div></div>
-    <div class="stat-card"><div class="stat-lbl">Events Today</div><div class="stat-val" id="s-today">—</div><div class="stat-sub" id="s-today-date"></div></div>
-    <div class="stat-card"><div class="stat-lbl">Calc Runs Today</div><div class="stat-val" id="s-calcs">—</div><div class="stat-sub">calculator_run events</div></div>
-    <div class="stat-card"><div class="stat-lbl">Active Users Today</div><div class="stat-val" id="s-users">—</div><div class="stat-sub">unique users</div></div>
+  <!-- Tab bar -->
+  <div class="act-tabbar">
+    <button class="act-tab active" id="tab-log"     onclick="switchTab('log')">📋 Activity Log</button>
+    <button class="act-tab"        id="tab-reports" onclick="switchTab('reports')">📊 Reports</button>
   </div>
 
-  <!-- Filters -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <label>Event</label>
-      <select id="f-event" onchange="applyFilters()">
-        <option value="">All events</option>
-        <option value="page_visit">Page visit</option>
-        <option value="calculator_run">Calculator run</option>
-      </select>
-    </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group">
-      <label>Page</label>
-      <select id="f-page" onchange="applyFilters()">
-        <option value="">All pages</option>
-        <option value="dashboard">Dashboard</option>
-        <option value="us-patent">US Patent</option>
-        <option value="india-patent">India Patent</option>
-        <option value="us-trademark">US Trademark</option>
-        <option value="patent-combined">India + US (Combined)</option>
-      </select>
-    </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group">
-      <label>User</label>
-      <select id="f-user" onchange="applyFilters()">
-        <option value="">All users</option>
-      </select>
-    </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group">
-      <label>From</label>
-      <input type="date" id="f-from" onchange="applyFilters()">
-    </div>
-    <div class="filter-group">
-      <label>To</label>
-      <input type="date" id="f-to" onchange="applyFilters()">
-    </div>
-    <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
-  </div>
+  <!-- ══ LOG PANEL ══════════════════════════════════════════════ -->
+  <div id="panel-log">
 
-  <!-- Table -->
-  <div class="tbl-card">
-    <div class="tbl-head">
-      <h2>Events</h2>
-      <span class="tbl-count" id="tbl-count"></span>
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-lbl">Total Events</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all time (last 500)</div></div>
+      <div class="stat-card"><div class="stat-lbl">Events Today</div><div class="stat-val" id="s-today">—</div><div class="stat-sub" id="s-today-date"></div></div>
+      <div class="stat-card"><div class="stat-lbl">Calc Runs Today</div><div class="stat-val" id="s-calcs">—</div><div class="stat-sub">calculator_run events</div></div>
+      <div class="stat-card"><div class="stat-lbl">Active Users Today</div><div class="stat-val" id="s-users">—</div><div class="stat-sub">unique users</div></div>
     </div>
-    <div style="overflow-x:auto">
-      <table id="activity-table">
-        <thead>
-          <tr>
-            <th style="width:160px">Timestamp</th>
-            <th>User</th>
-            <th style="width:130px">Event</th>
-            <th style="width:150px">Page</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody id="activity-tbody">
-          <tr><td colspan="5" class="empty-state">Loading…</td></tr>
-        </tbody>
-      </table>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Event</label>
+        <select id="f-event" onchange="applyFilters()">
+          <option value="">All events</option>
+          <option value="page_visit">Page visit</option>
+          <option value="calculator_run">Calculator run</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>Page</label>
+        <select id="f-page" onchange="applyFilters()">
+          <option value="">All pages</option>
+          <option value="dashboard">Dashboard</option>
+          <option value="us-patent">US Patent</option>
+          <option value="india-patent">India Patent</option>
+          <option value="us-trademark">US Trademark</option>
+          <option value="patent-combined">India + US (Combined)</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>User</label>
+        <select id="f-user" onchange="applyFilters()">
+          <option value="">All users</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>From</label>
+        <input type="date" id="f-from" onchange="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input type="date" id="f-to" onchange="applyFilters()">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
     </div>
-  </div>
+
+    <!-- Table -->
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div style="display:flex;align-items:center;gap:12px">
+          <h2>Events</h2>
+          <span class="tbl-count" id="tbl-count"></span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="del-filtered-btn"
+          style="color:#dc2626;border-color:#fca5a5;display:none"
+          onclick="deleteFiltered()">🗑 Delete filtered</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="activity-table">
+          <thead>
+            <tr>
+              <th style="width:160px">Timestamp</th>
+              <th>User</th>
+              <th style="width:130px">Event</th>
+              <th style="width:150px">Page</th>
+              <th>Details</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="activity-tbody">
+            <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /panel-log -->
+
+  <!-- ══ REPORTS PANEL ═══════════════════════════════════════════ -->
+  <div id="panel-reports" style="display:none">
+
+    <!-- Report period filter -->
+    <div class="rpt-filter">
+      <label>Report Period</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text)">From</label>
+        <input type="date" id="r-from" onchange="renderReports()">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text)">To</label>
+        <input type="date" id="r-to" onchange="renderReports()">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearReportFilter()">✕ Clear</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+
+    <div class="rpt-grid">
+      <!-- By User -->
+      <div class="rpt-card">
+        <div class="rpt-card-head">
+          <h3>Activity by User</h3>
+          <span style="font-size:11px;color:var(--muted)" id="r-user-period"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="rpt-tbl">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Visits</th>
+                <th>Calc Runs</th>
+                <th>Total</th>
+                <th>Last Active</th>
+              </tr>
+            </thead>
+            <tbody id="r-user-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- By Module -->
+      <div class="rpt-card">
+        <div class="rpt-card-head">
+          <h3>Activity by Module</h3>
+          <span style="font-size:11px;color:var(--muted)" id="r-mod-period"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="rpt-tbl">
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Visits</th>
+                <th>Calc Runs</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="r-mod-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily trend -->
+    <div class="tbl-card">
+      <div class="tbl-head"><h2>Daily Event Counts</h2></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Page Visits</th>
+              <th>Calc Runs</th>
+              <th>Total</th>
+              <th>Unique Users</th>
+            </tr>
+          </thead>
+          <tbody id="r-daily-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /panel-reports -->
 
 </div>
 
@@ -157,8 +284,9 @@ tbody tr:last-child td{border-bottom:none}
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
-let allEvents   = [];
-let profilesMap = {}; // user_id → { full_name, email }
+let allEvents    = [];
+let profilesMap  = {};
+let currentFiltered = [];
 
 const PAGE_LABELS = {
   'dashboard':       '🏠 Dashboard',
@@ -174,11 +302,10 @@ const PAGE_LABELS = {
 
   renderNavbar(auth.profile, 'Activity Log');
 
-  // Load all profiles for name lookup
   const { data: profiles } = await db.from('profiles').select('id, full_name, email');
   (profiles || []).forEach(p => { profilesMap[p.id] = p; });
 
-  // Populate user filter
+  // Populate user filter dropdown
   const sel = document.getElementById('f-user');
   (profiles || []).sort((a,b) => (a.full_name||a.email).localeCompare(b.full_name||b.email)).forEach(p => {
     const opt = document.createElement('option');
@@ -187,7 +314,6 @@ const PAGE_LABELS = {
     sel.appendChild(opt);
   });
 
-  // Load last 500 events (newest first)
   const { data: events, error } = await db
     .from('user_activity')
     .select('*')
@@ -196,7 +322,7 @@ const PAGE_LABELS = {
 
   if (error) {
     document.getElementById('activity-tbody').innerHTML =
-      `<tr><td colspan="5" class="empty-state">Error loading activity: ${error.message}</td></tr>`;
+      `<tr><td colspan="6" class="empty-state">Error: ${error.message}</td></tr>`;
   } else {
     allEvents = events || [];
     computeStats();
@@ -207,20 +333,31 @@ const PAGE_LABELS = {
   document.getElementById('main').style.display   = 'block';
 })();
 
-function computeStats() {
-  const todayStr = new Date().toISOString().slice(0,10);
-  const todayEvents   = allEvents.filter(e => e.created_at.startsWith(todayStr));
-  const todayCalcs    = todayEvents.filter(e => e.event_type === 'calculator_run');
-  const todayUsers    = new Set(todayEvents.map(e => e.user_id)).size;
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(name) {
+  ['log','reports'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tab-'   + t).classList.toggle('active', t === name);
+  });
+  if (name === 'reports') renderReports();
+}
 
-  document.getElementById('s-total').textContent  = allEvents.length;
-  document.getElementById('s-today').textContent  = todayEvents.length;
-  document.getElementById('s-calcs').textContent  = todayCalcs.length;
-  document.getElementById('s-users').textContent  = todayUsers;
+// ── Stats ─────────────────────────────────────────────────────
+function computeStats() {
+  const todayStr   = new Date().toISOString().slice(0,10);
+  const todayEvts  = allEvents.filter(e => e.created_at.startsWith(todayStr));
+  const todayCalcs = todayEvts.filter(e => e.event_type === 'calculator_run');
+  const todayUsers = new Set(todayEvts.map(e => e.user_id)).size;
+
+  document.getElementById('s-total').textContent = allEvents.length;
+  document.getElementById('s-today').textContent = todayEvts.length;
+  document.getElementById('s-calcs').textContent = todayCalcs.length;
+  document.getElementById('s-users').textContent = todayUsers;
   document.getElementById('s-today-date').textContent =
     new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
 }
 
+// ── Filters ───────────────────────────────────────────────────
 function applyFilters() {
   const fEvent = document.getElementById('f-event').value;
   const fPage  = document.getElementById('f-page').value;
@@ -228,7 +365,7 @@ function applyFilters() {
   const fFrom  = document.getElementById('f-from').value;
   const fTo    = document.getElementById('f-to').value;
 
-  let filtered = allEvents.filter(e => {
+  currentFiltered = allEvents.filter(e => {
     if (fEvent && e.event_type !== fEvent) return false;
     if (fPage  && e.page      !== fPage)  return false;
     if (fUser  && e.user_id   !== fUser)  return false;
@@ -237,41 +374,48 @@ function applyFilters() {
     return true;
   });
 
-  renderTable(filtered);
+  renderTable(currentFiltered);
+
+  // Show/hide Delete filtered button
+  const hasFilter = fEvent || fPage || fUser || fFrom || fTo;
+  const btn = document.getElementById('del-filtered-btn');
+  btn.style.display = (hasFilter && currentFiltered.length) ? 'inline-flex' : 'none';
+  if (hasFilter && currentFiltered.length) {
+    btn.textContent = `🗑 Delete ${currentFiltered.length} filtered`;
+  }
 }
 
 function clearFilters() {
   ['f-event','f-page','f-user','f-from','f-to'].forEach(id => {
-    const el = document.getElementById(id);
-    el.value = '';
+    document.getElementById(id).value = '';
   });
   applyFilters();
 }
 
+// ── Table render ──────────────────────────────────────────────
 function renderTable(events) {
   document.getElementById('tbl-count').textContent =
     events.length + ' event' + (events.length !== 1 ? 's' : '');
 
   if (!events.length) {
     document.getElementById('activity-tbody').innerHTML =
-      '<tr><td colspan="5" class="empty-state">No events match the current filters.</td></tr>';
+      '<tr><td colspan="6" class="empty-state">No events match the current filters.</td></tr>';
     return;
   }
 
-  const rows = events.map(e => {
-    const profile  = profilesMap[e.user_id] || {};
-    const name     = profile.full_name || profile.email || e.user_id;
-    const email    = profile.email || '';
-    const ts       = new Date(e.created_at);
-    const tsStr    = ts.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})
-                   + ' ' + ts.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-    const evBadge  = e.event_type === 'calculator_run'
+  document.getElementById('activity-tbody').innerHTML = events.map(e => {
+    const profile = profilesMap[e.user_id] || {};
+    const name    = profile.full_name || profile.email || e.user_id;
+    const email   = profile.email || '';
+    const ts      = new Date(e.created_at);
+    const tsStr   = ts.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})
+                  + ' ' + ts.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    const evBadge = e.event_type === 'calculator_run'
       ? '<span class="badge-calc">Calc Run</span>'
       : '<span class="badge-visit">Page Visit</span>';
-    const pageLbl  = PAGE_LABELS[e.page] || e.page || '—';
-    const details  = renderDetails(e);
+    const pageLbl = PAGE_LABELS[e.page] || e.page || '—';
 
-    return `<tr>
+    return `<tr id="erow-${e.id}">
       <td style="font-size:12px;color:var(--muted);white-space:nowrap">${tsStr}</td>
       <td>
         <div style="font-weight:600;font-size:13px">${escHtml(name)}</div>
@@ -279,19 +423,49 @@ function renderTable(events) {
       </td>
       <td>${evBadge}</td>
       <td><span class="page-pill">${pageLbl}</span></td>
-      <td>${details}</td>
+      <td>${renderDetails(e)}</td>
+      <td style="text-align:center;padding:6px 8px">
+        <button class="btn-del-row" title="Delete this event" onclick="deleteEvent('${e.id}')">×</button>
+      </td>
     </tr>`;
-  });
-
-  document.getElementById('activity-tbody').innerHTML = rows.join('');
+  }).join('');
 }
 
+// ── Delete single event ───────────────────────────────────────
+async function deleteEvent(id) {
+  if (!confirm('Delete this event? This cannot be undone.')) return;
+  const { error } = await db.from('user_activity').delete().eq('id', id);
+  if (error) { alert('Delete failed: ' + error.message); return; }
+  allEvents = allEvents.filter(e => e.id !== id);
+  computeStats();
+  applyFilters();
+}
+
+// ── Delete all filtered events ────────────────────────────────
+async function deleteFiltered() {
+  if (!currentFiltered.length) return;
+  const n = currentFiltered.length;
+  if (!confirm(`Delete ${n} event${n !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+  const ids = currentFiltered.map(e => e.id);
+  // Delete in batches of 100 (Supabase URL length limit)
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    const { error } = await db.from('user_activity').delete().in('id', batch);
+    if (error) { alert('Error during delete: ' + error.message); break; }
+  }
+
+  const idSet = new Set(ids);
+  allEvents = allEvents.filter(e => !idSet.has(e.id));
+  computeStats();
+  applyFilters();
+}
+
+// ── Details chips ─────────────────────────────────────────────
 function renderDetails(e) {
   const d = e.details || {};
   if (e.event_type === 'page_visit') return '<span style="font-size:12px;color:var(--muted)">—</span>';
-
   const chips = [];
-
   if (d.jurisdiction) {
     const jLabel = {india:'🇮🇳 India', us:'🇺🇸 US', both:'🇮🇳🇺🇸 Both'};
     chips.push(chip(jLabel[d.jurisdiction] || d.jurisdiction));
@@ -306,16 +480,160 @@ function renderDetails(e) {
   if (d.classes)      chips.push(chip(d.classes + ' class' + (d.classes>1?'es':'')));
   if (d.n && d.n > 1) chips.push(chip('×' + d.n + ' patents'));
   if (d.grand_total)  chips.push(`<span class="detail-chip" style="color:var(--navy);font-weight:700">₹${d.grand_total.toLocaleString('en-IN')}</span>`);
-
   return chips.length ? chips.join('') : '<span style="font-size:12px;color:var(--muted)">—</span>';
 }
 
-function chip(text) {
-  return `<span class="detail-chip">${escHtml(String(text))}</span>`;
+function chip(text) { return `<span class="detail-chip">${escHtml(String(text))}</span>`; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ══ REPORTS ══════════════════════════════════════════════════
+
+function clearReportFilter() {
+  document.getElementById('r-from').value = '';
+  document.getElementById('r-to').value   = '';
+  renderReports();
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function reportEvents() {
+  const from = document.getElementById('r-from').value;
+  const to   = document.getElementById('r-to').value;
+  return allEvents.filter(e => {
+    if (from && e.created_at < from)              return false;
+    if (to   && e.created_at > to + 'T23:59:59')  return false;
+    return true;
+  });
+}
+
+function periodLabel() {
+  const from = document.getElementById('r-from').value;
+  const to   = document.getElementById('r-to').value;
+  if (!from && !to) return 'all time';
+  if (from && to)   return `${from} – ${to}`;
+  if (from)         return `from ${from}`;
+  return `up to ${to}`;
+}
+
+function renderReports() {
+  const evts = reportEvents();
+  const lbl  = periodLabel();
+  document.getElementById('r-user-period').textContent = lbl;
+  document.getElementById('r-mod-period').textContent  = lbl;
+
+  // ── By User ──
+  const userMap = {};
+  evts.forEach(e => {
+    if (!userMap[e.user_id]) userMap[e.user_id] = { visits:0, calcs:0, lastTs:'' };
+    if (e.event_type === 'page_visit')    userMap[e.user_id].visits++;
+    if (e.event_type === 'calculator_run') userMap[e.user_id].calcs++;
+    if (e.created_at > userMap[e.user_id].lastTs) userMap[e.user_id].lastTs = e.created_at;
+  });
+
+  const userRows = Object.entries(userMap)
+    .map(([uid, d]) => {
+      const p = profilesMap[uid] || {};
+      return { name: p.full_name || p.email || uid, email: p.email || '', ...d, total: d.visits + d.calcs };
+    })
+    .sort((a,b) => b.total - a.total);
+
+  document.getElementById('r-user-tbody').innerHTML = userRows.length
+    ? userRows.map(r => {
+        const lastDt = r.lastTs ? new Date(r.lastTs).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '—';
+        return `<tr>
+          <td>
+            <div style="font-weight:600">${escHtml(r.name)}</div>
+            ${r.name !== r.email ? `<div style="font-size:10px;color:var(--muted)">${escHtml(r.email)}</div>` : ''}
+          </td>
+          <td>${r.visits}</td>
+          <td>${r.calcs}</td>
+          <td style="font-weight:600;color:var(--navy)">${r.total}</td>
+          <td style="font-size:11px;color:var(--muted);white-space:nowrap">${lastDt}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="5" class="empty-state" style="padding:24px">No data for selected period.</td></tr>';
+
+  // ── By Module ──
+  const modMap = {};
+  evts.forEach(e => {
+    const key = e.page || 'unknown';
+    if (!modMap[key]) modMap[key] = { visits:0, calcs:0 };
+    if (e.event_type === 'page_visit')     modMap[key].visits++;
+    if (e.event_type === 'calculator_run') modMap[key].calcs++;
+  });
+
+  const modRows = Object.entries(modMap)
+    .map(([page, d]) => ({ page, label: PAGE_LABELS[page] || page, ...d, total: d.visits + d.calcs }))
+    .sort((a,b) => b.total - a.total);
+
+  document.getElementById('r-mod-tbody').innerHTML = modRows.length
+    ? modRows.map(r => `<tr>
+        <td>${escHtml(r.label)}</td>
+        <td>${r.visits}</td>
+        <td>${r.calcs}</td>
+        <td style="font-weight:600;color:var(--navy)">${r.total}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty-state" style="padding:24px">No data for selected period.</td></tr>';
+
+  // ── Daily trend ──
+  const dayMap = {};
+  evts.forEach(e => {
+    const day = e.created_at.slice(0,10);
+    if (!dayMap[day]) dayMap[day] = { visits:0, calcs:0, users: new Set() };
+    if (e.event_type === 'page_visit')     dayMap[day].visits++;
+    if (e.event_type === 'calculator_run') dayMap[day].calcs++;
+    dayMap[day].users.add(e.user_id);
+  });
+
+  const dayRows = Object.entries(dayMap)
+    .sort(([a],[b]) => b.localeCompare(a))  // newest first
+    .map(([day, d]) => ({ day, ...d, total: d.visits + d.calcs, uniqueUsers: d.users.size }));
+
+  document.getElementById('r-daily-tbody').innerHTML = dayRows.length
+    ? dayRows.map(r => {
+        const dt = new Date(r.day + 'T00:00:00').toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric', weekday:'short'});
+        return `<tr>
+          <td style="white-space:nowrap">${dt}</td>
+          <td>${r.visits}</td>
+          <td>${r.calcs}</td>
+          <td style="font-weight:600;color:var(--navy)">${r.total}</td>
+          <td>${r.uniqueUsers}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="5" class="empty-state" style="padding:24px">No data for selected period.</td></tr>';
+}
+
+// ── Export CSV ────────────────────────────────────────────────
+function exportCSV() {
+  const evts = reportEvents();
+  if (!evts.length) { alert('No events to export for the selected period.'); return; }
+
+  const headers = ['timestamp','user_name','user_email','event_type','page','jurisdiction','draft_type','steps','marks','classes','n_patents','grand_total'];
+  const rows = evts.map(e => {
+    const p = profilesMap[e.user_id] || {};
+    const d = e.details || {};
+    return [
+      e.created_at,
+      p.full_name || '',
+      p.email || '',
+      e.event_type,
+      e.page || '',
+      d.jurisdiction || '',
+      d.draft_type   || '',
+      Array.isArray(d.steps) ? d.steps.join('+') : '',
+      d.marks   || '',
+      d.classes || '',
+      d.n       || '',
+      d.grand_total || '',
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+
+  const csv  = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  const from = document.getElementById('r-from').value;
+  const to   = document.getElementById('r-to').value;
+  a.download = `invntree_activity${from?'_'+from:''}${to?'_to_'+to:''}.csv`;
+  a.click();
 }
 </script>
 </body>
