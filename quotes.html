@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote History – InvnTree</title>
+<link rel="icon" href="/img/favicon.png">
+<link rel="stylesheet" href="css/shared.css">
+<style>
+  .page-loader {
+    position: fixed; inset: 0; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; flex-direction: column; gap: 12px;
+  }
+  .page-loader p { font-size: 13px; color: var(--muted); }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 700; color: var(--navy); flex: 1; }
+
+  .ref-badge {
+    font-size: 11px; font-weight: 700; font-family: monospace;
+    background: #dbeafe; color: #1e40af; border-radius: 5px;
+    padding: 2px 8px; letter-spacing: .5px;
+  }
+
+  .calc-badge {
+    font-size: 10px; font-weight: 600; border-radius: 4px;
+    padding: 2px 7px; text-transform: uppercase; letter-spacing: .4px;
+  }
+  .calc-india    { background: #ffe4e6; color: #be123c; }
+  .calc-us       { background: #fef3c7; color: #92400e; }
+  .calc-trademark{ background: #ede9fe; color: #6d28d9; }
+  .calc-combined { background: #dcfce7; color: #15803d; }
+
+  .empty-state {
+    text-align: center; padding: 64px 20px; color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+  .empty-state p  { font-size: 13px; }
+
+  /* Admin user filter */
+  .user-filter-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .user-filter-bar select {
+    border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 7px 12px; font-size: 13px; color: var(--text);
+    font-family: inherit; background: #fff; outline: none;
+  }
+
+  .filter-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .filter-row input[type=text],
+  .filter-row input[type=date] {
+    border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 7px 12px; font-size: 13px; color: var(--text);
+    font-family: inherit; background: #fff; outline: none;
+  }
+  .filter-row input[type=text] { width: 200px; }
+</style>
+</head>
+<body>
+<div class="page-loader" id="loader">
+  <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+  <p>Loading quotes…</p>
+</div>
+
+<div id="navbar-slot"></div>
+<div id="app" style="display:none">
+
+  <div class="container">
+    <div class="toolbar">
+      <h2>📋 Quote History</h2>
+      <button class="btn btn-ghost btn-sm" onclick="exportCsv()">⬇ Export CSV</button>
+    </div>
+
+    <!-- Admin only: user filter -->
+    <div class="user-filter-bar" id="admin-filter-bar" style="display:none">
+      <label style="font-size:12px;font-weight:600;color:var(--muted)">View quotes for:</label>
+      <select id="user-select" onchange="applyFilters()">
+        <option value="">All users</option>
+      </select>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <input type="text" id="search-input" placeholder="🔍 Search ref, title…" oninput="applyFilters()">
+      <select id="calc-filter" style="border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:13px;font-family:inherit;background:#fff;outline:none" onchange="applyFilters()">
+        <option value="">All calculators</option>
+        <option value="india-patent">India Patent</option>
+        <option value="us-patent">US Patent</option>
+        <option value="us-trademark">US Trademark</option>
+        <option value="combined-patent">Combined Patent</option>
+      </select>
+      <input type="date" id="from-date" onchange="applyFilters()" title="From date">
+      <input type="date" id="to-date"   onchange="applyFilters()" title="To date">
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-wrap">
+        <table class="data-table" id="quotes-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Title</th>
+              <th id="col-user" style="display:none">User</th>
+              <th>Calculator</th>
+              <th>Grand Total</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="quotes-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);margin-top:10px" id="count-label"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+let allQuotes   = [];
+let filteredQuotes = [];
+let isAdmin     = false;
+let allUsers    = [];
+let currentUserId = null;
+
+(async () => {
+  const auth = await requireAuth();
+  if (!auth) return;
+
+  currentUserId = auth.profile.id;
+  isAdmin = auth.profile.role === 'admin';
+
+  renderNavbar(auth.profile, 'Quote History');
+
+  if (isAdmin) {
+    // Show user filter and user column
+    document.getElementById('admin-filter-bar').style.display = 'flex';
+    document.getElementById('col-user').style.display = '';
+    // Load user list for dropdown
+    const { data: users } = await db.from('profiles').select('id,full_name,email').order('full_name');
+    allUsers = users || [];
+    const sel = document.getElementById('user-select');
+    allUsers.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = u.full_name || u.email;
+      sel.appendChild(opt);
+    });
+    // Load all quotes
+    const { data } = await db.from('quotes')
+      .select('*, profiles(full_name,email)')
+      .order('created_at', { ascending: false });
+    allQuotes = data || [];
+  } else {
+    // Only this user's quotes
+    const { data } = await db.from('quotes')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .order('created_at', { ascending: false });
+    allQuotes = data || [];
+  }
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('app').style.display    = 'block';
+  applyFilters();
+})();
+
+function calcLabel(type) {
+  return type === 'india-patent'    ? '<span class="calc-badge calc-india">India Patent</span>'
+       : type === 'us-patent'       ? '<span class="calc-badge calc-us">US Patent</span>'
+       : type === 'us-trademark'    ? '<span class="calc-badge calc-trademark">US Trademark</span>'
+       : type === 'combined-patent' ? '<span class="calc-badge calc-combined">Combined</span>'
+       : `<span class="calc-badge" style="background:#f1f5f9;color:#475569">${type}</span>`;
+}
+
+function inr(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function applyFilters() {
+  const search   = (document.getElementById('search-input').value || '').toLowerCase();
+  const calcType = document.getElementById('calc-filter').value;
+  const fromDate = document.getElementById('from-date').value;
+  const toDate   = document.getElementById('to-date').value;
+  const userId   = isAdmin ? (document.getElementById('user-select').value || '') : '';
+
+  filteredQuotes = allQuotes.filter(q => {
+    if (userId   && q.user_id !== userId) return false;
+    if (calcType && q.calculator_type !== calcType) return false;
+    if (fromDate && q.created_at < fromDate) return false;
+    if (toDate   && q.created_at.slice(0,10) > toDate) return false;
+    if (search) {
+      const haystack = ((q.reference_number||'') + ' ' + (q.title||'')).toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+
+  renderTable();
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('calc-filter').value  = '';
+  document.getElementById('from-date').value    = '';
+  document.getElementById('to-date').value      = '';
+  if (isAdmin) document.getElementById('user-select').value = '';
+  applyFilters();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('quotes-tbody');
+  const colUser = document.getElementById('col-user');
+  if (isAdmin) colUser.style.display = '';
+
+  document.getElementById('count-label').textContent =
+    filteredQuotes.length + ' quote' + (filteredQuotes.length !== 1 ? 's' : '');
+
+  if (!filteredQuotes.length) {
+    tbody.innerHTML = `<tr><td colspan="7">
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <h3>No quotes yet</h3>
+        <p>Quotes are saved when you click <strong>🔖 Save Quote</strong> in any calculator.</p>
+      </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredQuotes.map(q => {
+    const userCell = isAdmin
+      ? `<td style="font-size:12px">${q.profiles?.full_name || q.profiles?.email || '—'}</td>`
+      : '';
+    return `<tr>
+      <td><span class="ref-badge">${q.reference_number || '—'}</span></td>
+      <td style="max-width:280px;white-space:normal;line-height:1.4">${esc(q.title || '—')}</td>
+      ${userCell}
+      <td>${calcLabel(q.calculator_type)}</td>
+      <td style="font-weight:700;color:var(--navy)">${inr(q.grand_total || 0)}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(q.created_at)}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuote('${q.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function deleteQuote(id) {
+  if (!confirm('Delete this quote? This cannot be undone.')) return;
+  const { error } = await db.from('quotes').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  allQuotes = allQuotes.filter(q => q.id !== id);
+  applyFilters();
+}
+
+function exportCsv() {
+  const header = isAdmin
+    ? 'Reference,Title,User,Calculator,Grand Total,Date'
+    : 'Reference,Title,Calculator,Grand Total,Date';
+  const rows = filteredQuotes.map(q => {
+    const ref   = q.reference_number || '';
+    const title = '"' + (q.title||'').replace(/"/g,'""') + '"';
+    const user  = isAdmin ? '"' + ((q.profiles?.full_name||q.profiles?.email)||'').replace(/"/g,'""') + '",' : '';
+    const calc  = q.calculator_type || '';
+    const total = q.grand_total || 0;
+    const date  = fmtDate(q.created_at);
+    return isAdmin
+      ? `${ref},${title},${user}${calc},${total},${date}`
+      : `${ref},${title},${calc},${total},${date}`;
+  });
+  const csv = [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'quotes-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

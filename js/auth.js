@@ -56,6 +56,7 @@ function renderNavbar(profile, pageTitle = '') {
       ${pageTitle ? `<div class="nav-title">${pageTitle}</div>` : ''}
       <div class="nav-right">
         <a href="dashboard.html" class="btn btn-nav-outline btn-sm">&#8962; Home</a>
+        <a href="quotes.html" class="btn btn-nav-outline btn-sm">📋 Quotes</a>
         ${adminBtn}
         <span class="nav-user">Hi, <strong>${profile.full_name || profile.email.split('@')[0]}</strong></span>
         <button class="btn btn-nav-outline btn-sm" onclick="signOut()">Sign Out</button>

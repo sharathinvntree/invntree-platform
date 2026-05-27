@@ -289,6 +289,12 @@ let userAddons  = [];
 
   userProfile = auth.profile;
 
+  // Determine USD → INR rate: per-user override → global setting → default 100
+  {
+    const { data: usdSetting } = await db.from('settings').select('value').eq('key','usd_rate').single();
+    USD_RATE = userProfile.usd_rate || (usdSetting ? parseInt(usdSetting.value)||100 : 100);
+  }
+
   // Load India fee schedule and override prof amounts (key mapping: india-patent keys → combined keys)
   if (userProfile.india_fee_schedule_id) {
     const { data: sched } = await db
@@ -437,7 +443,7 @@ const fees = {
   }
 };
 
-const USD_RATE = 100, NUM_OA = 2;
+let USD_RATE = 100; const NUM_OA = 2;
 
 let st = {
   n: 1,
@@ -863,6 +869,8 @@ function recalc() {
       <div><h2>Fee Breakdown</h2><div style="font-size:12px;color:var(--muted);margin-top:2px">${juriLabel[j]}: ${al.join(' + ')}</div></div>
       <div style="display:flex;gap:8px;align-items:center">
         <span style="font-size:12px;color:var(--muted)">${n} patent${n!==1?'s':''}</span>
+        <button class="btn btn-ghost btn-sm" onclick="saveQuote()">🔖 Save Quote</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEmailModal()">📧 Email Quote</button>
         <button class="btn btn-primary btn-sm" onclick="downloadPdf()">⬇ Download PDF</button>
       </div>
     </div>
@@ -873,7 +881,7 @@ function recalc() {
 }
 
 // ── PDF Export ─────────────────────────────────────────────────
-function downloadPdf() {
+function buildPdfHtml() {
   const client  = userProfile?.client_name     || '';
   const contact = userProfile?.contact_person  || '';
   const title   = userProfile?.invention_title || '';
@@ -1000,11 +1008,15 @@ function downloadPdf() {
       </div>
       ${notesSection}
       <div style="margin-top:20px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px">
-        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'}. US Govt. fees shown at 1 USD = ₹100 indicative rate.<br>
+        GST @ 18% is ${st.showGst?'included in the grand total above':'applicable on Professional Fees and not included above'}. US Govt. fees shown at 1 USD = ₹${USD_RATE} indicative rate.<br>
         © 2025 InvnTree IP Services. This estimate is indicative and subject to revision.
       </div>
     </div>`;
+  return html;
+}
 
+function downloadPdf() {
+  const html = buildPdfHtml();
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>InvnTree Patent Fee Estimate</title>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff}
@@ -1158,6 +1170,109 @@ function buildFeeSchedule() {
   grid.appendChild(uCard);
   wrap.appendChild(grid);
 }
+
+// ── Quote Save ─────────────────────────────────────────────────
+async function saveQuote() {
+  if (!userProfile) return;
+  const n = st.n, rows = buildRows();
+  let totProf = 0, totIndiaGovt = 0, totUsGovt = 0;
+  rows.forEach(r => {
+    if (!r.hdr && !(r.earlyPub && st.earlyPub === 'no')) {
+      totProf      += r.prof      || 0;
+      totIndiaGovt += r.indiaGovt || 0;
+      totUsGovt    += r.usGovt    || 0;
+    }
+  });
+  const profDisc = userProfile.prof_discount || 0;
+  userAddons.forEach((item, i) => {
+    if (st.extras[i] !== 'yes') return;
+    totProf      += Math.round(item.amount * (1 - profDisc/100));
+    totIndiaGovt += item.govt_fee_inr || 0;
+    totUsGovt    += Math.round((item.govt_fee_usd || 0) * USD_RATE);
+  });
+  const grandTotal = (totProf + totIndiaGovt + totUsGovt) * n;
+
+  const title = userProfile.invention_title || ('Patent – ' + new Date().toLocaleDateString('en-IN'));
+  const { data, error } = await db.from('quotes').insert({
+    user_id: userProfile.id,
+    title,
+    calculator_type: 'combined-patent',
+    state: { n: st.n, juri: st.juri, opts: st.opts, extras: st.extras, draftType: st.draftType, earlyPub: st.earlyPub, showGst: st.showGst },
+    grand_total: grandTotal,
+  }).select('reference_number').single();
+
+  if (error) { showToast('❌ Could not save quote: ' + error.message, '#dc2626'); return; }
+  showToast(`✓ Quote saved — Ref: ${data.reference_number}`, '#16a34a');
+}
+
+function showToast(msg, color) {
+  let t = document.getElementById('quote-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'quote-toast';
+    t.style.cssText = 'position:fixed;bottom:28px;right:28px;padding:12px 20px;border-radius:10px;color:#fff;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;transition:opacity .4s';
+    document.body.appendChild(t);
+  }
+  t.style.background = color || '#16a34a';
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 4000);
+}
+
+// ── Email Quote ────────────────────────────────────────────────
+function openEmailModal() {
+  document.getElementById('email-to').value   = userProfile?.contact_email || '';
+  document.getElementById('email-subj').value = userProfile?.invention_title
+    ? ('Patent Fee Quote: ' + userProfile.invention_title) : 'Your InvnTree Patent Fee Quote';
+  document.getElementById('email-err').textContent = '';
+  document.getElementById('email-modal').classList.remove('hidden');
+}
+function closeEmailModal() { document.getElementById('email-modal').classList.add('hidden'); }
+async function sendEmail() {
+  const toVal = document.getElementById('email-to').value.trim();
+  const subj  = document.getElementById('email-subj').value.trim();
+  const errEl = document.getElementById('email-err');
+  const btn   = document.getElementById('email-send-btn');
+  errEl.textContent = '';
+  if (!toVal) { errEl.textContent = 'Recipient email is required.'; return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await db.functions.invoke('send-quote-email', {
+    body: { to: toVal, subject: subj, html: buildPdfHtml(), user_id: userProfile.id, calculator_type: 'combined-patent' }
+  });
+  btn.disabled = false; btn.textContent = 'Send Email';
+  if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+  closeEmailModal();
+  showToast('✓ Quote emailed to ' + toVal, '#16a34a');
+}
 </script>
+
+<!-- Email Modal -->
+<div class="modal-overlay hidden" id="email-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3>📧 Email Quote</h3>
+      <button class="modal-close" onclick="closeEmailModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">The fee quote will be sent as a formatted email to the recipient.</div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">To (email address)</label>
+        <input type="email" id="email-to" placeholder="client@example.com"
+          style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">Subject</label>
+        <input type="text" id="email-subj" placeholder="Your InvnTree Patent Fee Quote"
+          style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
+      </div>
+      <div id="email-err" style="font-size:12px;color:#dc2626;min-height:16px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-primary" id="email-send-btn" onclick="sendEmail()">Send Email</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -112,6 +112,7 @@
       <button class="admin-tab active" id="atab-users"     onclick="switchAdminTab('users')">👥 Users</button>
       <button class="admin-tab"        id="atab-schedules" onclick="switchAdminTab('schedules')">📋 Fee Schedules</button>
       <button class="admin-tab"        id="atab-addons"    onclick="switchAdminTab('addons')">✦ Add-ons</button>
+      <button class="admin-tab"        id="atab-settings"  onclick="switchAdminTab('settings')">⚙️ Settings</button>
     </div>
     <a id="activity-link" href="activity.html" class="btn btn-ghost btn-sm" style="display:none;margin-right:4px">📊 Activity Log</a>
   </div>
@@ -210,6 +211,41 @@
       </div>
     </div>
   </div><!-- /apanel-addons -->
+
+  <!-- ── Settings Panel ── -->
+  <div id="apanel-settings" style="display:none">
+    <div class="card" style="max-width:640px">
+      <div class="card-header">
+        <div>
+          <h2 style="margin:0">Platform Settings</h2>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Global defaults applied to all users unless overridden per-user.</div>
+        </div>
+      </div>
+      <div class="card-body" style="padding:24px">
+
+        <!-- USD Exchange Rate -->
+        <div style="display:flex;align-items:flex-start;gap:20px;padding:20px;background:#f8fafd;border-radius:10px;border:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px">USD → INR Exchange Rate</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Used to convert US government fees (USPTO) to Indian Rupees in all calculators. Can be overridden per user in the edit modal.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <span style="font-size:13px;color:var(--muted)">₹</span>
+            <input type="number" id="setting-usd-rate" min="50" max="200" step="1"
+              style="width:90px;border:1.5px solid var(--border);border-radius:7px;padding:8px 10px;font-size:15px;font-weight:700;color:var(--navy);text-align:right;font-family:inherit;outline:none"
+              placeholder="100">
+            <span style="font-size:13px;color:var(--muted)">per $1</span>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;align-items:center;gap:12px">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+          <span id="settings-saved-msg" style="font-size:12px;color:#16a34a;display:none;font-weight:600">✓ Settings saved</span>
+          <span id="settings-err-msg"   style="font-size:12px;color:#dc2626;display:none"></span>
+        </div>
+      </div>
+    </div>
+  </div><!-- /apanel-settings -->
 
 </div>
 
@@ -530,6 +566,25 @@
         </div>
       </div>
 
+      <!-- ── Per-user USD Rate ── -->
+      <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div class="field-label" style="margin-bottom:4px">USD → INR Rate Override
+              <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px"> — leave blank to use the global rate</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted)">Applies to US government fees in all calculators for this user.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span style="font-size:12px;color:var(--muted)">₹</span>
+            <input type="number" id="edit-usd-rate" min="50" max="200" step="1"
+              style="width:80px;border:1.5px solid var(--border);border-radius:7px;padding:7px 10px;font-size:14px;font-weight:600;color:var(--navy);text-align:right;font-family:inherit;outline:none"
+              placeholder="global">
+            <span style="font-size:12px;color:var(--muted)">per $1</span>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Client Logo ── -->
       <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
         <div class="field-label" style="margin-bottom:12px">Client Logo
@@ -557,6 +612,16 @@
             and in PDF document headers
           </div>
         </div>
+      </div>
+
+      <!-- ── Internal Notes (admin-only) ── -->
+      <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
+        <div class="field-label" style="margin-bottom:6px">Internal Notes
+          <span style="font-weight:400;text-transform:none;font-size:11px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 7px;margin-left:6px;letter-spacing:0">🔒 Admin only – never shown to client</span>
+        </div>
+        <textarea id="edit-internal-notes"
+          placeholder="e.g. Client contacted via referral. Trial period ends 2025-08-01. Remind to renew."
+          style="border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;min-height:80px;outline:none;line-height:1.6"></textarea>
       </div>
 
     </div>
@@ -891,6 +956,8 @@
     document.getElementById('edit-invention-title').value = u.invention_title || '';
     document.getElementById('edit-quote-notes').value     = u.quote_notes || '';
     document.getElementById('edit-active').value          = String(u.is_active);
+    document.getElementById('edit-usd-rate').value        = u.usd_rate || '';
+    document.getElementById('edit-internal-notes').value  = u.internal_notes || '';
     document.getElementById('modal-error').classList.add('hidden');
 
     // Logo preview
@@ -978,6 +1045,8 @@
       quote_notes:      document.getElementById('edit-quote-notes').value.trim() || null,
       is_active:        document.getElementById('edit-active').value === 'true',
       logo_url,
+      usd_rate:         parseInt(document.getElementById('edit-usd-rate').value) || null,
+      internal_notes:   document.getElementById('edit-internal-notes').value.trim() || null,
     };
 
     const { error } = await db.from('profiles').update(updates).eq('id', editingId);
@@ -1388,10 +1457,41 @@
 
   // ── Switch admin tab ──────────────────────────────────────────
   function switchAdminTab(tab) {
-    ['users','schedules','addons'].forEach(t => {
+    ['users','schedules','addons','settings'].forEach(t => {
       document.getElementById(`apanel-${t}`).style.display = t === tab ? 'block' : 'none';
       document.getElementById(`atab-${t}`).classList.toggle('active', t === tab);
     });
+    if (tab === 'settings') loadSettings();
+  }
+
+  // ── Platform Settings ─────────────────────────────────────────
+  let cachedSettings = {};
+
+  async function loadSettings() {
+    const { data } = await db.from('settings').select('key,value');
+    if (data) {
+      cachedSettings = Object.fromEntries(data.map(r => [r.key, r.value]));
+      const el = document.getElementById('setting-usd-rate');
+      if (el) el.value = cachedSettings['usd_rate'] || 100;
+    }
+  }
+
+  async function saveSettings() {
+    const rate = parseInt(document.getElementById('setting-usd-rate').value) || 100;
+    const savedEl = document.getElementById('settings-saved-msg');
+    const errEl   = document.getElementById('settings-err-msg');
+    savedEl.style.display = 'none'; errEl.style.display = 'none';
+
+    const { error } = await db.from('settings')
+      .upsert({ key: 'usd_rate', value: String(rate), updated_at: new Date().toISOString() },
+              { onConflict: 'key' });
+    if (error) {
+      errEl.textContent = error.message; errEl.style.display = '';
+    } else {
+      cachedSettings['usd_rate'] = String(rate);
+      savedEl.style.display = '';
+      setTimeout(() => { savedEl.style.display = 'none'; }, 3000);
+    }
   }
 
   // ── Load all schedules ────────────────────────────────────────
