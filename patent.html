@@ -335,10 +335,11 @@ let userAddons  = [];
     }
   }
 
-  // Load add-on items (all types)
+  // Load add-on items relevant to the combined calculator
   if (userProfile.addon_ids && userProfile.addon_ids.length > 0) {
     const { data: addons } = await db.from('addon_items').select('*')
-      .in('id', userProfile.addon_ids);
+      .in('id', userProfile.addon_ids)
+      .in('type', ['combined', 'india', 'us', 'both']);
     userAddons = addons || [];
   }
 

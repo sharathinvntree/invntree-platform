@@ -590,9 +590,11 @@
       <div class="field">
         <label class="field-label">Applies to</label>
         <select id="addon-type">
-          <option value="both">🌐 Both calculators</option>
-          <option value="india">🇮🇳 India only</option>
-          <option value="us">🇺🇸 US only</option>
+          <option value="both">🌐 All calculators</option>
+          <option value="india">🇮🇳 India Patent only</option>
+          <option value="us">🇺🇸 US Patent only</option>
+          <option value="trademark">™ US Trademark only</option>
+          <option value="combined">🌐 India + US Combined only</option>
         </select>
       </div>
       <div class="field">
@@ -1488,7 +1490,14 @@
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">No add-on items yet. Click <strong>+ New Add-on</strong> to create one.</td></tr>`;
       return;
     }
-    const typeLabel = { india: '🇮🇳 India', us: '🇺🇸 US', both: '🌐 Both' };
+    const typeLabel = {
+      both:      '🌐 All',
+      india:     '🇮🇳 India Patent',
+      us:        '🇺🇸 US Patent',
+      trademark: '™ US Trademark',
+      combined:  '🌐 Combined',
+    };
+    const typeBadge = t => t === 'india' ? 'badge-blue' : t === 'us' ? 'badge-gold' : t === 'trademark' ? 'badge-purple' : 'badge-gray';
     tbody.innerHTML = allAddons.map(a => {
       const assignedTo = allUsers.filter(u => (u.addon_ids || []).includes(a.id)).map(u => esc(u.full_name || u.email.split('@')[0]));
       const assignedStr = assignedTo.length ? assignedTo.join(', ') : '<span style="color:var(--muted)"></span>';
@@ -1499,7 +1508,7 @@
           ${a.govt_fee_inr ? `<div style="font-size:11px;color:var(--muted)">IPO: ₹${a.govt_fee_inr.toLocaleString('en-IN')}</div>` : ''}
           ${a.govt_fee_usd ? `<div style="font-size:11px;color:var(--muted)">USPTO: $${a.govt_fee_usd}</div>` : ''}
         </td>
-        <td><span class="badge ${a.type === 'india' ? 'badge-blue' : a.type === 'us' ? 'badge-gold' : 'badge-gray'}">${typeLabel[a.type]}</span></td>
+        <td><span class="badge ${typeBadge(a.type)}">${typeLabel[a.type] || a.type}</span></td>
         <td style="font-size:12px;color:var(--muted)">${assignedStr}</td>
         <td style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEditAddon('${a.id}')">Edit</button>
