@@ -178,7 +178,13 @@
 <!-- LEFT panel -->
 <div class="login-hero">
   <div class="login-brand">
-    <img src="/img/logo-white.png" alt="invntree" style="height:36px;display:block;width:auto"/>
+    <img src="/img/logo-white.png" alt=""
+      style="height:40px;display:block;width:auto"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div style="display:none;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px;flex-shrink:0">I</div>
+      <span style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px">InvnTree</span>
+    </div>
   </div>
 
   <div class="login-hero-content">

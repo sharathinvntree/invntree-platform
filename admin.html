@@ -69,6 +69,8 @@
   .discount-item input:focus { border-color: var(--blue); }
 
   .last-login { font-size: 12px; color: var(--muted); }
+  .data-table td, .data-table th { padding: 13px 18px; }
+  .data-table td:last-child { white-space: nowrap; }
 
   /* Admin panel tab bar */
   .admin-tabbar { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--line); }
@@ -116,7 +118,11 @@
   <section class="hero-strip">
     <div class="hero-strip-inner">
       <div>
-        <div class="breadcrumb"><a href="dashboard.html">Home</a><span>Admin Panel</span></div>
+        <div class="hero-strip-eyebrow">
+          <a href="dashboard.html" style="color:rgba(255,255,255,.55);font-weight:500;text-transform:none;letter-spacing:0">Home</a>
+          <span style="color:rgba(255,255,255,.3)"> › </span>
+          <span>Admin Panel</span>
+        </div>
         <h1 class="hero-strip-title">Admin Panel</h1>
         <p class="hero-strip-sub">Manage users, fee schedules, add-ons, and platform settings.</p>
       </div>
@@ -162,14 +168,12 @@
             <th>Name</th>
             <th>Email</th>
             <th>Role</th>
-            <th>Entity Type</th>
             <th>Status</th>
-            <th>Last Login</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="users-tbody">
-          <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
+          <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">Loading users…</td></tr>
         </tbody>
       </table>
     </div>
@@ -903,28 +907,23 @@
   function renderTable(users) {
     const tbody = document.getElementById('users-tbody');
     if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">No users found.</td></tr>`;
       return;
     }
     tbody.innerHTML = users.map(u => {
-      const entityBadge = u.entity_type === 'startup_msme'
-        ? `<span class="badge badge-gold" style="font-size:10px">MSME/Startup</span>`
-        : `<span class="badge badge-gray" style="font-size:10px">Other Entity</span>`;
       const discInfo = u.prof_discount > 0
-        ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">Prof: ${u.prof_discount}% discount</div>` : '';
+        ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">${u.prof_discount}% discount</div>` : '';
       return `
       <tr data-id="${u.id}">
-        <td><strong>${esc(u.full_name || '')}</strong></td>
+        <td><strong>${esc(u.full_name || '')}</strong>${discInfo}</td>
         <td style="color:var(--muted)">${esc(u.email)}</td>
         <td><span class="badge ${u.role === 'admin' ? 'role-admin' : 'role-user'}">${u.role}</span></td>
-        <td>${entityBadge}${discInfo}</td>
         <td>
           <span class="badge ${u.is_active ? 'badge-green' : 'badge-red'}">
             ${u.is_active ? 'Active' : 'Inactive'}
           </span>
         </td>
-        <td>${fmtLogin(u.last_login_at)}</td>
-        <td style="display:flex;gap:6px">
+        <td style="display:flex;gap:6px;align-items:center">
           <button class="btn btn-ghost btn-sm" onclick="openEdit('${u.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="confirmDelete('${u.id}','${esc(u.full_name||u.email)}')">Delete</button>
         </td>
