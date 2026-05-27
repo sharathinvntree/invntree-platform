@@ -1098,20 +1098,22 @@ function showToast(msg, color) {
 
 // ── Email Quote ────────────────────────────────────────────────
 function openEmailModal() {
-  document.getElementById('email-to').value   = userProfile?.contact_email || '';
-  document.getElementById('email-subj').value = userProfile?.client_name
-    ? ('Trademark Fee Quote: ' + userProfile.client_name) : 'Your InvnTree Trademark Fee Quote';
+  document.getElementById('email-name').value  = userProfile?.client_name || '';
+  document.getElementById('email-to').value    = userProfile?.contact_email || '';
+  document.getElementById('email-phone').value = userProfile?.phone || '';
   document.getElementById('email-err').textContent = '';
   document.getElementById('email-modal').classList.remove('hidden');
 }
 function closeEmailModal() { document.getElementById('email-modal').classList.add('hidden'); }
 async function sendEmail() {
-  const toVal = document.getElementById('email-to').value.trim();
-  const subj  = document.getElementById('email-subj').value.trim();
-  const errEl = document.getElementById('email-err');
-  const btn   = document.getElementById('email-send-btn');
+  const nameVal  = document.getElementById('email-name').value.trim();
+  const toVal    = document.getElementById('email-to').value.trim();
+  const phoneVal = document.getElementById('email-phone').value.trim();
+  const errEl    = document.getElementById('email-err');
+  const btn      = document.getElementById('email-send-btn');
   errEl.textContent = '';
-  if (!toVal) { errEl.textContent = 'Recipient email is required.'; return; }
+  if (!nameVal) { errEl.textContent = 'Recipient name is required.'; return; }
+  if (!toVal)   { errEl.textContent = 'Recipient email is required.'; return; }
   btn.disabled = true; btn.textContent = 'Sending…';
 
   const rows = buildRows();
@@ -1125,20 +1127,24 @@ async function sendEmail() {
   });
   const grandTotal = totProf + totGovt;
 
-  const { error } = await db.functions.invoke('send-quote-email', {
+  const { data, error } = await db.functions.invoke('send-quote-email', {
     body: {
-      to: toVal, subject: subj,
+      to: toVal, recipient_name: nameVal, recipient_phone: phoneVal,
       quote_html: buildPdfHtml(),
       user_id: userProfile.id,
       calculator_type: 'us-trademark',
-      title: userProfile.client_name ? (userProfile.client_name + ' – US Trademark') : ('US Trademark – ' + new Date().toLocaleDateString('en-IN')),
+      title: nameVal ? (nameVal + ' – US Trademark') : ('US Trademark – ' + new Date().toLocaleDateString('en-IN')),
       grand_total: grandTotal,
-      client_name: userProfile.client_name || userProfile.full_name || userProfile.email,
+      client_name: nameVal,
       state: { numWordmarks: st.numWordmarks, numDeviceMarks: st.numDeviceMarks, classes: st.classes, opts: st.opts, filingBasis: st.filingBasis, showGst: st.showGst },
     }
   });
   btn.disabled = false; btn.textContent = 'Send Email';
-  if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+  if (error) {
+    let msg = error.message;
+    try { const b = await error.context.json(); if (b?.error) msg = b.error; } catch {}
+    errEl.textContent = 'Error: ' + msg; return;
+  }
   closeEmailModal();
   showToast('✓ Quote emailed to ' + toVal, '#16a34a');
 }
@@ -1154,14 +1160,19 @@ async function sendEmail() {
     <div class="modal-body">
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px">The fee quote will be sent as a formatted email to the recipient.</div>
       <div class="field" style="margin-bottom:14px">
-        <label class="field-label">To (email address)</label>
-        <input type="email" id="email-to" placeholder="client@example.com"
-          style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
+        <label class="field-label">Recipient Name <span style="color:#dc2626">*</span></label>
+        <input type="text" id="email-name" placeholder="Client / Company name"
+          style="border:1.5px solid var(--line);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
       </div>
       <div class="field" style="margin-bottom:14px">
-        <label class="field-label">Subject</label>
-        <input type="text" id="email-subj" placeholder="Your InvnTree Trademark Fee Quote"
-          style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
+        <label class="field-label">Email Address <span style="color:#dc2626">*</span></label>
+        <input type="email" id="email-to" placeholder="client@example.com"
+          style="border:1.5px solid var(--line);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">Phone Number <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="tel" id="email-phone" placeholder="+91 98765 43210"
+          style="border:1.5px solid var(--line);border-radius:7px;padding:9px 12px;font-size:13px;width:100%;box-sizing:border-box;font-family:inherit;outline:none">
       </div>
       <div id="email-err" style="font-size:12px;color:#dc2626;min-height:16px"></div>
     </div>

@@ -17,7 +17,7 @@
 
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 200px));
     gap: 16px; margin-bottom: 28px;
   }
   .stat-card {
@@ -48,8 +48,8 @@
   }
   .page-loader p { font-size: 13px; color: var(--muted); }
 
-  .btn-danger { background: #dc2626; color: #fff; border: none; }
-  .btn-danger:hover { background: #b91c1c; }
+  .btn-danger { background: transparent; color: #dc2626; border: 1.5px solid #fca5a5; }
+  .btn-danger:hover { background: #fef2f2; border-color: #dc2626; }
 
   .perm-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
@@ -884,11 +884,7 @@
 
     document.getElementById('stats-row').innerHTML = `
       <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Users</div></div>
-      <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>
-      <div class="stat-card"><div class="stat-num">${usCount}</div><div class="stat-lbl">US Patent Access</div></div>
-      <div class="stat-card"><div class="stat-num">${indCount}</div><div class="stat-lbl">India Patent Access</div></div>
-      <div class="stat-card"><div class="stat-num">${tmCount}</div><div class="stat-lbl">US Trademark Access</div></div>
-      <div class="stat-card"><div class="stat-num">${cpCount}</div><div class="stat-lbl">Combined Patent Access</div></div>`;
+      <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>`;
   }
 
   // ── Format last login ─────────────────────────────────────────

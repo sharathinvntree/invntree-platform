@@ -49,11 +49,7 @@ function renderNavbar(profile, pageTitle = '') {
   const initial = userName.charAt(0).toUpperCase();
 
   const NAV_LINKS = [
-    { id: 'dashboard',    label: 'Home',         href: 'dashboard.html' },
-    { id: 'us-patent',    label: 'US Patent',    href: 'us-patent.html' },
-    { id: 'india-patent', label: 'India Patent', href: 'india-patent.html' },
-    { id: 'us-trademark', label: 'US Trademark', href: 'us-trademark.html' },
-    { id: 'combined',     label: 'India + US',   href: 'patent.html' },
+    { id: 'dashboard', label: 'Home', href: 'dashboard.html' },
   ];
 
   // Determine current page from URL
