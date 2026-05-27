@@ -29,10 +29,10 @@ function buildEmailHtml(recipientName: string, referenceNumber: string, recipien
 
     <!-- Header -->
     <div style="background:#0f1f3d;padding:26px 36px">
-      <img src="https://invntree.com/img/logo-white.png"
+      <img src="https://www.invntree.com/wp-content/uploads/2026/05/Invntree-Logo-LowRes-White-NoBG-LS.png"
            alt="InvnTree"
            style="height:38px;width:auto;display:block;margin-bottom:6px"
-           width="152" height="38">
+           height="38">
       <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.55)">Fee Quotation</p>
     </div>
 
