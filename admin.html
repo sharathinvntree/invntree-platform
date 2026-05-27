@@ -227,33 +227,19 @@
       <div id="bulk-step-upload">
         <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
           Upload a CSV file to create multiple users at once. Each row becomes one user account.
-          <a id="bulk-template-link" href="#" onclick="downloadTemplate();return false"
-            style="color:var(--blue);font-weight:600;text-decoration:none;margin-left:6px">⬇ Download template</a>
+          Download the sample CSV, fill in your users, then upload it here.
         </p>
+        <div style="margin-bottom:14px">
+          <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">⬇ Download Sample CSV</button>
+        </div>
         <div class="csv-dropzone" id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()"
           ondragover="event.preventDefault();this.classList.add('drag-over')"
           ondragleave="this.classList.remove('drag-over')"
           ondrop="handleDrop(event)">
           <input type="file" id="csv-file-input" accept=".csv,text/csv" onchange="handleFileSelect(event)">
           <div class="dz-icon">📄</div>
-          <div class="dz-text"><strong>Click to choose</strong> or drag a CSV file here</div>
+          <div class="dz-text"><strong>Click to choose</strong> or drag your filled CSV here</div>
           <div class="dz-text" style="margin-top:4px;font-size:11px" id="bulk-filename"></div>
-        </div>
-        <div style="margin-top:14px;padding:12px 14px;background:#f8fafd;border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted)">
-          <strong style="color:var(--navy);display:block;margin-bottom:6px">CSV columns (first row = header)</strong>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 16px">
-            <span><code style="color:var(--blue)">email</code> — required</span>
-            <span><code style="color:var(--blue)">password</code> — required</span>
-            <span><code>full_name</code></span>
-            <span><code>entity_type</code> — other / startup_msme</span>
-            <span><code>us_entity_type</code> — small / large</span>
-            <span><code>prof_discount</code> — 0–100</span>
-            <span><code>us_patenting</code> — yes / no</span>
-            <span><code>india_patenting</code> — yes / no</span>
-            <span><code>us_trademark</code> — yes / no</span>
-            <span><code>combined_patent</code> — yes / no</span>
-            <span><code>combined_default_jurisdiction</code> — both / india / us</span>
-          </div>
         </div>
       </div>
 
