@@ -972,10 +972,15 @@ function downloadPdf() {
       <div style="font-size:11px;color:#555;line-height:1.6;white-space:pre-wrap">${notes}</div>
     </div>` : '';
 
+  const clientLogoHtml = userProfile?.logo_url
+    ? `<div style="background:#fff;border-radius:6px;padding:5px 12px;line-height:0"><img src="${userProfile.logo_url}" style="height:36px;max-width:120px;object-fit:contain;display:block" alt=""></div>`
+    : '';
+
   const html = `
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:820px;margin:0 auto;color:#1a1a2e">
       <div style="background:#1a2f5e;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;border-radius:8px 8px 0 0">
         <img src="${window.location.origin}/img/logo-white.png" style="height:44px;display:block" alt="InvnTree">
+        ${clientLogoHtml}
         <div style="text-align:right">
           <div style="font-size:14px;font-weight:700;color:#fff">${juriLabel[j]}</div>
           <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:3px">Professional &amp; Government Fees</div>

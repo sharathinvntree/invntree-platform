@@ -530,6 +530,33 @@
         </div>
       </div>
 
+      <!-- ── Client Logo ── -->
+      <div style="border-top:1px solid var(--border);margin:18px 0 0;padding-top:16px">
+        <div class="field-label" style="margin-bottom:12px">Client Logo
+          <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:11px"> — shown in the navbar and all PDF downloads for this user</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div id="logo-preview-wrap" style="width:140px;height:64px;border:1.5px solid var(--border);border-radius:8px;background:#f8fafd;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+            <span id="logo-placeholder" style="font-size:11px;color:var(--muted)">No logo</span>
+            <img id="logo-preview" style="max-width:130px;max-height:56px;object-fit:contain;display:none" src="" alt="">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+              <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none" onchange="previewLogo(event)">
+              📷 Upload Logo
+            </label>
+            <button class="btn btn-ghost btn-sm" id="logo-remove-btn"
+              style="display:none;color:#dc2626;border-color:#fca5a5"
+              onclick="removeLogo()">✕ Remove Logo</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7">
+            PNG, JPG or SVG · any colour works<br>
+            Displayed on white background in navbar<br>
+            and in the PDF document header
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -661,7 +688,31 @@
 <script src="js/auth.js"></script>
 <script>
   let allUsers = [];
-  let editingId = null;
+  let editingId            = null;
+  let logoFileToUpload     = null;   // File object staged for upload on save
+  let logoMarkedForRemoval = false;  // True when admin clicked Remove
+
+  function previewLogo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    logoFileToUpload     = file;
+    logoMarkedForRemoval = false;
+    const url = URL.createObjectURL(file);
+    document.getElementById('logo-preview').src          = url;
+    document.getElementById('logo-preview').style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+    document.getElementById('logo-remove-btn').style.display  = 'inline-flex';
+  }
+
+  function removeLogo() {
+    logoMarkedForRemoval = true;
+    logoFileToUpload     = null;
+    document.getElementById('logo-preview').src           = '';
+    document.getElementById('logo-preview').style.display = 'none';
+    document.getElementById('logo-placeholder').style.display = '';
+    document.getElementById('logo-remove-btn').style.display  = 'none';
+    document.getElementById('logo-file-input').value = '';
+  }
   let currentAdminId = null;
 
   (async () => {
@@ -831,6 +882,23 @@
     document.getElementById('edit-active').value          = String(u.is_active);
     document.getElementById('modal-error').classList.add('hidden');
 
+    // Logo preview
+    logoFileToUpload = null;
+    logoMarkedForRemoval = false;
+    const existingLogo = u.logo_url || '';
+    if (existingLogo) {
+      document.getElementById('logo-preview').src = existingLogo;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('logo-placeholder').style.display = 'none';
+      document.getElementById('logo-remove-btn').style.display = 'inline-flex';
+    } else {
+      document.getElementById('logo-preview').src = '';
+      document.getElementById('logo-preview').style.display = 'none';
+      document.getElementById('logo-placeholder').style.display = '';
+      document.getElementById('logo-remove-btn').style.display = 'none';
+    }
+    document.getElementById('logo-file-input').value = '';
+
     document.getElementById('edit-role').disabled = (userId === currentAdminId);
 
     document.getElementById('edit-modal').classList.remove('hidden');
@@ -848,6 +916,36 @@
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
 
     const newPassword = document.getElementById('edit-password').value;
+
+    // ── Handle logo upload / removal ──
+    let logo_url = (allUsers.find(u => u.id === editingId)?.logo_url) || null;
+
+    if (logoMarkedForRemoval) {
+      // Best-effort delete from storage (all possible extensions)
+      ['png','jpg','jpeg','webp','svg'].forEach(ext => {
+        db.storage.from('client-logos').remove([`${editingId}.${ext}`]).catch(() => {});
+      });
+      logo_url = null;
+    } else if (logoFileToUpload) {
+      const ext  = (logoFileToUpload.name.split('.').pop() || 'png').toLowerCase();
+      const path = `${editingId}.${ext}`;
+      // Remove previous logo files (other extensions)
+      ['png','jpg','jpeg','webp','svg'].filter(e => e !== ext).forEach(e => {
+        db.storage.from('client-logos').remove([`${editingId}.${e}`]).catch(() => {});
+      });
+      const { error: upErr } = await db.storage
+        .from('client-logos')
+        .upload(path, logoFileToUpload, { upsert: true, contentType: logoFileToUpload.type });
+      if (upErr) {
+        const errEl = document.getElementById('modal-error');
+        errEl.textContent = 'Logo upload failed: ' + upErr.message;
+        errEl.classList.remove('hidden');
+        btn.disabled = false; btn.innerHTML = 'Save Changes';
+        return;
+      }
+      const { data: urlData } = db.storage.from('client-logos').getPublicUrl(path);
+      logo_url = urlData.publicUrl + '?v=' + Date.now();
+    }
 
     const updates = {
       full_name:       document.getElementById('edit-name').value.trim() || null,
@@ -868,6 +966,7 @@
       invention_title:  document.getElementById('edit-invention-title').value.trim() || null,
       quote_notes:      document.getElementById('edit-quote-notes').value.trim() || null,
       is_active:        document.getElementById('edit-active').value === 'true',
+      logo_url,
     };
 
     const { error } = await db.from('profiles').update(updates).eq('id', editingId);
