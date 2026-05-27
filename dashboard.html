@@ -283,7 +283,7 @@
     renderNavbar(profile, 'Dashboard');
     trackPageVisit(profile.id, 'dashboard');
     document.getElementById('welcome-name').textContent =
-      profile.full_name || profile.email.split('@')[0];
+      profile.client_name || profile.full_name || profile.email.split('@')[0];
 
     // Client logo on the right of the welcome box
     if (profile.logo_url) {
