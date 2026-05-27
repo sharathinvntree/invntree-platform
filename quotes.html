@@ -256,7 +256,8 @@ function renderTable() {
       <td>${calcLabel(q.calculator_type)}</td>
       <td style="font-weight:700;color:var(--navy)">${inr(q.grand_total || 0)}</td>
       <td style="font-size:12px;color:var(--muted)">${fmtDate(q.created_at)}</td>
-      <td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="viewQuote('${q.id}')">View</button>
         <button class="btn btn-danger btn-sm" onclick="deleteQuote('${q.id}')">Delete</button>
       </td>
     </tr>`;
@@ -273,6 +274,117 @@ async function deleteQuote(id) {
   if (error) { alert('Error: ' + error.message); return; }
   allQuotes = allQuotes.filter(q => q.id !== id);
   applyFilters();
+}
+
+function viewQuote(id) {
+  const q = allQuotes.find(q => q.id === id);
+  if (!q) return;
+  const s = q.state || {};
+
+  const calcNames = {
+    'india-patent':    'India Patent',
+    'us-patent':       'US Patent',
+    'us-trademark':    'US Trademark',
+    'combined-patent': 'Combined Patent (India + US)',
+  };
+
+  // ── Build human-readable state summary ──
+  const rows = [];
+
+  // Jurisdiction (combined only)
+  if (q.calculator_type === 'combined-patent' && s.juri) {
+    const juriMap = { india: '🇮🇳 India only', us: '🇺🇸 US only', both: '🌐 India + US' };
+    rows.push(['Jurisdiction', juriMap[s.juri] || s.juri]);
+  }
+
+  // Number of patents / marks
+  if (s.n)             rows.push(['No. of Patents', s.n]);
+  if (s.numWordmarks)  rows.push(['Wordmarks', s.numWordmarks]);
+  if (s.numDeviceMarks && s.numDeviceMarks > 0) rows.push(['Device / Logo Marks', s.numDeviceMarks]);
+  if (s.classes)       rows.push(['Trademark Classes', s.classes]);
+
+  // Draft type
+  if (s.draftType) {
+    const dtMap = {
+      'complete':          'Complete Specification',
+      'provisional':       'Provisional → Complete',
+      'non-provisional':   'Non-Provisional',
+    };
+    rows.push(['Draft Type', dtMap[s.draftType] || s.draftType]);
+  }
+
+  // Filing basis (trademark)
+  if (s.filingBasis) {
+    rows.push(['Filing Basis', s.filingBasis === 'itu' ? 'Intent to Use (ITU)' : 'In Use']);
+  }
+
+  // Steps included
+  if (s.opts) {
+    const stepNames = {
+      1: 'Novelty Search',
+      2: 'Drafting & Filing',
+      3: 'Prosecution / Office Action',
+      4: 'Statement of Use',
+    };
+    const included = Object.entries(s.opts)
+      .filter(([,v]) => v === 'yes')
+      .map(([k]) => stepNames[k] || ('Step ' + k))
+      .join(', ');
+    if (included) rows.push(['Steps Included', included]);
+  }
+
+  // Early pub (india/combined)
+  if (s.earlyPub !== undefined) {
+    rows.push(['Early Publication', s.earlyPub === 'yes' ? 'Yes' : 'No']);
+  }
+
+  // OA complexity (trademark)
+  if (s.oaComplexity) {
+    rows.push(['OA Complexity', s.oaComplexity.charAt(0).toUpperCase() + s.oaComplexity.slice(1)]);
+  }
+
+  // GST
+  if (s.showGst !== undefined) rows.push(['GST Included', s.showGst ? 'Yes' : 'No']);
+
+  const stateHtml = rows.length
+    ? rows.map(([k,v]) => `
+        <tr>
+          <td style="padding:7px 12px;color:var(--muted);font-size:12px;width:180px;border-bottom:1px solid var(--border)">${k}</td>
+          <td style="padding:7px 12px;font-size:13px;font-weight:600;color:var(--navy);border-bottom:1px solid var(--border)">${v}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="2" style="padding:12px;color:var(--muted);font-size:12px">No configuration details available.</td></tr>`;
+
+  const userRow = isAdmin && q.profiles
+    ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">
+         Client: <strong style="color:var(--text)">${esc(q.profiles.full_name || q.profiles.email || '—')}</strong>
+       </div>` : '';
+
+  document.getElementById('view-modal-body').innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+      <div>
+        ${userRow}
+        <div style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px">${esc(q.title || '—')}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="ref-badge">${q.reference_number || '—'}</span>
+          ${calcLabel(q.calculator_type)}
+          <span style="font-size:12px;color:var(--muted)">${fmtDate(q.created_at)}</span>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Grand Total</div>
+        <div style="font-size:26px;font-weight:800;color:var(--navy)">${inr(q.grand_total || 0)}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Configuration at time of save</div>
+    <table style="width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      ${stateHtml}
+    </table>`;
+
+  document.getElementById('view-modal').classList.remove('hidden');
+}
+
+function closeViewModal() {
+  document.getElementById('view-modal').classList.add('hidden');
 }
 
 function exportCsv() {
@@ -297,5 +409,21 @@ function exportCsv() {
   a.click();
 }
 </script>
+
+<!-- View Quote Modal -->
+<div class="modal-overlay hidden" id="view-modal" onclick="if(event.target===this)closeViewModal()">
+  <div class="modal" style="max-width:580px;width:95vw">
+    <div class="modal-head">
+      <h3>Quote Details</h3>
+      <button class="modal-close" onclick="closeViewModal()">×</button>
+    </div>
+    <div class="modal-body" id="view-modal-body" style="padding:24px">
+      <!-- filled by viewQuote() -->
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeViewModal()">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
