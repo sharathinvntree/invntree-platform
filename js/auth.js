@@ -76,7 +76,7 @@ function renderNavbar(profile, pageTitle = '') {
   document.getElementById('navbar-slot').innerHTML = menuStyles + `
     <nav class="navbar">
       <a class="nav-brand" href="dashboard.html">
-        <img src="/img/logo-color.png" alt="InvnTree" style="height:30px;display:block;width:auto">
+        <img src="/img/logo-color.png" alt="InvnTree" style="height:60px;display:block;width:auto">
       </a>
       ${pageTitle ? `<div class="nav-sep"></div><div class="nav-context">${pageTitle}</div>` : ''}
       <div class="nav-right">
