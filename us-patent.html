@@ -880,6 +880,15 @@ async function saveQuote() {
 
   if (error) { showToast('❌ Could not save quote: ' + error.message, '#dc2626'); return; }
   showToast(`✓ Quote saved — Ref: ${data.reference_number}`, '#16a34a');
+  // Notify admin (fire-and-forget)
+  db.functions.invoke('send-quote-email', { body: {
+    notify_admin_only: true,
+    user_id: userProfile.id,
+    calculator_type: 'us-patent',
+    reference_number: data.reference_number,
+    grand_total: grandTotal,
+    client_name: userProfile.client_name || userProfile.full_name || userProfile.email,
+  }}).catch(() => {});
 }
 
 function showToast(msg, color) {
