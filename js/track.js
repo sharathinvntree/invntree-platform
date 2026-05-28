@@ -4,9 +4,13 @@
 // All functions are fire-and-forget; failures are silently ignored
 // so tracking never interrupts the user experience.
 
+// Set to true for admin users so their own browsing isn't logged.
+let _trackingDisabled = false;
+function disableTracking() { _trackingDisabled = true; }
+
 // ── Core insert ────────────────────────────────────────────────
 function trackEvent(userId, eventType, page, details) {
-  if (!userId || !db) return;
+  if (_trackingDisabled || !userId || !db) return;
   db.from('user_activity').insert({
     user_id:    userId,
     event_type: eventType,

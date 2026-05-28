@@ -25,6 +25,11 @@ async function requireAuth() {
     return null;
   }
 
+  // Admins don't generate activity log entries
+  if (profile.role === 'admin' && typeof disableTracking === 'function') {
+    disableTracking();
+  }
+
   return { session, profile };
 }
 
