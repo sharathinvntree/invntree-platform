@@ -15,18 +15,21 @@
     --text: var(--ink);
   }
 
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 200px));
-    gap: 16px; margin-bottom: 28px;
+  /* Card header / body */
+  .card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
   }
-  .stat-card {
-    background: #fff; border-radius: 10px;
-    border: 1px solid var(--line); padding: 18px 20px;
-    box-shadow: var(--shadow-sm);
-  }
-  .stat-card .stat-num  { font-size: 28px; font-weight: 800; color: var(--navy); }
-  .stat-card .stat-lbl  { font-size: 12px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .card-header h2 { font-size: 15px; font-weight: 700; color: var(--navy); margin: 0; }
+  .card-body { padding: 24px 22px; }
+
+  /* Stats rendered inside the hero — hide old row */
+  .stats-row { display: none; }
 
   .toolbar {
     display: flex; align-items: center; gap: 12px;
@@ -115,22 +118,24 @@
 <div id="navbar-slot"></div>
 
 <div id="admin-hero" style="display:none">
-  <section class="hero-strip">
-    <div class="hero-strip-inner">
+  <section style="background:linear-gradient(135deg,#0F1B3D 0%,#142554 100%);padding:36px 40px;position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:var(--halftone);opacity:.4;pointer-events:none"></div>
+    <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;position:relative">
       <div>
-        <div class="hero-strip-eyebrow">
-          <a href="dashboard.html" style="color:rgba(255,255,255,.55);font-weight:500;text-transform:none;letter-spacing:0">Home</a>
-          <span style="color:rgba(255,255,255,.3)"> › </span>
-          <span>Admin Panel</span>
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <a href="dashboard.html" style="color:rgba(255,255,255,.45);font-weight:500">Home</a>
+          <span style="color:rgba(255,255,255,.25)">›</span>
+          <span style="color:rgba(255,255,255,.65)">Admin Panel</span>
         </div>
-        <h1 class="hero-strip-title">Admin Panel</h1>
-        <p class="hero-strip-sub">Manage users, fee schedules, add-ons, and platform settings.</p>
+        <h1 style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.7px;line-height:1.1;margin-bottom:8px">Admin Panel</h1>
+        <p style="font-size:14px;color:rgba(255,255,255,.6);max-width:480px;line-height:1.5">Manage users, fee schedules, add-ons, and platform settings.</p>
       </div>
+      <div id="hero-stats-slot" style="display:flex;gap:14px;flex-wrap:wrap"></div>
     </div>
   </section>
 </div>
 
-<div class="container" id="main" style="display:none;padding-top:28px">
+<div class="container" id="main" style="display:none;padding-top:32px;padding-bottom:56px">
 
   <!-- Admin Tab Bar -->
   <div class="admin-tabbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -886,9 +891,13 @@
     const tmCount  = allUsers.filter(u => u.us_trademark).length;
     const cpCount  = allUsers.filter(u => u.combined_patent).length;
 
-    document.getElementById('stats-row').innerHTML = `
-      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Users</div></div>
-      <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Active</div></div>`;
+    const statTile = (num, lbl) =>
+      `<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:18px 26px;backdrop-filter:blur(6px);min-width:110px">
+        <div style="font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px">${num}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-top:5px">${lbl}</div>
+      </div>`;
+    document.getElementById('hero-stats-slot').innerHTML =
+      statTile(total, 'Total Users') + statTile(active, 'Active');
   }
 
   // ── Format last login ─────────────────────────────────────────
