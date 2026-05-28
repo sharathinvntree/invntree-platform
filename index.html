@@ -171,6 +171,22 @@
     .login-stats { gap: 24px; }
     .login-panel { padding: 36px 28px; }
   }
+
+  /* Phone — show just logo bar + form */
+  @media (max-width: 600px) {
+    body { overflow-y: auto; }
+    .login-hero {
+      padding: 22px 20px 18px;
+      min-height: auto;
+    }
+    .login-hero-content { display: none; }
+    .login-footnote { display: none; }
+    .login-brand img { height: 72px; }
+    .login-panel { padding: 28px 20px 48px; justify-content: flex-start; }
+    .login-form h2 { font-size: 22px; }
+    .login-form > p { margin-bottom: 24px; font-size: 13px; }
+    .login-submit { padding: 12px; }
+  }
 </style>
 </head>
 <body>

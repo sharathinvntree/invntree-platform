@@ -71,6 +71,7 @@ function renderNavbar(profile, pageTitle = '') {
       .um-item:hover { background:var(--bg); }
       .um-danger { color:var(--red); }
       .um-danger:hover { background:var(--red-tint); }
+      @media (max-width:600px) { .user-menu { right:16px;top:54px; } }
     </style>`;
 
   document.getElementById('navbar-slot').innerHTML = menuStyles + `
@@ -84,7 +85,7 @@ function renderNavbar(profile, pageTitle = '') {
         ${adminLink}
         <button class="nav-user-btn" onclick="toggleUserMenu(event)">
           <span class="avatar">${initial}</span>
-          ${userName}
+          <span class="nav-username">${userName}</span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="user-menu" id="user-menu" style="display:none">
